@@ -1,0 +1,15 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (contiene contraseñas)
+.env
+
+# PDFs generados
+informes/
+
+# Logs
+*.log
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

@@ -1,0 +1,8 @@
+- Cuando se refiere a 
+"Cada mes, haremos un informe automatizado de los IoT y sus valores y generaremos un PDF que tendrá logotipos y demás y lo enviarás por email usando un SMTP propio de la UGR."
+
+el destinatario sera el responsable y/o el administador ??
+
+por ahora destinatarios es un array por si se decide ampliar en un futuro
+
+- Preguntar si un dispositivo tiene que pertenecer si o si a una instalacion, para asi en el crear, que sea obligatorio pasarle el id de la instalacion o no (puede ocurrir que un dispositivo haya llegado y todavia no este configurado, por lo que no tendria por que pertenecer a una instalacion)
