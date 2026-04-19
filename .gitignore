@@ -137,3 +137,7 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Scripts de utilidad usados durante el desarrollo
+update-admin-password.js
+test-model.js
