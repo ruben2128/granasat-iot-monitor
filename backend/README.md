@@ -1,1 +1,0 @@
-# granasat-iot-monitor
