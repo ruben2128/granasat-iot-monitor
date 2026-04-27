@@ -58,3 +58,36 @@ InfluxDB 2.x
 Mosquitto (broker MQTT)
 Docker y Docker Compose 
 
+
+Roles del Sistema
+ADMIN           Acceso total: gestiona instalaciones, dispositivos, usuarios y alertas
+RESPONSABLE     Acceso limitado: solo ve sus instalaciones y dispositivos asignados
+
+
+API REST
+POST   /api/auth/login
+POST   /api/auth/register
+GET    /api/auth/me
+
+GET    /api/instalaciones
+GET    /api/instalaciones/:id
+POST   /api/instalaciones
+PUT    /api/instalaciones/:id
+DELETE /api/instalaciones/:id
+
+GET    /api/dispositivos
+GET    /api/dispositivos/:id
+POST   /api/dispositivos
+PUT    /api/dispositivos/:id
+DELETE /api/dispositivos/:id
+
+GET    /api/alertas-config
+POST   /api/alertas-config
+PUT    /api/alertas-config/:id
+DELETE /api/alertas-config/:id
+
+GET    /api/informes
+POST   /api/informes/generar
+GET    /api/informes/:id/descargar
+
+GET    /api/usuarios
