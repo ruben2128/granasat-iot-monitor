@@ -62,7 +62,7 @@ async function obtenerDispositivoPorId(req, res) {
             return res.status(404).json({error: 'Dispositivo no encontrado'});
         }
 
-        if(req.user.role === 'RESPONSABLE' && instalacion.responsable_id !== req.user.id) {
+        if(req.user.role === 'RESPONSABLE' && dispositivo.instalacion.responsable_id !== req.user.id) {
             return res.status(403).json({error: 'No tienes acceso a esta dispositivo'});
         }
 

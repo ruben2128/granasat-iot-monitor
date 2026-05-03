@@ -21,6 +21,11 @@ async function obtenerInstalaciones(req, res){
         } else {
             instalaciones = await Instalacion.findAll({
                 where: { responsable_id: req.user.id },
+                include: [{
+                    model: Usuario,
+                    as: 'responsable',
+                    attributes: ['id', 'username', 'nombre', 'apellidos', 'email']
+                }],
                 order: [['created_at', 'DESC']]
             });
         }
@@ -77,8 +82,8 @@ async function crearInstalacion(req, res) {
     try{
         const { nombre, codigo, descripcion, ubicacion, responsable_id } = req.body;
 
-        if(!nombre || !codigo){
-            return res.status(400).json({ error: 'nombre y codigo son obligatorios'});
+        if(!nombre || !codigo || !responsable_id) {
+            return res.status(400).json({ error: 'nombre, codigo y responsable_id son obligatorios'});
         }
 
         const existe = await Instalacion.findOne({ where: { codigo: codigo.toUpperCase()}});

@@ -16,7 +16,8 @@ const instalacionRoutes = require('./routes/instalacionRoutes');
 const dispositivoRoutes = require('./routes/dispositivoRoutes');
 const alertaConfigRoutes = require('./routes/alertaConfigRoutes');
 const lecturaRoutes = require('./routes/lecturaRoutes');
-const informeRoutes = require('./routes/informeRoutes')
+const informeRoutes = require('./routes/informeRoutes');
+const usuarioRoutes = require('./routes/usuarioRoutes');
 
 // Crear app de Express
 const app = express();
@@ -48,6 +49,7 @@ app.use('/api/dispositivos', dispositivoRoutes);
 app.use('/api/alertas-config', alertaConfigRoutes);
 app.use('/api/dispositivos', lecturaRoutes);
 app.use('/api/informes', informeRoutes);
+app.use('/api/usuarios', usuarioRoutes);
 
 // Middleware para las rutas no encontradas
 app.use((req, res) => {

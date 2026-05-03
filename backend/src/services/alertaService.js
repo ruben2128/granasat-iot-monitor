@@ -69,6 +69,10 @@ async function procesarAlertas(){
                 const ultimaLectura = await influxService.obtenerUltimaLectura(dispositivo.mac_address);
                 const lecturaDelCampo = ultimaLectura[alerta.campo];
 
+                if(ultimaLectura){
+                    await dispositivo.update({ ultima_conexion: new Date() });
+                }
+                
                 if(!lecturaDelCampo){
                     continue;
                 }
