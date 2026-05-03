@@ -67,3 +67,44 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  backend:
+    container_name: backend
+    build: ./backend
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: tfg_iot
+      DB_USER: tfg_user
+      DB_PASSWORD: tfg_password_seguro_2024
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_TOKEN: wlU1zhuHiHp_BAzRYdBY0zGebWOKS4kF-j413vNg4qknVsXqaiLPJKii9UXOIK3EOTZt5JiGudanARcSCaG5cQ==
+      INFLUX_ORG: GranaSAT
+      INFLUX_BUCKET: NeutronSource
+      JWT_SECRET: mi_secreto_super_seguro_cambiar_en_produccion_123456
+      JWT_EXPIRES_IN: 24h
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USER: gilrubenmartin@gmail.com
+      SMTP_PASS: ogjrrxmkgonuhbsl
+      MQTT_HOST: mqtt
+      MQTT_PORT: 1883
+    depends_on:
+      postgres:
+        condition: service_healthy
+      influxdb:
+        condition: service_started
+    restart: always
+
+  frontend:
+    container_name: frontend
+    build: ./frontend
+    ports:
+      - "3002:3000"
+    depends_on:
+      - backend
+    restart: always
