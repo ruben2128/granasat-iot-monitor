@@ -101,6 +101,8 @@ services:
     restart: always
 
   frontend:
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api   #CAMBIAR CUANDO TENGA IP PARA DESPLEGAR
     container_name: frontend
     build: ./frontend
     ports:
