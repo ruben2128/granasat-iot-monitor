@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const { testConnection, sequelize } = require('./config/database');
@@ -18,6 +19,11 @@ const alertaConfigRoutes = require('./routes/alertaConfigRoutes');
 const lecturaRoutes = require('./routes/lecturaRoutes');
 const informeRoutes = require('./routes/informeRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
+const logRoutes = require('./routes/logRoutes');
+const emailHistorialRoutes = require('./routes/emailHistorialRoutes');
+const configEmailRoutes = require('./routes/configEmailRoutes');
+const dockerRoutes = require('./routes/dockerRoutes');
+
 
 // Crear app de Express
 const app = express();
@@ -50,6 +56,11 @@ app.use('/api/alertas-config', alertaConfigRoutes);
 app.use('/api/dispositivos', lecturaRoutes);
 app.use('/api/informes', informeRoutes);
 app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/log', logRoutes);
+app.use('/api/email-historial', emailHistorialRoutes);
+app.use('/api/config-email', configEmailRoutes);
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/api/docker', dockerRoutes);
 
 // Middleware para las rutas no encontradas
 app.use((req, res) => {

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict LI2VnpJWhbAqTIj5uzgWpFI0CgRkF6W0TfSfCQI22KiqLZxJVSkN82T7jUZ1gIn
+\restrict gAyTZ24zbSk3aoTC5sAduoSYTyP0g97UEe10tOZaOWKzWYD9VUHUKsEF2HrVc7U
 
 -- Dumped from database version 15.15 (Debian 15.15-1.pgdg13+1)
 -- Dumped by pg_dump version 15.15 (Debian 15.15-1.pgdg13+1)
@@ -332,10 +332,6 @@ dc1bf133-7172-40a4-9721-a9c3a2fe22df	cf8e7393-223d-4191-b300-494833290cfe	55add4
 
 COPY public.dispositivos (id, mac_address, nombre, descripcion, instalacion_id, hw_version, fw_version, activo, ultima_conexion, ultima_ip, fecha_instalacion, notas, created_at, updated_at) FROM stdin;
 55add4e0-10f0-4a4a-8b9b-80793800e1bf	84:1F:E8:39:54:D4	Sensor-001	prueba descripcion	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	1.0	1.0	t	2026-03-13 20:09:44.838657		2026-03-13		2026-03-13 20:09:44.838657	2026-04-23 22:48:56.254795
-aa735b57-22f6-4e0d-aaec-26318eb9ffe7	FF:A2:05:BA:C5:DA	prueba	prueba	957f7b5f-b311-41c5-af82-dc6a4415f4d0	2.5	1.7	t	\N	\N	\N	\N	2026-04-27 19:37:40.991	2026-04-27 19:37:40.991
-c1207e8d-c6bb-42a0-acc3-907cfc790571	51:DB:8E:2D:8D:20	prueba2	prueba2	957f7b5f-b311-41c5-af82-dc6a4415f4d0	5.1	1.7	t	\N	\N	2026-04-26	\N	2026-04-27 19:53:49.353	2026-04-27 19:53:49.353
-2aa711bd-d67e-4209-9265-96c5886300e0	72:05:9E:6D:1D:BD	ewf	dswrqw	216ad948-123a-4439-899b-1cd70d2654df	1.5	3.1	t	\N	\N	2012-02-21	\N	2026-05-02 17:10:24.058	2026-05-02 17:10:24.058
-bdb36f9c-38e3-449f-a422-cf76f5ea10d0	C1:87:CF:73:AC:89	prueba grabacion	prueba grabacion	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	1.4	3.5	t	\N	\N	2026-05-03	\N	2026-05-03 15:52:51.297	2026-05-03 15:52:51.297
 \.
 
 
@@ -355,9 +351,6 @@ COPY public.informes (id, instalacion_id, mes, anio, fecha_inicio, fecha_fin, ru
 COPY public.instalaciones (id, nombre, codigo, descripcion, ubicacion, responsable_id, activa, created_at, updated_at) FROM stdin;
 9f1755fc-431d-4b89-8227-8af3f17bce9e	Instalación B	INST_B	\N	ETSIIT, Planta 2, Sala 201	0e60c4fd-3029-4dd7-b97d-bf6c0912be9e	t	2026-03-12 20:59:57.476	2026-04-14 19:48:43.544047
 d9c72d36-151f-4e96-bd98-f7d3042cc6f3	Instalación A	INST_A	Laboratorio de Física Nuclear	ETSIIT, Planta 3, Sala 301	6ad3cd3c-4b3d-4152-8db1-795d880d84af	t	2026-01-21 18:28:44.923688	2026-04-14 19:50:34.377373
-957f7b5f-b311-41c5-af82-dc6a4415f4d0	prueba3	PRUEBA3	prueba3	prueba3	0e60c4fd-3029-4dd7-b97d-bf6c0912be9e	t	2026-04-27 18:55:04.337	2026-04-27 18:55:04.337
-216ad948-123a-4439-899b-1cd70d2654df	sfa	SAAFS	asf	dsa	0e60c4fd-3029-4dd7-b97d-bf6c0912be9e	t	2026-05-02 17:09:28.877	2026-05-02 17:09:28.877
-f01f3216-29db-4656-a75b-9614f13c9269	prueba grabacion	PRUEBA GRABACION	prueba grabacion	pruebagrabacion	50ad34fd-5c97-4722-83f2-5bf98f13a389	t	2026-05-03 15:53:41.271	2026-05-03 15:53:41.271
 \.
 
 
@@ -366,14 +359,8 @@ f01f3216-29db-4656-a75b-9614f13c9269	prueba grabacion	PRUEBA GRABACION	prueba gr
 --
 
 COPY public.usuarios (id, username, password_hash, role, nombre, apellidos, email, movil, activo, created_at, updated_at, ultimo_acceso) FROM stdin;
-a5801455-88ad-40ea-b6fd-b8d024e8d062	pruebagrabacion	$2b$10$IBR1Dm3wkw5fU7KaYqdMjOAg.LjKoa0bptTQQs3opkd73eLUvFMGS	RESPONSABLE	prueba	grabacion	pruebagrabacion@gmail.com	666442200	t	2026-05-03 14:47:21.386	2026-05-03 15:46:35.300632	\N
-50ad34fd-5c97-4722-83f2-5bf98f13a389	pruebagrabacion2	$2b$10$HmOCI/RAb.L2175Kp76.Ke1vwM7Wti6aoCWa2ZWPJouNVUFCTkqG6	RESPONSABLE	prueba2	grabacion2	pruebagrabacion2@gmail.com	666442244	t	2026-05-03 15:47:32.156	2026-05-03 15:47:45.944343	\N
-a59f9c8e-e86d-4b9d-9aff-d2a1d92d69f9	otraprueba	$2b$10$D1snlL9fm582OMzg4r.KfeXkDC6JAPsFnJENp693NsbUUTa3/eU2G	RESPONSABLE	otra 	prueba	otraprueba@gmail.com	666442200	t	2026-05-03 11:40:04.366	2026-05-03 12:14:46.98817	\N
 0e60c4fd-3029-4dd7-b97d-bf6c0912be9e	responsable1	$2b$10$mSqX6Dk7iSs29uzLU/P/T.S7RPMpFQYlmVJotHacf8G8o4iZIGkAe	RESPONSABLE	Juan	Pérez García	prueba@gmail.com	666555444	t	2026-02-07 19:49:28.907	2026-05-03 15:54:04.846098	2026-05-03 15:54:04.844
 6ad3cd3c-4b3d-4152-8db1-795d880d84af	admin	$2b$10$/yS4MVo6oL9uzcZn351IxeyP9fx6XEwOthPPdGbosMQ1L3I/6AMXy	ADMIN	Administrador	del Sistema	admin@ugr.es	\N	t	2026-01-21 18:28:44.922508	2026-05-03 18:35:21.079137	2026-05-03 18:35:21.075
-2cf64b3b-36f4-422b-882d-ae4ce8c6900e	pruebaresponsable	$2b$10$ffGoxpozx9GK3oU/gQI9b.bxcvV5EbXImz/UnBf5gpVaVCvpFS6d.	RESPONSABLE	prueba 	responsable	prresponsable@gmail.com	666442200	t	2026-05-03 11:38:45.913	2026-05-03 14:05:07.604684	\N
-39dfb6b7-4c53-46f1-a263-559796051f91	yotraprueba	$2b$10$DuWcsTeENHbtGVNqzMlZNujcryrgMnWaPNu.LUjOOI.6wugRiC0mW	RESPONSABLE	 y otra	prueba	yotraprueba@gmail.com	666442211	t	2026-05-03 11:42:02.674	2026-05-03 11:42:02.674	\N
-9bbd4bd5-d78a-4fd6-b79c-f4612d4da767	pruebaadmin	$2b$10$mtjLGcap123loKvdTTQg1u0rHLa4mPesHLIbxEAtA1azCPnmkDZsm	ADMIN	prueba admin	1	pruebaadmin@gmail.com	666442244	t	2026-05-03 11:42:53.38	2026-05-03 14:46:30.841767	\N
 \.
 
 
@@ -705,5 +692,5 @@ ALTER TABLE ONLY public.instalaciones
 -- PostgreSQL database dump complete
 --
 
-\unrestrict LI2VnpJWhbAqTIj5uzgWpFI0CgRkF6W0TfSfCQI22KiqLZxJVSkN82T7jUZ1gIn
+\unrestrict gAyTZ24zbSk3aoTC5sAduoSYTyP0g97UEe10tOZaOWKzWYD9VUHUKsEF2HrVc7U
 

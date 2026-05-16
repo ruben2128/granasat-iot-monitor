@@ -2,6 +2,7 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 const { Op } = require('sequelize');
+const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 
 const Informe = require('../models/Informe');
 const Instalacion = require('../models/Instalacion');
@@ -19,88 +20,139 @@ if(!fs.existsSync(CARPETA_INFORMES)){
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre', '' ];
 
-
 /* Generar PDF del informe mensual de una instalación y lo guarda*/
-async function generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaInicio, fechaFin){
+async function generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaInicio, fechaFin, graficas) {
     return new Promise((resolve, reject) => {
-        const nombreArchivo = `informe_${instalacion.codigo}_${anio}_${String(mes).padStart(2,'0')}.pdf`;
+        const nombreArchivo = `informe_${instalacion.codigo}_${anio}_${String(mes).padStart(2, '0')}.pdf`;
         const rutaArchivo = path.join(CARPETA_INFORMES, nombreArchivo);
-
-        const doc = new PDFDocument({margin: 50});
+        const LOGO = path.join(__dirname, '../assets/granasat-logo.png');
+        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        const fechaGeneracion = new Date().toLocaleString('es-ES');
         const stream = fs.createWriteStream(rutaArchivo);
-        
+
         doc.pipe(stream);
 
-        //CABECERA
-        doc.fontSize(20).font('Helvetica-Bold').text('INFORME MENSUAL DE MONITORIZACION GRANASAT', {align: 'center'});
-
-        doc.moveDown(0.5);
-        doc.fontSize(14).font('Helvetica').text(`${MESES[mes]} ${anio}`, {align: 'center'});
-
-        doc.moveDown(0.5);
-        doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
-        doc.moveDown(1);
-
-        //INSTALACION
-        doc.fontSize(14).font('Helvetica-Bold').text('DATOS DE LA INSTALACION');
-        
-        doc.moveDown(0.5);
-        doc.fontSize(11).font('Helvetica');
-        doc.text(`Nombre: ${instalacion.nombre}`);
-        doc.text(`Codigo: ${instalacion.codigo}`);
-        doc.text(`Ubicacion: ${instalacion.ubicacion}`);
-        doc.text(`Periodo: ${fechaInicio} - ${fechaFin}`);
-        doc.moveDown(1);
-
-        //DISPOSITIVOS
-        doc.fontSize(14).font('Helvetica-Bold').text('DISPOSITIVOS REGISTRADOS');
-        doc.moveDown(0.5);
-        doc.fontSize(11).font('Helvetica');
-
-        if(dispositivos.length === 0){
-            doc.text('No hay dispositivos registrados en esta instalacion');
-        } else {
-            dispositivos.forEach((d, i) => { doc.text(`${i+1}. ${d.nombre} - Direccion MAC: ${d.mac_address} - Version Hardware; ${d.hw_version} - Version firmware: ${d.fw_version}`);});
+        // Cabecera
+        // Logo GranaSAT
+        if (fs.existsSync(LOGO)) {
+            doc.image(LOGO, 50, 40, { width: 50, height: 50 });
         }
 
+        // Bloque texto cabecera (derecha del logo)
+        doc.fontSize(14).font('Helvetica-Bold').fillColor('#e8550a').text('GranaSAT', 110, 42);
+        doc.fontSize(9).font('Helvetica').fillColor('#444444').text('CubeSat University Program', 110, 59).text('Electronics Department — University of Granada, SPAIN', 110, 71);
+
+        // Línea separadora
+        doc.moveDown(0.5);
+        doc.moveTo(50, 100).lineTo(545, 100).strokeColor('#e8550a').lineWidth(2).stroke();
+        doc.strokeColor('black').lineWidth(1);
+
+        // Título
+        doc.moveDown(1.5);
+        doc.fontSize(16).font('Helvetica-Bold').fillColor('#1a1a1a').text('INFORME MENSUAL DE MONITORIZACIÓN IoT', { align: 'center' });
+        doc.moveDown(0.3);
+        doc.fontSize(13).font('Helvetica').fillColor('#444444').text(`${MESES[mes - 1]} de ${anio}`, { align: 'center' });
+
+        doc.moveDown(1);
+        doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor('#cccccc').stroke();
         doc.moveDown(1);
 
-        // RESUMEN DE LAS ALERTAS
-        doc.fontSize(14).font('Helvetica-Bold').text('RESUMEN DE ALERTAS DEL MES');
+        // Datos de la instalación
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#e8550a').text('DATOS DE LA INSTALACIÓN');
+        doc.moveDown(0.4);
 
-        doc.moveDown(0.5);
-        doc.fontSize(11).font('Helvetica');
+        // Fondo gris claro para la tarjeta de datos
+        const yTarjeta = doc.y;
+        doc.rect(50, yTarjeta, 495, 80).fill('#f7f7f7').stroke('#e0e0e0');
+        doc.fillColor('#1a1a1a').fontSize(10).font('Helvetica');
 
-        if(alertas.length === 0){
-            doc.text('No se registraron alertas durante este periodo');
+        doc.text(`Nombre:`, 65, yTarjeta + 10, { continued: true }).font('Helvetica-Bold').text(`  ${instalacion.nombre}`);
+        doc.font('Helvetica').text(`Código:`, 65, yTarjeta + 26, { continued: true }).font('Helvetica-Bold').text(`  ${instalacion.codigo}`);
+        doc.font('Helvetica').text(`Ubicación:`, 65, yTarjeta + 42, { continued: true }).font('Helvetica-Bold').text(`  ${instalacion.ubicacion || 'No especificada'}`);
+        doc.font('Helvetica').text(`Período:`, 65, yTarjeta + 58, { continued: true }).font('Helvetica-Bold').text(`  ${fechaInicio} - ${fechaFin}`);
+
+        doc.y = yTarjeta + 90;
+        doc.moveDown(1);
+
+        // Dispositivos registrados
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#e8550a').text('DISPOSITIVOS REGISTRADOS');
+        doc.moveDown(0.4);
+        doc.fontSize(10).font('Helvetica').fillColor('#1a1a1a');
+
+        if (dispositivos.length === 0) {
+            doc.text('No hay dispositivos registrados en esta instalación.');
         } else {
-            doc.text('Total de alertas disparadas: ${alertas.length}');
-
-            doc.moveDown(0.5);
-            alertas.forEach((a, i) => {
-                const fecha = new Date(a.fecha_disparo).toLocaleString('es-ES');
-
-                doc.text(`${i+1}. [${a.tipo}] ${fecha} - Valor: ${a.valor_detectado} (umbral: ${a.umbral_configurado}) - Email enviado: ${a.email_enviado ? 'Si' : 'No'}`);
+            dispositivos.forEach((d, i) => {
+                doc.font('Helvetica-Bold').text(`${i + 1}. ${d.nombre}`, { continued: true }).font('Helvetica').fillColor('#444444').text(`   MAC: ${d.mac_address}   HW: ${d.hw_version || 'N/A'}   FW: ${d.fw_version || 'N/A'}`);
+                doc.fillColor('#1a1a1a');
             });
         }
-        
+
         doc.moveDown(1);
 
-        // PIE DE PAGINA
-        doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
-        
-        doc.moveDown(0.5);
-        doc.fontSize(9).font('Helvetica').fillColor('grey').text(`Informe generado automaticamente el ${new Date().toLocaleString('es-ES')}`, {align: 'center'});
+        //Resumen de alertas
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#e8550a').text('RESUMEN DE ALERTAS DEL MES');
+        doc.moveDown(0.4);
+        doc.fontSize(10).font('Helvetica').fillColor('#1a1a1a');
+
+        if (alertas.length === 0) {
+            doc.text('No se registraron alertas durante este período.');
+        } else {
+            doc.text(`Total de alertas disparadas: ${alertas.length}`);
+            doc.moveDown(0.4);
+            alertas.forEach((a, i) => {
+                const fecha = new Date(a.fecha_disparo).toLocaleString('es-ES');
+                doc.fontSize(9).fillColor('#444444').text(`${i + 1}.  [${a.tipo}]  ${fecha}  —  Valor: ${a.valor_detectado}  (umbral: ${a.umbral_configurado})  —  Email: ${a.email_enviado ? 'Enviado ' : 'No enviado'}`);
+            });
+        }
+
+        //Gráficas
+        if (graficas && graficas.length > 0) {
+            doc.moveDown(2);
+            doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor('#e0e0e0').lineWidth(1).stroke();
+            doc.moveDown(0.3);
+            doc.fontSize(8).font('Helvetica').fillColor('#888888').text('Edif. I+D Josefina Castro Vizoso · Avda. Madrid 15, 2 Pta. · 18011 Granada · Tel. +34-958244010 · amroldan@ugr.es', { align: 'center' });
+            doc.text(`Informe generado automaticamente el ${fechaGeneracion}`, { align: 'center' });
+
+            doc.addPage();
+
+            // Cabecera repetida en la nueva página
+            if (fs.existsSync(LOGO)) {
+                doc.image(LOGO, 50, 40, { width: 40, height: 40 });
+            }
+            
+            doc.fontSize(9).font('Helvetica').fillColor('#888888').text('GranaSAT — CubeSat University Program — University of Granada', 100, 52);
+            doc.moveTo(50, 88).lineTo(545, 88).strokeColor('#e8550a').lineWidth(2).stroke();
+            doc.strokeColor('black').lineWidth(1);
+
+            doc.moveDown(2);
+            doc.fontSize(12).font('Helvetica-Bold').fillColor('#e8550a').text('GRÁFICAS DE MONITORIZACIÓN', 50, 105);
+            doc.moveDown(1);
+
+            graficas.forEach(function (grafica) {
+                doc.fontSize(10).font('Helvetica-Bold').fillColor('#1a1a1a').text(grafica.nombre);
+                doc.moveDown(0.3);
+                doc.image(grafica.imagen, { width: 495, align: 'center' });
+                doc.moveDown(1.5);
+            });
+
+        }
+
+        doc.moveDown(2);
+        doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor('#e0e0e0').lineWidth(1).stroke();
+        doc.moveDown(0.3);
+        doc.fontSize(8).font('Helvetica').fillColor('#888888').text('Edif. I+D Josefina Castro Vizoso · Avda. Madrid 15, 2 Pta. · 18011 Granada · Tel. +34-958244010 · amroldan@ugr.es', { align: 'center' });
+        doc.text(`Informe generado automaticamente el ${fechaGeneracion}`, { align: 'center' });
 
         doc.end();
 
         stream.on('finish', () => {
             const tamanio = fs.statSync(rutaArchivo).size;
-            resolve ({rutaArchivo, nombreArchivo, tamanio});
+            resolve({ rutaArchivo, nombreArchivo, tamanio });
         });
 
         stream.on('error', reject);
-    })
+    });
 }
 
 
@@ -135,10 +187,6 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
         where: { instalacion_id, mes, anio}
     });
 
-    if(informeExistente && informeExistente.generado){
-        throw new Error('Ya existe un informe generado para este mes y anio');
-    }
-
     //Obtener los dispositivos que hay en la instalacion
     const dispositivos = await Dispositivo.findAll({
         where: { instalacion_id }
@@ -155,8 +203,28 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
         }, order: [['fecha_disparo', 'ASC']]
     });
 
+    // Generar gráficas para cada dispositivo
+    const graficas = [];
+    for(const dispositivo of dispositivos){
+        if(dispositivo.mac_address){
+            try {
+                const lecturas = await influxService.obtenerLecturas(dispositivo.mac_address, '-30d', null);
+                if(lecturas.length > 0){
+                    const umbral = 80; // Por defecto, luego lo haremos configurable
+                    const imagen = await generarGraficaRadiacion(lecturas, umbral);
+                    graficas.push({
+                        nombre: `${dispositivo.nombre} - Radiación`,
+                        imagen
+                    });
+                }
+            } catch(err) {
+                console.error(`Error generando gráfica para ${dispositivo.nombre}:`, err.message);
+            }
+        }
+    }
+
     //Generar el PDF
-    const { rutaArchivo, tamano } = await generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaInicioStr, fechaFinStr);
+    const { rutaArchivo, nombreArchivo, tamanio } = await generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaInicioStr, fechaFinStr, graficas);
 
     //Determinar los destinatarios (responsable por ahora) que recibiran el email
     const destinatarios = [];
@@ -165,16 +233,31 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
         destinatarios.push(instalacion.responsable.email);
     }
 
+    //Añadir titulares de cada dispositivo
+    for(const dispositivo of dispositivos) {
+        if(dispositivo.titular_id){
+            const titular = await require('../models/Usuario').findByPk(dispositivo.titular_id,{
+                attributes: ['email']
+            });
+
+            if(titular && titular.email && !destinatarios.includes(titular.email)){
+                destinatarios.push(titular.email);
+            }
+        }
+    }
+
     //Enviar el informe por email
     let emailEnviado = false;
     let fechaEnvioEmail = null;
 
     if(destinatarios.length > 0){
         try {
-            await emailService.enviarEmailAlerta(
+            await emailService.enviarEmailInforme(
                 destinatarios,
-                `Informe mensual IoT - ${MESES[mes]} {anio} - ${instalacion.nombre}`,
-                `El informe mensual de la instalacion ${instalacion.nombre} correspondiente al mes de ${MESES[mes]} de ${anio} se encuentra adjuntado a este email.`
+                `Informe mensual IoT - ${MESES[mes - 1]} ${anio} - ${instalacion.nombre}`,
+                `El informe mensual de la instalacion <strong>${instalacion.nombre}</strong> correspondiente al mes de <strong>${MESES[mes - 1]} de ${anio}</strong> esta listo.`,
+                rutaArchivo,
+                nombreArchivo
             );
             emailEnviado = true;
             fechaEnvioEmail = new Date();
@@ -189,7 +272,7 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
     if(informeExistente){
         registro = await informeExistente.update({
             ruta_pdf: rutaArchivo,
-            tamano_bytes: tamano,
+            tamanio_bytes: tamanio,
             generado: true,
             email_enviado: emailEnviado,
             email_destinatarios: destinatarios,
@@ -204,7 +287,7 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
             fecha_inicio: fechaInicioStr,
             fecha_fin: fechaFinStr,
             ruta_pdf: rutaArchivo,
-            tamano_bytes: tamano,
+            tamanio_bytes: tamanio,
             generado: true,
             email_enviado: emailEnviado,
             email_destinatarios: destinatarios,
@@ -220,6 +303,49 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
     };
 
     return resultado;
+}
+
+async function generarGraficaRadiacion(lecturas, umbral) {
+    const width = 500;
+    const height = 250;
+    const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height });
+
+    // Filtrar solo lecturas de radiación y ordenar por tiempo
+    const lecturasRadiacion = lecturas
+        .filter(function(l) { return l.variable === 'radiacion'; })
+        .reverse();
+
+    const labels = lecturasRadiacion.map(function(l) {
+        return new Date(l.time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    });
+
+    const valores = lecturasRadiacion.map(function(l) { return l.valor; });
+
+    const config = {type: 'line', data: { labels, datasets: [
+                {
+                    label: 'Radiación',
+                    data: valores,
+                    borderColor: '#e8550a',
+                    backgroundColor: 'rgba(232, 85, 10, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: true
+                },
+                {
+                    label: `Umbral (${umbral})`,
+                    data: new Array(labels.length).fill(umbral),
+                    borderColor: '#ff0000',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false
+                }
+            ]
+        },
+        options: { responsive: false, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true }}}
+    };
+
+    return await chartJSNodeCanvas.renderToBuffer(config);
 }
 
 module.exports = { generarInformeMensual };

@@ -7,10 +7,12 @@ router.get('/', authenticateToken, dispositivoController.obtenerDispositivos);
 
 router.get('/:id', authenticateToken, dispositivoController.obtenerDispositivoPorId);
 
-router.post('/', authenticateToken, requireAdmin, dispositivoController.crearDispositivo);
+router.post('/', authenticateToken, dispositivoController.crearDispositivo);
 
 router.put('/:id', authenticateToken, requireAdmin, dispositivoController.actualizarDispositivo);
 
 router.delete('/:id', authenticateToken, requireAdmin, dispositivoController.eliminarDispositivo);
+
+router.get('/:id/test', authenticateToken, dispositivoController.testConexion);
 
 module.exports = router;

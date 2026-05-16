@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
-import {temaOscuro, temaClaro} from '../lib/temas';
+import {temaOscuro, temaClaro, temaAltoContraste, temaAzul, obtenerColores} from '../lib/temas';
 import Navbar from "../components/Navbar";
 import api from '../lib/api';
 import Head from 'next/head';
@@ -19,6 +19,8 @@ export default function Usuarios() {
     const[nombre, setNombre] = useState('');
     const[apellidos, setApellidos] = useState('');
     const[movil, setMovil] = useState('');
+    const[dispositivos, setDispositivos] = useState([]);
+    const[instalaciones, setInstalaciones] = useState([]);
     const router = useRouter();
     const[tema, setTema] = useState(function() {
         if(typeof window !== 'undefined'){
@@ -27,7 +29,7 @@ export default function Usuarios() {
 
         return 'oscuro'
     });
-    const colores = tema === 'oscuro' ? temaOscuro : temaClaro;
+    const colores = obtenerColores(tema);
     const verdeExito = tema === 'oscuro' ? '#4ade80' : '#15803d';
     
     /*
@@ -51,8 +53,17 @@ export default function Usuarios() {
 
             setUsuario(usuarioGuardado);
 
+            const respuestaDispositivos = await api.get('/dispositivos', {headers: {Authorization: `Bearer ${token}`}});
+            setDispositivos(respuestaDispositivos.data.dispositivos);
+
+            const respuestaInstalaciones = await api.get('/instalaciones', { headers: { Authorization: `Bearer ${token}` }});
+            setInstalaciones(respuestaInstalaciones.data.instalaciones);
+
             const respuesta = await api.get('/usuarios', {headers: {Authorization: `Bearer ${token}`}});
             setUsuarios(respuesta.data.usuarios);
+
+            console.log('Dispositivos:', respuestaDispositivos.data);
+
         }
         cargarDatos();
     }, []) 
@@ -96,6 +107,26 @@ export default function Usuarios() {
             console.log('Error al cambiar el estado del usuario: ', err);
             setError('Error al cambiar el estado del usuario');
         } 
+    }
+
+    async function handleSubirAvatar(id, archivo){
+        if(!archivo) 
+            return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const formData = new FormData();
+
+            formData.append('avatar', archivo);
+            await api.post(`/usuarios/${id}/avatar`, formData, {headers: { Authorization: `Bearer ${token}`,'Content-Type': 'multipart/form-data'}});
+            
+            const respuesta = await api.get('/usuarios', {headers: {Authorization: `Bearer ${token}`}});
+            
+            setUsuarios(respuesta.data.usuarios);
+            setExito('Avatar actualizado correctamente');
+        } catch(err){
+            setError('Error al subir el avatar');
+        }
     }
 
     if(!usuario) {
@@ -172,6 +203,7 @@ export default function Usuarios() {
                                         <label htmlFor="role" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>ROL</label>
                                         <select id="role" value={role} onChange={function(e) { setRole(e.target.value); }} style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}>
                                             <option value="RESPONSABLE">RESPONSABLE</option>
+                                            <option value="TITULAR">TITULAR</option>
                                             <option value="ADMIN">ADMIN</option>
                                         </select>
                                     </div>
@@ -188,7 +220,8 @@ export default function Usuarios() {
 
                     {/* Lista de usuarios */}
                     <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`}}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr', padding: '12px 20px', borderBottom: `1px solid ${colores.borde}`}}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '50px 2fr 2fr 1fr 1fr 1fr', padding: '12px 20px', borderBottom: `1px solid ${colores.borde}`}}>
+                            <p style={{ margin: 0}}></p>
                             <p style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: 0}}>Nombre</p>
                             <p style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: 0}}>Email</p>
                             <p style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: 0}}>Rol</p>
@@ -197,10 +230,33 @@ export default function Usuarios() {
                         </div>
                         {usuarios.map(function(u){
                             return(
-                                <div key={u.id} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr', padding: '16px 20px', borderBottom: `1px solid ${colores.borde}`, alignItems: 'center'}}>
+                                <div key={u.id} style={{ display: 'grid', gridTemplateColumns: '50px 2fr 2fr 1fr 1fr 1fr', padding: '16px 20px', borderBottom: `1px solid ${colores.borde}`, alignItems: 'center'}}>
+                                    <div style={{ position: 'relative', cursor: 'pointer' }} onClick={function() { document.getElementById(`avatar-input-${u.id}`).click(); }}>
+                                        {u.avatar ? (
+                                            <img src={`${process.env.NEXT_PUBLIC_API_URL.replace('/api', '')}${u.avatar}`} alt={u.nombre} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover'}}/>
+                                        ) : (
+                                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: colores.borde, display: 'flex', alignItems: 'center', justifyContent: 'center', color: colores.textoSecundario, fontSize: '14px', fontWeight: '600'}}>
+                                                {u.nombre ? u.nombre.charAt(0).toUpperCase() : '?'}
+                                            </div>
+                                        )}
+                                        <input id={`avatar-input-${u.id}`} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none'}} onChange={function(e) { handleSubirAvatar(u.id, e.target.files[0]); }}/>
+                                    </div>
                                     <div>
-                                        <p style={{ color: colores.texto, fontSize: '14px', fontWeight: '600', margin: '0 0 2px 0'}}>{u.nombre} {u.apellidos}</p>
-                                        <p style={{ color: textoSecundarioAccesible, fontSize: '12px', margin: 0}}>{u.username}</p>
+                                        <p style={{ color: colores.texto, fontSize: '14px', fontWeight: '600', margin: '0 0 2px 0'}}>
+                                            {u.nombre} {u.apellidos}
+                                        </p>
+                                        <p style={{ color: textoSecundarioAccesible, fontSize: '12px', margin: 0}}>
+                                            {u.username}
+                                        </p>
+                                        {u.role === 'RESPONSABLE' && (
+                                            <p style={{ color: colores.acento, fontSize: '11px', margin: '2px 0 0 0', cursor: 'pointer'}}
+                                               onClick={function() { router.push('/mapa'); }}>
+                                                {dispositivos.filter(function(d) {
+                                                    const instalacion = instalaciones.find(function(i) { return i.id === d.instalacion_id; });
+                                                    return instalacion && instalacion.responsable_id === u.id;
+                                                }).length} IoT asignados
+                                            </p>
+                                        )}
                                     </div>
                                     <p style={{ color: colores.texto, fontSize: '13px', margin: 0}}>{u.email}</p>
                                     <span style={{ backgroundColor: colores.fondo, color: textoSecundarioAccesible, fontSize: '11px', fontWeight: '600', padding: '3px 8px', borderRadius: '4px', display: 'inline-block'}}>

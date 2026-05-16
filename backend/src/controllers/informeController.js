@@ -14,7 +14,7 @@ async function generar(req,res) {
         const { instalacion_id, mes, anio } = req.body;
 
         if(!instalacion_id || !mes || !anio){
-            return res.status(400).json({ error: 'instalacion_id, mes y anio son obligatorios'});
+            return res.status(400).json({ error: 'instalacion_id, mes y año son obligatorios'});
         }
 
         if(mes < 1 || mes > 12){

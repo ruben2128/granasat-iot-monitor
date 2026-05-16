@@ -20,7 +20,7 @@ const Usuario = sequelize.define('Usuario', {
     allowNull: false
   },
   role: {
-    type: DataTypes.ENUM('ADMIN', 'RESPONSABLE'),
+    type: DataTypes.ENUM('ADMIN', 'RESPONSABLE', 'TITULAR'),
     allowNull: false
   },
   nombre: {
@@ -39,6 +39,10 @@ const Usuario = sequelize.define('Usuario', {
   },
   movil: {
     type: DataTypes.STRING(20)
+  },
+  avatar: {
+    type: DataTypes.STRING(255),
+    allowNull: true
   },
   activo: {
     type: DataTypes.BOOLEAN,

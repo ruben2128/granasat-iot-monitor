@@ -70,4 +70,9 @@ const AlertaHistorial = sequelize.define('AlertaHistorial', {
     timestamps: false
 });
 
+AlertaHistorial.belongsTo(require('./Instalacion'), {
+     foreignKey: 'instalacion_id',
+     as: 'instalacion' 
+});
+
 module.exports = AlertaHistorial

@@ -1,5 +1,6 @@
 const Dispositivo = require('../models/Dispositivo');
 const Instalacion = require('../models/Instalacion');
+const influxService = require('../services/influxService');
 
 /*
     Ruta: GET /api/dispositivos/ 
@@ -7,10 +8,18 @@ const Instalacion = require('../models/Instalacion');
 */
 async function obtenerDispositivos(req, res) {
     try {
+        //Filtro opcional por instalacion_id
+        const { instalacion_id } = req.query;
+        const whereDispositivo = {};
         let dispositivos;
+
+        if(instalacion_id){
+            whereDispositivo.instalacion_id = instalacion_id;
+        }
 
         if(req.user.role === 'ADMIN') {
             dispositivos = await Dispositivo.findAll ({
+                where: whereDispositivo,
                 include: [{
                     model: Instalacion,
                     as: 'instalacion',
@@ -21,6 +30,7 @@ async function obtenerDispositivos(req, res) {
         } else {
             // Buscar solo dispositivos de las instalaciones donde el usuario es responsable
             dispositivos = await Dispositivo.findAll({
+                where: whereDispositivo,
                 include: [{
                     model: Instalacion,
                     as: 'instalacion',
@@ -79,7 +89,9 @@ async function obtenerDispositivoPorId(req, res) {
 */
 async function crearDispositivo(req, res) {
     try {
-        const { mac_address, nombre, descripcion, instalacion_id, hw_version, fw_version, fecha_instalacion, notas } = req.body;
+        const { mac_address, nombre, descripcion, instalacion_id, hw_version, fw_version, fecha_instalacion, notas, latitud, longitud, altura, nivel_bateria, titular_id, ip_registro, fecha_caducidad_ip } = req.body;
+
+        console.log('Coordenadas recibidas:', { latitud, longitud, altura });
 
         if (!mac_address || !nombre) {
             return res.status(400).json({ error: 'mac_address y nombre son obligatorios' });
@@ -104,7 +116,11 @@ async function crearDispositivo(req, res) {
             }
         }
 
-        const dispositivo = await Dispositivo.create({mac_address, nombre, descripcion, instalacion_id: instalacion_id || null, hw_version, fw_version, fecha_instalacion, notas});
+        if(req.user.role === 'RESPONSABLE' && instalacion.responsable_id !== req.user.id){
+            return res.status(403).json({error: 'No puedes crear dispositivos en instalaciones que no son tuyas'});
+        }
+
+        const dispositivo = await Dispositivo.create({mac_address, nombre, descripcion, instalacion_id: instalacion_id || null, hw_version, fw_version, fecha_instalacion, notas, latitud: latitud ? parseFloat(latitud) : null, longitud: longitud ? parseFloat(longitud) : null, altura: altura ? parseFloat(altura) : null, nivel_bateria: nivel_bateria ? parseInt(nivel_bateria) : null, titular_id: titular_id || null, ip_registro: ip_registro || null, fecha_caducidad_ip: fecha_caducidad_ip || null });
 
         const dispositivoCompleto = await Dispositivo.findByPk(dispositivo.id, {
             include: [{
@@ -202,5 +218,31 @@ async function eliminarDispositivo (req, res){
     }
 }
 
-module.exports = {obtenerDispositivos, obtenerDispositivoPorId, crearDispositivo, actualizarDispositivo, eliminarDispositivo};
+/*
+    Test de conexión de un dispositivo
+    Comprueba si el dispositivo ha enviado algún dato en los últimos 10 minutos a través de InfluxDB
+*/
+async function testConexion(req, res){
+    try{
+        const { id } = req.params;
+        const dispositivo = await Dispositivo.findByPk(id);
+
+        if(!dispositivo){
+            return res.status(404).json({error: 'Dispositivo no encontrado'});
+        }
+
+        const resultado = await influxService.testConexionDispositivo(dispositivo.mac_address);
+
+        res.json({
+            activo: resultado.activo,
+            ultimaLectura: resultado.ultimaLectura,
+            mensaje: resultado.activo ? 'Dispositivo activo' : 'Sin datos en los últimos 10 minutos'
+        });
+    }catch (error){
+        console.error('Error al testear la conexión del dispositivo: ',error );
+        res.status(500).json({ error: 'Error al testear la conexión'});
+    }
+}
+
+module.exports = {obtenerDispositivos, obtenerDispositivoPorId, crearDispositivo, actualizarDispositivo, eliminarDispositivo, testConexion};
 

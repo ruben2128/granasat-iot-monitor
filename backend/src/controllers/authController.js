@@ -1,6 +1,8 @@
 // backend/src/controllers/authController.js
 const jwt = require('jsonwebtoken');
 const Usuario = require('../models/Usuario');
+const { enviarEmailBienvenida } = require('../services/emailService');
+const LogAcceso = require('../models/LogAcceso');
 
 /*
   Ruta: POST /api/auth/register
@@ -10,6 +12,7 @@ const Usuario = require('../models/Usuario');
 async function registrarUsuario(req, res) {
   try {
     const { username, email, password, role, nombre, apellidos, movil } = req.body;
+    
 
     // Validar datos obligatorios
     if (!username || !email || !password || !role) {
@@ -20,10 +23,10 @@ async function registrarUsuario(req, res) {
     }
 
     // Validar que el rol sea válido
-    if (!['ADMIN', 'RESPONSABLE'].includes(role)) {
+    if (!['ADMIN', 'RESPONSABLE', 'TITULAR'].includes(role)) {
       return res.status(400).json({
         error: 'Rol inválido',
-        valid_roles: ['ADMIN', 'RESPONSABLE']
+        valid_roles: ['ADMIN', 'RESPONSABLE', 'TITULAR']
       });
     }
 
@@ -54,6 +57,15 @@ async function registrarUsuario(req, res) {
       movil,
       activo: true
     });
+
+    // Enviar email de bienvenida con credenciales
+    try {
+        await enviarEmailBienvenida(email, nombre || username, username, password);
+        console.log(`Email de bienvenida enviado a ${email}`);
+    } catch (emailError) {
+        console.error('Error enviando email de bienvenida:', emailError);
+        // No fallar la creación del usuario si el email falla
+    }
 
     // No devolver el password_hash
     const usuarioRespuesta = {
@@ -112,13 +124,45 @@ async function iniciarSesion(req, res) {
     const passwordValido = await usuario.comparePassword(password);
 
     if (!passwordValido) {
-      return res.status(401).json({
-        error: 'Credenciales inválidas'
-      });
+      // Registrar intento fallido
+      try {
+          const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
+          await LogAcceso.create({
+              usuario_id: usuario.id,
+              username: usuario.username,
+              ip: ip ? ip.toString().substring(0, 45) : null,
+              exito: false
+          });
+      } catch (logError) {
+          console.error('Error registrando log de acceso fallido:', logError);
+      }
+      return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
     // Actualizar último acceso
     await usuario.update({ ultimo_acceso: new Date() });
+
+    // Registrar acceso en el log
+    try {
+        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
+        await LogAcceso.create({
+            usuario_id: usuario.id,
+            username: usuario.username,
+            ip: ip ? ip.toString().substring(0, 45) : null,
+            exito: true
+        });
+    } catch (logError) {
+        console.error('Error registrando log de acceso:', logError);
+    }
+
+    const ultimoAcceso = await LogAcceso.findOne({
+      where: {
+        usuario_id: usuario.id,
+        exito: true
+      },
+      order: [['fecha', 'DESC']],
+      offset: 1 //Omitir el acceso actual
+    });
 
     // Generar token JWT
     const token = jwt.sign(
@@ -137,6 +181,7 @@ async function iniciarSesion(req, res) {
     res.json({
       message: 'Login exitoso',
       token,
+      ultimo_acceso: ultimoAcceso ? ultimoAcceso.fecha : null,
       usuario: {
         id: usuario.id,
         username: usuario.username,

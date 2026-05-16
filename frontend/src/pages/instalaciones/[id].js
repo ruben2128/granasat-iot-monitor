@@ -3,7 +3,8 @@ import { useRouter } from "next/router";
 import api from '../../lib/api';
 import Navbar from "../../components/Navbar";
 import Head from "next/head";
-import { temaClaro, temaOscuro } from "../../lib/temas";
+import {temaOscuro, temaClaro, temaAltoContraste, temaAzul, obtenerColores} from '../../lib/temas';
+
 
 export default function Instalacion(){
     const router = useRouter();
@@ -18,6 +19,12 @@ export default function Instalacion(){
     const[hw_version, setVersionHardware] = useState('');
     const[fecha_instalacion, setFechaInstalacion] = useState('');
     const[mostrarFormulario, setMostrarFormulario] = useState(false);
+    const[latitud, setLatitud] = useState('');
+    const[longitud, setLongitud] = useState('');
+    const[altura, setAltura] = useState('');
+    const[titulares, setTitulares] = useState([]);
+    const[titularId, setTitularId] = useState('');
+    const[nivel_bateria, setNivelBateria] = useState('');
     const[error, setError] = useState('');
     const[tema, setTema] = useState(function() {
         if(typeof window !== 'undefined'){
@@ -26,8 +33,9 @@ export default function Instalacion(){
 
         return 'oscuro'
     });
-
-    const colores = tema === 'oscuro' ? temaOscuro : temaClaro;
+    const colores = obtenerColores(tema);
+    const[ipRegistro, setIpRegistro] = useState('');
+    const[fechaCaducidadIp, setFechaCaducidadIp] = useState('');
 
     useEffect(function(){
         async function cargarDatos(){
@@ -36,6 +44,7 @@ export default function Instalacion(){
 
             const token = localStorage.getItem('token');
             const usuarioGuardado = localStorage.getItem('usuario');
+
             setUsuario(JSON.parse(usuarioGuardado));
 
             if(!token){
@@ -46,7 +55,7 @@ export default function Instalacion(){
             const respuesta = await api.get(`/instalaciones/${id}`, {headers: {Authorization: `Bearer ${token}`}}); 
             setInstalacion(respuesta.data);
 
-            const respuestaDispositivos = await api.get('/dispositivos', {headers: {Authorization: `Bearer ${token}`}});
+            const respuestaDispositivos = await api.get(`/dispositivos?instalacion_id=${id}`, {headers: {Authorization: `Bearer ${token}`}});
             const todos = respuestaDispositivos.data.dispositivos;
             
             const soloDeEstaInstalacion = todos.filter(function(d) {
@@ -54,6 +63,8 @@ export default function Instalacion(){
             });
             setDispositivos(soloDeEstaInstalacion);
 
+            const respuestaTitulares = await api.get('/usuarios/titulares', {headers: {Authorization: `Bearer ${token}`}});
+            setTitulares(respuestaTitulares.data.titulares);
         }
         cargarDatos();
     }, [id])
@@ -62,9 +73,9 @@ export default function Instalacion(){
         e.preventDefault();
         try{
             const token = localStorage.getItem('token');
-            await api.post('/dispositivos', {nombre, descripcion, mac_address, hw_version, fw_version, fecha_instalacion, instalacion_id: id}, { headers: { Authorization: `Bearer ${token}` }});
+            await api.post('/dispositivos', {nombre, descripcion, mac_address, hw_version, fw_version, fecha_instalacion, instalacion_id: id, latitud: latitud || null, longitud: longitud || longitud, altura: altura || null, nivel_bateria: nivel_bateria ? parseInt(nivel_bateria) : null, titular_id: titularId || null, ip_registro: ipRegistro || null, fecha_caducidad_ip: fechaCaducidadIp || null}, { headers: { Authorization: `Bearer ${token}` }});
             
-            const respuestaDispositivos = await api.get('/dispositivos', {headers: {Authorization: `Bearer ${token}`}});
+            const respuestaDispositivos = await api.get(`/dispositivos?instalacion_id=${id}`, {headers: {Authorization: `Bearer ${token}`}});
             const todos = respuestaDispositivos.data.dispositivos;
             
             const soloDeEstaInstalacion = todos.filter(function(d) {
@@ -78,7 +89,7 @@ export default function Instalacion(){
             setVersionFirmware('');    
             setVersionHardware('');
         } catch (err) {
-            console.log('Error en el registro del dispositivo:', err);
+            console.log('Error en el registro del dispositivo:', err.response.data);
             setError('Error en el registro del dispositivo');
         }  
     }
@@ -135,7 +146,7 @@ export default function Instalacion(){
                             DISPOSITIVOS ({dispositivos.length})
                         </h1>
 
-                        {usuario.role === 'ADMIN' && (
+                        { (usuario.role === 'ADMIN' || usuario.role === 'RESPONSABLE') && (
                             <span onClick={function() { setMostrarFormulario(!mostrarFormulario);}} style={{color:colores.acento, fontSize:'13px', cursor: 'pointer'}}>
                                 {mostrarFormulario ? 'Cancelar' : '+ Nuevo dispositivo'}
                             </span>
@@ -143,7 +154,7 @@ export default function Instalacion(){
                     </div>
 
                     {/*Formulario para crear un dispositivo nuevo*/}
-                    {mostrarFormulario && usuario.role === 'ADMIN' && (
+                    {mostrarFormulario && (usuario.role === 'ADMIN' || usuario.role === 'RESPONSABLE') && (
                         <div style={{backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: '1px solid #2c2c2e', marginBottom: '24px'}}> 
                             <h2 style={{color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 20px 0'}}>
                                 Nuevo dispositivo
@@ -174,6 +185,59 @@ export default function Instalacion(){
                                     <div>
                                         <label htmlFor="fw_version" style={{color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>VERSIÓN DEL FIRMWARE</label>
                                         <input id="fw_version" type="text" value={fw_version} onChange={function(e) {setVersionFirmware(e.target.value);}} style={{width: '100%', backgroundColor: colores.fondo, border: '1px solid #2c2c2e', borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
+                                    </div>
+                                    <div style={{girdColumn: '1 / -1'}}>
+                                        <label htmlFor="titular" style={{color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
+                                            TITULAR
+                                        </label>
+                                        <select id="titular" value={titularId} onChange={function(e) {setTitularId(e.target.value);}} style={{width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}>
+                                            <option value ="">
+                                                Sin titular asignado
+                                            </option>
+                                            {titulares.map(function(t){
+                                                return (
+                                                    <option key={t.id} value={t.id}>
+                                                        {t.nombre}{t.apellidos}
+                                                    </option>
+                                                );
+                                            })}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="nivel_bateria" style={{color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
+                                            NIVEL DE BATERÍA (%)
+                                        </label>
+                                        <input id="nivel_bateria" type="number" min="0" max="100" value={nivel_bateria} onChange={function(e) {setNivelBateria(e.target.value);}} placeholder="0-100" style={{width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="latitud" style={{color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
+                                            LATITUD
+                                        </label>
+                                        <input id="latitud" type="number" value={latitud} onChange={function(e) {setLatitud(e.target.value);}} placeholder="Ej: 37.1773" style={{width: '100%', backgroundColor: colores.fondo, border: '1px solid #2c2c2e', borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="longitud" style={{color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
+                                            LONGITUD
+                                        </label>
+                                        <input id="longitud" type="number" value={longitud} onChange={function(e) {setLongitud(e.target.value);}} placeholder="Ej: -3.5986" style={{width: '100%', backgroundColor: colores.fondo, border: '1px solid #2c2c2e', borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="altura" style={{color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
+                                            ALTURA
+                                        </label>
+                                        <input id="altura" type="number" value={altura} onChange={function(e) {setAltura(e.target.value);}} placeholder="Ej: 680" style={{width: '100%', backgroundColor: colores.fondo, border: '1px solid #2c2c2e', borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="ip_registro" style={{color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
+                                            IP REGISTRO UGR
+                                        </label>
+                                        <input id="ip_registro" type="text" value={ipRegistro} onChange={function(e) {setIpRegistro(e.target.value);}} placeholder="150.214.X.X" style={{width: '100%', backgroundColor: colores.fondo, border: '1px solid #2c2c2e', borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>                                        
+                                    </div>
+                                    <div>
+                                        <label htmlFor="fecha_caducidad_ip" style={{color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
+                                            FECHA CADUCIDAD IP
+                                        </label>
+                                        <input id="fecha_caducidad_ip" type="date" value={fechaCaducidadIp} onChange={function(e) {setFechaCaducidadIp(e.target.value);}} style={{width: '100%', backgroundColor: colores.fondo, border: '1px solid #2c2c2e', borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>                                        
                                     </div>
                                 </div>
                                 <div style={{display: 'flex', justifyContent:'flex-end'}}>

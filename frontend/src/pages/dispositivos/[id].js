@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import api from '../../lib/api';
 import Navbar from "../../components/Navbar";
 import Head from "next/head";
-import { temaOscuro, temaClaro } from "@/lib/temas";
+import {temaOscuro, temaClaro, temaAltoContraste, temaAzul, obtenerColores} from '../../lib/temas';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function Dispositivo(){
@@ -20,7 +20,9 @@ export default function Dispositivo(){
 
         return 'oscuro';
     })
-    const colores = tema === 'oscuro' ? temaOscuro : temaClaro;
+    const colores = obtenerColores(tema);
+    const[testResultado, setTestResultado] = useState(null);
+    const[testCargando, setTestCargando] = useState(false);
 
     useEffect(function(){
         async function cargarDatos(){
@@ -47,6 +49,22 @@ export default function Dispositivo(){
         cargarDatos();
     }, [id, rango]) // Ejecutar cuando id esté disponible
 
+    async function handleTestConexion() {
+        setTestCargando(true);
+        setTestResultado(null);
+
+        try{
+            const token = localStorage.getItem('token');
+            const respuesta = await api.get(`/dispositivos/${id}/test`, {headers: {Authorization: `Bearer ${token}`}});
+
+            setTestResultado(respuesta.data);
+        } catch (err){
+            setTestResultado({ activo: false, mensaje: 'Error al conectar con el servidor'});
+        } finally {
+            setTestCargando(false);
+        }
+    }
+
     if (!dispositivo) {
         return <p>Cargando...</p>;
     }
@@ -56,6 +74,25 @@ export default function Dispositivo(){
         const lectura = lecturas.find(function(lectura){return lectura.variable === variable;});
         
         return lectura ? lectura.valor : null;
+    }
+
+    //Calcular los días restantes a la caducidad de la IP y establecer un estilo 
+    function obtenerEstadoCaducidad(fechaCaducidad){
+        if(!fechaCaducidad){
+            return null;
+        }
+
+        const ahora = new Date();
+        const caducidad = new Date(fechaCaducidad);
+        const diasRestantes = Math.floor((caducidad - ahora) / (1000*60*60*24));
+
+        if(diasRestantes < 0){
+            return {color: '#f87171', texto: `Caducado hace ${Math.abs(diasRestantes)} días`};
+        } else if(diasRestantes < 30){
+            return {color: '#fbbf24', texto: `Caduca en ${diasRestantes} días`};
+        } else {
+            return { color: '#4ade80', texto: `Caduca en ${diasRestantes} días`};
+        }
     }
 
     // Solo las lecturas de radiación
@@ -108,7 +145,16 @@ export default function Dispositivo(){
                             </span>
                         </div>
                     </div>
-
+                    <div style={{display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px', marginBottom: '24px'}}>
+                        <button onClick={handleTestConexion} disabled={testCargando} style={{backgroundColor: colores.acentoBoton, color: 'white', border: 'none', borderRadius: '8px', padding: '8px 20px', fontSize: '13px', fontWeight: '600', cursor: testCargando ? 'wait' : 'pointer', opacity: testCargando ? 0.7 : 1}}>
+                            {testCargando ? 'Probando...' : 'Test de conexión'}
+                        </button>
+                        {testResultado && (
+                            <span style={{ backgroundColor: testResultado.activo ? '#1a3a2a' : '#3a1a1a', color: testResultado.activo ? '#4ade80' : '#f87171', fontSize: '13px', fontWeight: '600', padding: '6px 14px', borderRadius: '8px'}}>
+                                {testResultado.mensaje}
+                            </span>
+                        )}
+                    </div>
                     {/*Tarjetas de las lecturas*/}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px'}}>
                         <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '20px', border: `1px solid ${colores.borde}`}}>
@@ -168,16 +214,34 @@ export default function Dispositivo(){
                             {label: 'Versión firmware', value: dispositivo.fw_version},
                             {label: 'Última conexión', value: formatearFecha(dispositivo.ultima_conexion)},
                             {label: 'Fecha de instalación', value: dispositivo.fecha_instalacion},
+                            {label: 'Nivel de batería', value: dispositivo.nivel_bateria !== null ? `${dispositivo.nivel_bateria}%` : '-'},
+                            {label: 'Ip de registro en la UGR', value: dispositivo.ip_registro},
                         ].map(function(item) {
                             return (
                                 <div key={item.label}> 
-                                    <p style={{color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 6px 0'}}>{item.label}</p>
-                                    <p style={{color: colores.texto, fontSize: '14px', margin: 0}}>{item.value || '-'}</p>
+                                    <p style={{color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 6px 0'}}>
+                                        {item.label}
+                                    </p>
+                                    <p style={{color: colores.texto, fontSize: '14px', margin: 0}}>
+                                        {item.value || '-'}
+                                    </p>
                                 </div>
                             )
-                            })
-                        }
+                            })}
                         </div>
+                        {dispositivo.fecha_caducidad_ip && (
+                            <div>
+                                <p style={{color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 6px 0'}}>
+                                    Caducidad IP
+                                </p>
+                                <p style={{color: colores.texto, fontSize: '14px', margin: '0 0 4px 0'}}>
+                                    {new Date(dispositivo.fecha_caducidad_ip).toLocaleDateString('es-ES')}
+                                </p>
+                                <span style={{color: obtenerEstadoCaducidad(dispositivo.fecha_caducidad_ip).color, fontSize: '12px', fontWeight: '600'}}>
+                                    {obtenerEstadoCaducidad(dispositivo.fecha_caducidad_ip).texto}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </main>
             </div>

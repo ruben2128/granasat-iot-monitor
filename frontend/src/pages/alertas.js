@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import api from '../lib/api';
 import Navbar from "../components/Navbar";
-import {temaOscuro, temaClaro} from '../lib/temas';
+import {temaOscuro, temaClaro, temaAltoContraste, temaAzul, obtenerColores} from '../lib/temas';
 import Head from 'next/head';
 
 export default function Alertas(){
@@ -17,7 +17,7 @@ export default function Alertas(){
 
         return 'oscuro'
     });
-    const colores = tema === 'oscuro' ? temaOscuro : temaClaro;
+    const colores = obtenerColores(tema);
 
     useEffect(function(){
         async function cargarDatos(){

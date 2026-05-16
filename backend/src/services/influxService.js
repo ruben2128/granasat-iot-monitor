@@ -76,5 +76,21 @@ async function obtenerUltimaLectura(mac){
     return resultado;
 }
 
+/*
+    Comprobar si el dispositivo esta activo según si ha enviado alguna lectura en los ultimos 10 minutos
+ */
+async function testConexionDispositivo(mac){
+    try{
+        const lecturas = await obtenerLecturas(mac, '-10m', 'radiacion');
 
-module.exports = {obtenerLecturas, obtenerUltimaLectura};
+        return {
+            activo: lecturas.length > 0,
+            ultimaLectura: lecturas.length > 0 ? lecturas[0].time : null
+        };
+    } catch(err){
+        return { activo: false, ultimaLectura: null};
+    }
+}
+
+
+module.exports = {obtenerLecturas, obtenerUltimaLectura,testConexionDispositivo};

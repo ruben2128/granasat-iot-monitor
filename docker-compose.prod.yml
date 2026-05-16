@@ -1,0 +1,149 @@
+version: "3.8"
+
+services:
+  influxdb_rad:
+    container_name: influxdb_rad
+    image: influxdb:2.7
+    ports:
+      - "8087:8086"
+    volumes:
+      - ./data/influxdb:/var/lib/influxdb2
+      - ./conf/influxdb:/etc/influxdb2
+    restart: always
+    networks:
+      - RadiacionN
+
+  telegraf_rad:
+    container_name: telegraf_rad
+    image: telegraf
+    volumes:
+      - ./conf/telegraf/telegraf.prod.conf:/etc/telegraf/telegraf.conf
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - influxdb_rad
+      - mqtt_rad
+    restart: always
+    networks:
+      - RadiacionN
+
+  grafana_rad:
+    container_name: grafana_rad
+    image: grafana/grafana
+    user: "0"
+    ports:
+      - "3003:3000"
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+      - ./log/grafana:/var/log/grafana
+    depends_on:
+      - influxdb_rad
+    restart: always
+    networks:
+      - RadiacionN
+
+  mqtt_rad:
+    container_name: mqtt_rad
+    image: eclipse-mosquitto:latest
+    user: "0"
+    ports:
+      - "1884:1883"
+      - "9002:9001"
+    volumes:
+      - ./conf/mqtt/:/mosquitto/config/
+      - ./data/mqtt/:/mosquitto/data/
+      - ./log/mqtt/:/mosquitto/log/
+    restart: always
+    networks:
+      - RadiacionN
+
+  postgres_rad:
+    container_name: postgres_rad
+    image: postgres:15
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: tfg_iot
+      POSTGRES_USER: tfg_user
+      POSTGRES_PASSWORD: tfg_password_seguro_2024
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tfg_user -d tfg_iot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - RadiacionN
+
+  backend_rad:
+    container_name: backend_rad
+    build: ./backend
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_HOST: postgres_rad
+      DB_PORT: 5432
+      DB_NAME: tfg_iot
+      DB_USER: tfg_user
+      DB_PASSWORD: tfg_password_seguro_2024
+      INFLUX_URL: http://influxdb_rad:8086
+      INFLUX_TOKEN: wlU1zhuHiHp_BAzRYdBY0zGebWOKS4kF-j413vNg4qknVsXqaiLPJKii9UXOIK3EOTZt5JiGudanARcSCaG5cQ==
+      INFLUX_ORG: GranaSAT
+      INFLUX_BUCKET: NeutronSource
+      JWT_SECRET: mi_secreto_super_seguro_cambiar_en_produccion_123456
+      JWT_EXPIRES_IN: 24h
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USER: gilrubenmartin@gmail.com
+      SMTP_PASS: ogjrrxmkgonuhbsl
+      MQTT_HOST: mqtt_rad
+      MQTT_PORT: 1883
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.radiacion-api.rule=Host(`radiacion.granasat.space`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.radiacion-api.tls=true"
+      - "traefik.http.routers.radiacion-api.service=radiacion-api"
+      - "traefik.http.services.radiacion-api.loadbalancer.server.port=3001"
+    depends_on:
+      postgres_rad:
+        condition: service_healthy
+      influxdb_rad:
+        condition: service_started
+    restart: always
+    networks:
+      - traefik
+      - RadiacionN
+
+  frontend_rad:
+    container_name: frontend_rad
+    build: ./frontend
+    ports:
+      - "3002:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: https://radiacion.granasat.space/api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.radiacion.rule=Host(`radiacion.granasat.space`)"
+      - "traefik.http.routers.radiacion.tls=true"
+      - "traefik.http.routers.radiacion.service=radiacion"
+      - "traefik.http.services.radiacion.loadbalancer.server.port=3000"
+    depends_on:
+      - backend_rad
+    restart: always
+    networks:
+      - traefik
+      - RadiacionN
+
+networks:
+  traefik:
+    external: true
+    name: traefik
+  RadiacionN:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.169.162.0/24

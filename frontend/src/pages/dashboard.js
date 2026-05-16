@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
-import {temaOscuro, temaClaro} from '../lib/temas';
+import {temaOscuro, temaClaro, temaAltoContraste, temaAzul, obtenerColores} from '../lib/temas';
 import Navbar from "../components/Navbar";
 import api from '../lib/api';
 import Head from 'next/head';
@@ -29,7 +29,8 @@ export default function Dashboard() {
 
         return 'oscuro'
     });
-    const colores = tema === 'oscuro' ? temaOscuro : temaClaro;
+    const colores = obtenerColores(tema);
+    const[espacioDocker, setEspacioDocker] = useState([]);
 
     async function handleRegistrarInstalacion(e){
         e.preventDefault();
@@ -80,11 +81,19 @@ export default function Dashboard() {
                     setResponsableId(responsables[0].id);
                 }
 
-                setUsuarios(usuarios);  
+                setUsuarios(usuarios);
+
+                try{
+                    const respuestaDocker = await api.get('/docker/espacio', {headers: {Authorization: `Bearer ${token}`}});
+                    setEspacioDocker(respuestaDocker.data.volumenes || []);
+                } catch(err){
+                    console.log('No se pudo obtener espacio Docker');
+                }
             }
             
             setInstalaciones(instalaciones);
             setDispositivos(dispositivos);
+
         }
         cargarDatos();
     }, []) // [] indica que useEffect se ejecute solo una vez, es decir, cuando el componente se cargue por primera vez
@@ -109,6 +118,14 @@ export default function Dashboard() {
                     <p style={{ color: colores.textoSecundario, fontSize: '14px', margin: '0 0 32px 0'}}>
                         Bienvenido de nuevo, {usuario.nombre}
                     </p>
+                    {localStorage.getItem('ultimo_acceso') && (
+                        <p style={{color: colores.textoSecundario, fontSize: '12px', margin: '0 0 32px 0'}}>
+                            Último acceso: {new Date(localStorage.getItem('ultimo_acceso')).toLocaleString('es-ES', {
+                                day: '2-digit', month: '2-digit', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit'
+                            })}
+                        </p>
+                    )}
 
                     {/* Tarjetas resumen de alertas e informes */}
                     <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '40px'}}>
@@ -153,6 +170,29 @@ export default function Dashboard() {
                             })}
                         </div>
                     </div>
+
+                    {/* Espacio docker */}
+                    {usuario.role === 'ADMIN' && espacioDocker.length > 0 && (
+                        <div style={{ marginTop: '32px'}}>
+                            <h2 style = {{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 16px 0', borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px'}}>
+                                ESPACIO EN DISCO (DOCKER)
+                            </h2>
+                            <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px'}}>
+                                {espacioDocker.map(function (vol,index){
+                                    return(
+                                        <div key={index} style={{backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`}}>
+                                            <p style={{ color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0'}}>
+                                                {vol.nombre.toUpperCase()}
+                                            </p>
+                                            <p style={{ color: colores.texto, fontSize: '24px', fontWeight: '700', margin: 0}}>
+                                                {vol.tamanio}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
 
                     {/*Formulario solo para ADMIN*/}
                     { mostrarFormulario && usuario.role === 'ADMIN' && (

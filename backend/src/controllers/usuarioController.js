@@ -1,4 +1,6 @@
 const Usuario = require('../models/Usuario');
+const path = require('path');
+const fs = require('fs');
 
 async function obtenerUsuarios(req, res){
     try {
@@ -9,7 +11,7 @@ async function obtenerUsuarios(req, res){
         }
         
         usuarios = await Usuario.findAll({
-            attributes: ['id', 'username', 'nombre', 'apellidos', 'email', 'role', 'activo'],
+            attributes: ['id', 'username', 'nombre', 'apellidos', 'email', 'role', 'activo', 'avatar'],
             order: [['created_at', 'DESC']]
         });
 
@@ -48,4 +50,54 @@ async function activarDesactivarUsuario(req, res){
     }
 }
 
-module.exports = { obtenerUsuarios, activarDesactivarUsuario };
+async function obtenerTitulares(req, res){
+    try {
+        const titulares = await Usuario.findAll({
+            where: { role: 'TITULAR', activo: true},
+            attributes: ['id', 'username', 'nombre', 'apellidos', 'email'],
+            order: [['nombre', 'ASC']]
+        });
+
+        res.json({total: titulares.length, titulares});
+        
+    } catch (error){
+
+        console.error('Error al obtener los titulareS: ', error);
+        res.status(500).json({error: 'Error al obtener los titulares'});
+    }
+}
+
+async function subirAvatar(req, res){
+    try {
+        if(!req.file){
+            return res.status(400).json({ error: 'No se ha subido ninguna imagen' });
+        }
+
+        const { id } = req.params;
+        const usuario = await Usuario.findByPk(id);
+
+        if(!usuario){
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        // Eliminar avatar anterior si existe
+        if(usuario.avatar){
+            const rutaAnterior = path.join(__dirname, '../../uploads/avatares', path.basename(usuario.avatar));
+            if(fs.existsSync(rutaAnterior)){
+                fs.unlinkSync(rutaAnterior);
+            }
+        }
+
+        // Guardar ruta relativa del nuevo avatar
+        const rutaAvatar = `/uploads/avatares/${req.file.filename}`;
+        await usuario.update({ avatar: rutaAvatar });
+
+        res.json({ message: 'Avatar actualizado correctamente', avatar: rutaAvatar });
+
+    } catch (error){
+        console.error('Error al subir avatar:', error);
+        res.status(500).json({ error: 'Error al subir el avatar' });
+    }
+}
+
+module.exports = { obtenerUsuarios, activarDesactivarUsuario, obtenerTitulares, subirAvatar };

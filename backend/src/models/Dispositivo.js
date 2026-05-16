@@ -54,6 +54,39 @@ const Dispositivo = sequelize.define('Dispositivo', {
     },
     notas: {
         type: DataTypes.TEXT
+    },
+    nivel_bateria: {
+       type: DataTypes.INTEGER,
+       allowNull: true
+    },   
+     latitud: {
+        type: DataTypes.DECIMAL(10, 7),
+        allowNull: true
+    },
+    longitud: {
+        type: DataTypes.DECIMAL(10, 7),
+        allowNull: true
+    },
+    altura: {
+        type: DataTypes.DECIMAL(8, 2),
+        allowNull: true
+    },
+    titular_id: {
+        type: DataTypes.UUID,
+        references: {
+            model: 'usuarios',
+            key: 'id'
+        },
+        onDelete: 'SET NULL',
+        allowNull: true
+    },
+    ip_registro: {
+        type:DataTypes.STRING(45),
+        allowNull: true
+    },
+    fecha_caducidad_ip: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
     }
 }, {
     tableName: 'dispositivos',
