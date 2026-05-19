@@ -24,7 +24,6 @@ const emailHistorialRoutes = require('./routes/emailHistorialRoutes');
 const configEmailRoutes = require('./routes/configEmailRoutes');
 const dockerRoutes = require('./routes/dockerRoutes');
 
-
 // Crear app de Express
 const app = express();
 
@@ -42,11 +41,29 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// PRUEBAS PARA LAS ALERTAS
 app.get('/api/test-alertas', async (req, res) => {
   await procesarAlertas();
   res.json({ message: 'Alertas procesadas' });
 });
+
+app.get('/api/setup-admin', async (req, res) => {
+    try {
+        const bcrypt = require('bcrypt');
+        const Usuario = require('./models/Usuario');
+        const hash = await bcrypt.hash('admin123', 10);
+        
+        const [actualizado] = await Usuario.update({ password_hash: hash },{ where: { username: 'admin' }});
+
+        if (actualizado === 0) {
+            await Usuario.create({password_hash: hash, role: 'ADMIN', nombre: 'Administrador', apellidos: 'del Sistema', email: 'admin@granasat.ugr.es', activo: true, username: 'admin'});
+        }
+
+        res.json({message: 'Admin listo'});
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 // Rutas que pertenecen a la API
 app.use('/api/auth', authRoutes);
@@ -88,7 +105,6 @@ async function startServer() {
     console.log('Tablas sincronizadas con la BD');
 
     app.listen(PORT, () => {
-      console.log(`Servidor corriendo en http://localhost:${PORT}`);
       console.log(`Entorno: ${process.env.NODE_ENV}`);
       console.log(`\nRutas disponibles:`);
       console.log(`   POST   /api/auth/register`);
