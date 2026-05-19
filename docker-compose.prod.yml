@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   influxdb_rad:
     container_name: influxdb_rad
@@ -106,8 +104,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.radiacion-api.rule=Host(`radiacion.granasat.space`) && PathPrefix(`/api`)"
       - "traefik.http.routers.radiacion-api.tls=true"
-      - "traefik.http.routers.radiacion-api.service=radiacion-api"
       - "traefik.http.services.radiacion-api.loadbalancer.server.port=3001"
+      - "traefik.http.routers.radiacion-api.tls.certresolver=resolver"
     depends_on:
       postgres_rad:
         condition: service_healthy
@@ -120,17 +118,18 @@ services:
 
   frontend_rad:
     container_name: frontend_rad
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: https://radiacion.granasat.space/api
     ports:
       - "3002:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: https://radiacion.granasat.space/api
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.radiacion.rule=Host(`radiacion.granasat.space`)"
       - "traefik.http.routers.radiacion.tls=true"
-      - "traefik.http.routers.radiacion.service=radiacion"
       - "traefik.http.services.radiacion.loadbalancer.server.port=3000"
+      - "traefik.http.routers.radiacion.tls.certresolver=resolver"
     depends_on:
       - backend_rad
     restart: always
