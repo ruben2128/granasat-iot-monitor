@@ -2,8 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict gVIIEmUX32JR119RyX1X03dIn2RxVhlDdgG2odb5WzxoBwlIFSwbvEeEY7gSXlL
-
 -- Dumped from database version 15.15 (Debian 15.15-1.pgdg13+1)
 -- Dumped by pg_dump version 15.15 (Debian 15.15-1.pgdg13+1)
 
@@ -116,10 +114,6 @@ CREATE TABLE public.alertas_config (
 
 ALTER TABLE public.alertas_config OWNER TO tfg_user;
 
---
--- Name: TABLE alertas_config; Type: COMMENT; Schema: public; Owner: tfg_user
---
-
 COMMENT ON TABLE public.alertas_config IS 'Configuración de alertas por instalación';
 
 
@@ -145,10 +139,6 @@ CREATE TABLE public.alertas_historial (
 
 
 ALTER TABLE public.alertas_historial OWNER TO tfg_user;
-
---
--- Name: TABLE alertas_historial; Type: COMMENT; Schema: public; Owner: tfg_user
---
 
 COMMENT ON TABLE public.alertas_historial IS 'Histórico de alertas disparadas';
 
@@ -187,11 +177,9 @@ CREATE SEQUENCE public.config_email_id_seq
 
 ALTER TABLE public.config_email_id_seq OWNER TO tfg_user;
 
---
--- Name: config_email_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: tfg_user
---
-
 ALTER SEQUENCE public.config_email_id_seq OWNED BY public.config_email.id;
+
+ALTER TABLE ONLY public.config_email ALTER COLUMN id SET DEFAULT nextval('public.config_email_id_seq'::regclass);
 
 
 --
@@ -220,28 +208,27 @@ CREATE TABLE public.dispositivos (
     titular_id uuid,
     ip_registro character varying(45),
     fecha_caducidad_ip date,
+    -- Bloque 1: Identificación del equipo de medición
     marca_comercial character varying(100),
     modelo_electronica character varying(100),
     num_serie_electronica character varying(100),
     num_serie_sonda character varying(100),
     tipo_detector character varying(100),
+    -- Bloque 2: Calibración y verificación
     calibrado boolean DEFAULT false NOT NULL,
     fecha_ultima_calibracion date,
     fecha_proxima_calibracion date,
     verificacion_periodica boolean DEFAULT false NOT NULL,
     periodicidad_verificacion character varying(50),
+    -- Bloque 3: Medida en continuo
     medida_continuo boolean DEFAULT false NOT NULL,
     unidades_medida character varying(20) DEFAULT 'µSv/h'::character varying,
     factor_correccion numeric(10,6) DEFAULT 1.0,
-    zona_radiologica character varying(30)
+    zona_radiologica public.enum_dispositivos_zona_radiologica
 );
 
 
 ALTER TABLE public.dispositivos OWNER TO tfg_user;
-
---
--- Name: TABLE dispositivos; Type: COMMENT; Schema: public; Owner: tfg_user
---
 
 COMMENT ON TABLE public.dispositivos IS 'Dispositivos IoT registrados';
 
@@ -272,10 +259,6 @@ CREATE TABLE public.informes (
 
 ALTER TABLE public.informes OWNER TO tfg_user;
 
---
--- Name: TABLE informes; Type: COMMENT; Schema: public; Owner: tfg_user
---
-
 COMMENT ON TABLE public.informes IS 'Informes PDF generados mensualmente';
 
 
@@ -293,17 +276,13 @@ CREATE TABLE public.instalaciones (
     activa boolean DEFAULT true,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    tipo_instalacion character varying(10),
+    tipo_instalacion public.enum_instalaciones_tipo_instalacion,
     direccion_instalacion text,
     codigo_referencia character varying(50)
 );
 
 
 ALTER TABLE public.instalaciones OWNER TO tfg_user;
-
---
--- Name: TABLE instalaciones; Type: COMMENT; Schema: public; Owner: tfg_user
---
 
 COMMENT ON TABLE public.instalaciones IS 'Instalaciones físicas donde están los IoT';
 
@@ -323,6 +302,7 @@ CREATE TABLE public.log_accesos (
 
 
 ALTER TABLE public.log_accesos OWNER TO tfg_user;
+
 
 --
 -- Name: usuarios; Type: TABLE; Schema: public; Owner: tfg_user
@@ -348,15 +328,11 @@ CREATE TABLE public.usuarios (
 
 ALTER TABLE public.usuarios OWNER TO tfg_user;
 
---
--- Name: TABLE usuarios; Type: COMMENT; Schema: public; Owner: tfg_user
---
-
 COMMENT ON TABLE public.usuarios IS 'Usuarios del sistema (admin y responsables)';
 
 
 --
--- Name: v_alertas_recientes; Type: VIEW; Schema: public; Owner: tfg_user
+-- Views
 --
 
 CREATE VIEW public.v_alertas_recientes AS
@@ -374,12 +350,8 @@ CREATE VIEW public.v_alertas_recientes AS
   WHERE (ah.fecha_disparo > (now() - '24:00:00'::interval))
   ORDER BY ah.fecha_disparo DESC;
 
-
 ALTER TABLE public.v_alertas_recientes OWNER TO tfg_user;
 
---
--- Name: v_dispositivos_completos; Type: VIEW; Schema: public; Owner: tfg_user
---
 
 CREATE VIEW public.v_dispositivos_completos AS
  SELECT d.id,
@@ -395,367 +367,109 @@ CREATE VIEW public.v_dispositivos_completos AS
      LEFT JOIN public.instalaciones i ON ((d.instalacion_id = i.id)))
      LEFT JOIN public.usuarios u ON ((i.responsable_id = u.id)));
 
-
 ALTER TABLE public.v_dispositivos_completos OWNER TO tfg_user;
 
---
--- Name: config_email id; Type: DEFAULT; Schema: public; Owner: tfg_user
---
-
-ALTER TABLE ONLY public.config_email ALTER COLUMN id SET DEFAULT nextval('public.config_email_id_seq'::regclass);
-
 
 --
--- Name: alertas_config alertas_config_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+-- Primary keys and constraints
 --
 
 ALTER TABLE ONLY public.alertas_config
     ADD CONSTRAINT alertas_config_pkey PRIMARY KEY (id);
 
-
---
--- Name: alertas_historial alertas_historial_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
-
 ALTER TABLE ONLY public.alertas_historial
     ADD CONSTRAINT alertas_historial_pkey PRIMARY KEY (id);
-
-
---
--- Name: config_email config_email_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
 
 ALTER TABLE ONLY public.config_email
     ADD CONSTRAINT config_email_pkey PRIMARY KEY (id);
 
-
---
--- Name: dispositivos dispositivos_mac_address_key; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
-
 ALTER TABLE ONLY public.dispositivos
     ADD CONSTRAINT dispositivos_mac_address_key UNIQUE (mac_address);
-
-
---
--- Name: dispositivos dispositivos_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
 
 ALTER TABLE ONLY public.dispositivos
     ADD CONSTRAINT dispositivos_pkey PRIMARY KEY (id);
 
-
---
--- Name: informes informes_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
-
 ALTER TABLE ONLY public.informes
     ADD CONSTRAINT informes_pkey PRIMARY KEY (id);
-
-
---
--- Name: instalaciones instalaciones_codigo_key; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
 
 ALTER TABLE ONLY public.instalaciones
     ADD CONSTRAINT instalaciones_codigo_key UNIQUE (codigo);
 
-
---
--- Name: instalaciones instalaciones_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
-
 ALTER TABLE ONLY public.instalaciones
     ADD CONSTRAINT instalaciones_pkey PRIMARY KEY (id);
-
-
---
--- Name: log_accesos log_accesos_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
 
 ALTER TABLE ONLY public.log_accesos
     ADD CONSTRAINT log_accesos_pkey PRIMARY KEY (id);
 
-
---
--- Name: usuarios usuarios_email_key; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
-
 ALTER TABLE ONLY public.usuarios
     ADD CONSTRAINT usuarios_email_key UNIQUE (email);
 
-
---
--- Name: usuarios usuarios_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
-
 ALTER TABLE ONLY public.usuarios
     ADD CONSTRAINT usuarios_pkey PRIMARY KEY (id);
-
-
---
--- Name: usuarios usuarios_username_key; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
 
 ALTER TABLE ONLY public.usuarios
     ADD CONSTRAINT usuarios_username_key UNIQUE (username);
 
 
 --
--- Name: usuarios usuarios_username_key1; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
-
-ALTER TABLE ONLY public.usuarios
-    ADD CONSTRAINT usuarios_username_key1 UNIQUE (username);
-
-
---
--- Name: usuarios usuarios_username_key2; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
-
-ALTER TABLE ONLY public.usuarios
-    ADD CONSTRAINT usuarios_username_key2 UNIQUE (username);
-
-
---
--- Name: usuarios usuarios_username_key3; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
-
-ALTER TABLE ONLY public.usuarios
-    ADD CONSTRAINT usuarios_username_key3 UNIQUE (username);
-
-
---
--- Name: usuarios usuarios_username_key4; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
-
-ALTER TABLE ONLY public.usuarios
-    ADD CONSTRAINT usuarios_username_key4 UNIQUE (username);
-
-
---
--- Name: usuarios usuarios_username_key5; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
-
-ALTER TABLE ONLY public.usuarios
-    ADD CONSTRAINT usuarios_username_key5 UNIQUE (username);
-
-
---
--- Name: usuarios usuarios_username_key6; Type: CONSTRAINT; Schema: public; Owner: tfg_user
---
-
-ALTER TABLE ONLY public.usuarios
-    ADD CONSTRAINT usuarios_username_key6 UNIQUE (username);
-
-
---
--- Name: idx_alertas_config_activa; Type: INDEX; Schema: public; Owner: tfg_user
+-- Indexes
 --
 
 CREATE INDEX idx_alertas_config_activa ON public.alertas_config USING btree (activa);
-
-
---
--- Name: idx_alertas_config_instalacion; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE INDEX idx_alertas_config_instalacion ON public.alertas_config USING btree (instalacion_id);
-
-
---
--- Name: idx_alertas_historial_dispositivo; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE INDEX idx_alertas_historial_dispositivo ON public.alertas_historial USING btree (dispositivo_id);
-
-
---
--- Name: idx_alertas_historial_fecha; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE INDEX idx_alertas_historial_fecha ON public.alertas_historial USING btree (fecha_disparo DESC);
-
-
---
--- Name: idx_alertas_historial_instalacion; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE INDEX idx_alertas_historial_instalacion ON public.alertas_historial USING btree (instalacion_id);
-
-
---
--- Name: idx_dispositivos_activo; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE INDEX idx_dispositivos_activo ON public.dispositivos USING btree (activo);
-
-
---
--- Name: idx_dispositivos_instalacion; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE INDEX idx_dispositivos_instalacion ON public.dispositivos USING btree (instalacion_id);
-
-
---
--- Name: idx_dispositivos_mac; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE INDEX idx_dispositivos_mac ON public.dispositivos USING btree (mac_address);
-
-
---
--- Name: idx_informes_instalacion; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE INDEX idx_informes_instalacion ON public.informes USING btree (instalacion_id);
-
-
---
--- Name: idx_informes_periodo; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE INDEX idx_informes_periodo ON public.informes USING btree (anio DESC, mes DESC);
-
-
---
--- Name: idx_informes_unique; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE UNIQUE INDEX idx_informes_unique ON public.informes USING btree (instalacion_id, anio, mes);
-
-
---
--- Name: idx_instalaciones_codigo; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE INDEX idx_instalaciones_codigo ON public.instalaciones USING btree (codigo);
-
-
---
--- Name: idx_instalaciones_responsable; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE INDEX idx_instalaciones_responsable ON public.instalaciones USING btree (responsable_id);
-
-
---
--- Name: idx_usuarios_email; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE INDEX idx_usuarios_email ON public.usuarios USING btree (email);
-
-
---
--- Name: idx_usuarios_role; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE INDEX idx_usuarios_role ON public.usuarios USING btree (role);
-
-
---
--- Name: idx_usuarios_username; Type: INDEX; Schema: public; Owner: tfg_user
---
-
 CREATE INDEX idx_usuarios_username ON public.usuarios USING btree (username);
 
 
 --
--- Name: alertas_config trigger_alertas_config_updated_at; Type: TRIGGER; Schema: public; Owner: tfg_user
+-- Triggers
 --
 
 CREATE TRIGGER trigger_alertas_config_updated_at BEFORE UPDATE ON public.alertas_config FOR EACH ROW EXECUTE FUNCTION public.actualizar_updated_at();
-
-
---
--- Name: dispositivos trigger_dispositivos_updated_at; Type: TRIGGER; Schema: public; Owner: tfg_user
---
-
 CREATE TRIGGER trigger_dispositivos_updated_at BEFORE UPDATE ON public.dispositivos FOR EACH ROW EXECUTE FUNCTION public.actualizar_updated_at();
-
-
---
--- Name: instalaciones trigger_instalaciones_updated_at; Type: TRIGGER; Schema: public; Owner: tfg_user
---
-
 CREATE TRIGGER trigger_instalaciones_updated_at BEFORE UPDATE ON public.instalaciones FOR EACH ROW EXECUTE FUNCTION public.actualizar_updated_at();
-
-
---
--- Name: usuarios trigger_usuarios_updated_at; Type: TRIGGER; Schema: public; Owner: tfg_user
---
-
 CREATE TRIGGER trigger_usuarios_updated_at BEFORE UPDATE ON public.usuarios FOR EACH ROW EXECUTE FUNCTION public.actualizar_updated_at();
 
 
 --
--- Name: alertas_config alertas_config_instalacion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+-- Foreign keys
 --
 
 ALTER TABLE ONLY public.alertas_config
     ADD CONSTRAINT alertas_config_instalacion_id_fkey FOREIGN KEY (instalacion_id) REFERENCES public.instalaciones(id) ON DELETE CASCADE;
 
-
---
--- Name: alertas_historial alertas_historial_alerta_config_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
---
-
 ALTER TABLE ONLY public.alertas_historial
     ADD CONSTRAINT alertas_historial_alerta_config_id_fkey FOREIGN KEY (alerta_config_id) REFERENCES public.alertas_config(id) ON DELETE SET NULL;
-
-
---
--- Name: alertas_historial alertas_historial_dispositivo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
---
 
 ALTER TABLE ONLY public.alertas_historial
     ADD CONSTRAINT alertas_historial_dispositivo_id_fkey FOREIGN KEY (dispositivo_id) REFERENCES public.dispositivos(id) ON DELETE SET NULL;
 
-
---
--- Name: alertas_historial alertas_historial_instalacion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
---
-
 ALTER TABLE ONLY public.alertas_historial
     ADD CONSTRAINT alertas_historial_instalacion_id_fkey FOREIGN KEY (instalacion_id) REFERENCES public.instalaciones(id) ON DELETE SET NULL;
-
-
---
--- Name: dispositivos dispositivos_instalacion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
---
 
 ALTER TABLE ONLY public.dispositivos
     ADD CONSTRAINT dispositivos_instalacion_id_fkey FOREIGN KEY (instalacion_id) REFERENCES public.instalaciones(id) ON DELETE CASCADE;
 
-
---
--- Name: dispositivos dispositivos_titular_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
---
-
 ALTER TABLE ONLY public.dispositivos
     ADD CONSTRAINT dispositivos_titular_id_fkey FOREIGN KEY (titular_id) REFERENCES public.usuarios(id) ON DELETE SET NULL;
-
-
---
--- Name: informes informes_instalacion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
---
 
 ALTER TABLE ONLY public.informes
     ADD CONSTRAINT informes_instalacion_id_fkey FOREIGN KEY (instalacion_id) REFERENCES public.instalaciones(id) ON DELETE CASCADE;
 
-
---
--- Name: instalaciones instalaciones_responsable_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
---
-
 ALTER TABLE ONLY public.instalaciones
     ADD CONSTRAINT instalaciones_responsable_id_fkey FOREIGN KEY (responsable_id) REFERENCES public.usuarios(id) ON DELETE SET NULL;
-
-
---
--- Name: log_accesos log_accesos_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
---
 
 ALTER TABLE ONLY public.log_accesos
     ADD CONSTRAINT log_accesos_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id) ON DELETE CASCADE;
@@ -764,6 +478,3 @@ ALTER TABLE ONLY public.log_accesos
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict gVIIEmUX32JR119RyX1X03dIn2RxVhlDdgG2odb5WzxoBwlIFSwbvEeEY7gSXlL
-
