@@ -87,6 +87,80 @@ const Dispositivo = sequelize.define('Dispositivo', {
     fecha_caducidad_ip: {
         type: DataTypes.DATEONLY,
         allowNull: true
+    },
+    marca_comercial: {
+        type: DataTypes.STRING(100),
+        allowNull: true
+    },
+    modelo_electronica: {
+        type: DataTypes.STRING(100),
+        allowNull: true
+    },
+    // Número de serie de la unidad de control electrónica
+    num_serie_electronica: {
+        type: DataTypes.STRING(100),
+        allowNull: true
+    },
+    // Número de serie del detector/sonda ambiental (separado del de la electrónica)
+    num_serie_sonda: {
+        type: DataTypes.STRING(100),
+        allowNull: true
+    },
+    // Tipo de detector: Centellador NaI(Tl), Cámara de ionización, Geiger-Müller, etc.
+    tipo_detector: {
+        type: DataTypes.STRING(100),
+        allowNull: true
+    },
+
+    // ── BLOQUE 2: Calibración y verificación ─────────────────────────────
+    // Indica si el equipo tiene calibración vigente
+    calibrado: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false
+    },
+    fecha_ultima_calibracion: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
+    },
+    // Fecha calculada de la próxima revisión — el sistema avisa 3 meses antes
+    fecha_proxima_calibracion: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
+    },
+    // Indica si el equipo se somete a verificaciones periódicas
+    verificacion_periodica: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false
+    },
+    // Periodicidad de la verificación: mensual, trimestral, semestral, anual
+    periodicidad_verificacion: {
+        type: DataTypes.STRING(50),
+        allowNull: true
+    },
+    // Indica si el equipo está destinado al registro continuo de valores
+    medida_continuo: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false
+    },
+    // Unidades de medida del equipo. Por defecto µSv/h
+    unidades_medida: {
+        type: DataTypes.STRING(20),
+        defaultValue: 'µSv/h',
+        allowNull: true
+    },
+    // Factor de corrección cuando las unidades no son µSv/h
+    factor_correccion: {
+        type: DataTypes.DECIMAL(10, 6),
+        defaultValue: 1.0,
+        allowNull: true
+    },
+    // Zona radiológica donde se encuentra el dispositivo
+    zona_radiologica: {
+        type: DataTypes.ENUM('LIBRE_PASO', 'VIGILADA', 'CONTROLADA', 'CONTROLADA_LIMITADA', 'CONTROLADA_REGLAMENTADA', 'ACCESO_PROHIBIDO'),
+        allowNull: true
     }
 }, {
     tableName: 'dispositivos',

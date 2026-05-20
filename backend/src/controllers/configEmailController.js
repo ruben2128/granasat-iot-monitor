@@ -115,4 +115,26 @@ async function eliminarConfigEmail(req, res){
     }
 }
 
-module.exports = { obtenerConfigEmail, guardarConfigEmail, activarConfigEmail, eliminarConfigEmail };
+async function testEmail(req, res){
+    try {
+        if(req.user.role !== 'ADMIN'){
+            return res.status(403).json({ error: 'No tienes permiso' });
+        }
+
+        const { destinatario } = req.body;
+
+        if(!destinatario){
+            return res.status(400).json({ error: 'El campo destinatario es obligatorio' });
+        }
+
+        await emailService.enviarEmailTest(destinatario);
+
+        res.json({ message: `Email de prueba enviado correctamente a ${destinatario}` });
+
+    } catch (error){
+        console.error('Error al enviar email de test:', error);
+        res.status(500).json({ error: 'Error al enviar el email de prueba. Revisa la configuración SMTP.' });
+    }
+}
+
+module.exports = { obtenerConfigEmail, guardarConfigEmail, activarConfigEmail, eliminarConfigEmail, testEmail };

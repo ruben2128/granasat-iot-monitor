@@ -29,6 +29,9 @@ export default function ConfigEmail() {
     const colores = obtenerColores(tema);
     const verdeExito = tema === 'oscuro' ? '#4ade80' : '#15803d';
     const textoSecundarioAccesible = tema === 'oscuro' ? '#a0a0a0' : '#696969';
+    const [emailTest, setEmailTest] = useState('');
+    const [testCargando, setTestCargando] = useState(false);
+    const [testResultado, setTestResultado] = useState(null);
 
     async function cargarDatos(){
         const token = localStorage.getItem('token');
@@ -91,7 +94,27 @@ export default function ConfigEmail() {
         }
     }
 
-    if(!usuario) return <p>Cargando...</p>;
+    async function handleTestEmail(e){
+        e.preventDefault();
+        setTestCargando(true);
+        setTestResultado(null);
+        try {
+            const token = localStorage.getItem('token');
+            const respuesta = await api.post('/config-email/test', 
+                { destinatario: emailTest }, 
+                { headers: { Authorization: `Bearer ${token}` }}
+            );
+            setTestResultado({ ok: true, mensaje: respuesta.data.message });
+        } catch(err){
+            setTestResultado({ ok: false, mensaje: err.response?.data?.error || 'Error al enviar el email de prueba' });
+        } finally {
+            setTestCargando(false);
+        }
+    }
+
+
+    if(!usuario) 
+        return <p>Cargando...</p>;
 
     return (
         <>
@@ -144,10 +167,40 @@ export default function ConfigEmail() {
                         </div>
                     )}
 
+                    {/* Test de conexión SMTP */}
+                    <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginBottom: '24px', maxWidth: '600px'}}>
+                        <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 16px 0', borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px'}}>
+                            TEST DE CONEXIÓN SMTP
+                        </h2>
+                        <form onSubmit={handleTestEmail} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end'}}>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
+                                    EMAIL DESTINATARIO
+                                </label>
+                                <input 
+                                    type="email" 
+                                    value={emailTest} 
+                                    onChange={function(e){ setEmailTest(e.target.value); }} 
+                                    placeholder="tu@email.com" 
+                                    required
+                                    style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}
+                                />
+                            </div>
+                            <button type="submit" disabled={testCargando} style={{ backgroundColor: colores.acentoBoton, color: 'white', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', fontWeight: '600', cursor: testCargando ? 'wait' : 'pointer', opacity: testCargando ? 0.7 : 1, whiteSpace: 'nowrap'}}>
+                                {testCargando ? 'Enviando...' : 'Enviar test'}
+                            </button>
+                        </form>
+                        {testResultado && (
+                            <p style={{ color: testResultado.ok ? verdeExito : '#f87171', fontSize: '13px', margin: '12px 0 0 0', fontWeight: '600'}}>
+                                {testResultado.ok ? '✓ ' : '✗ '}{testResultado.mensaje}
+                            </p>
+                        )}
+                    </div>
+
                     {/* Botón nueva configuración */}
                     <div style={{ marginBottom: '16px'}}>
                         <span onClick={function() { setMostrarFormulario(!mostrarFormulario); setExito(''); setError(''); }} style={{ color: colores.acento, fontSize: '13px', cursor: 'pointer'}}>
-                            {mostrarFormulario ? 'x Cancelar' : '+ Nueva configuración'}
+                            {mostrarFormulario ? 'Cancelar' : 'Nueva configuración'}
                         </span>
                     </div>
 

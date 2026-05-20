@@ -103,4 +103,34 @@ async function enviarEmailInforme(destinatarios, asunto, mensaje, rutaPdf, nombr
         throw error;
     }
 }
-module.exports = {enviarEmailAlerta, enviarEmailBienvenida , actualizarTransporter, enviarEmailInforme};
+
+async function enviarEmailTest(destinatario) {
+    try {
+        const info = await transporter.sendMail({
+            from: `"Sistema IoT GranaSAT" <${process.env.SMTP_USER}>`,
+            to: destinatario,
+            subject: 'Test de configuración SMTP de GranaSAT',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #c93d00;">Test de configuración SMTP</h2>
+                    <p>Configuración SMTP del Sistema IoT GranaSAT está funcionando correctamente.</p>
+                    <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <p><strong>Servidor:</strong> ${process.env.SMTP_HOST}</p>
+                        <p><strong>Puerto:</strong> ${process.env.SMTP_PORT}</p>
+                        <p><strong>Usuario:</strong> ${process.env.SMTP_USER}</p>
+                        <p><strong>Fecha del test:</strong> ${new Date().toLocaleString('es-ES')}</p>
+                    </div>
+                    <p style="color: #666; font-size: 12px;">
+                        Este email ha sido generado automáticamente por el Sistema IoT GranaSAT.
+                    </p>
+                </div>
+            `
+        });
+        return info;
+    } catch (error) {
+        console.error('Error enviando email de test:', error);
+        throw error;
+    }
+}
+
+module.exports = {enviarEmailAlerta, enviarEmailBienvenida , actualizarTransporter, enviarEmailInforme, enviarEmailTest};

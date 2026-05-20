@@ -1,5 +1,4 @@
 import { useRouter } from 'next/router';
-import Image from 'next/image';
 import { useState } from 'react';
 
 export default function Navbar({ usuario, tema, setTema, colores }){
@@ -26,7 +25,7 @@ export default function Navbar({ usuario, tema, setTema, colores }){
         <nav style={{backgroundColor: colores ? colores.navbar : '#1c1c1e',padding: '0 24px',height: '56px',display: 'flex',alignItems: 'center',justifyContent: 'space-between', borderBottom: `1px solid ${colores ? colores.borde : '#2c2c2e'}`, }}>
             {/* Logo */}
             <div style= {{ display: 'flex', alignItems: 'center', gap: '10px'}}>
-                <Image src="/granasat-logo.png" alt="GranaSAT" width={36} height={36} style={{borderRadius: '50%'}} />
+                <img src="/granasat-logo.png" alt="GranaSAT" width={36} height={36} style={{borderRadius: '50%'}} />
                 <span style ={{ color: colores.acento, fontWeight: '600', fontSize: '15px'}} >
                     GranaSAT
                 </span>

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict gAyTZ24zbSk3aoTC5sAduoSYTyP0g97UEe10tOZaOWKzWYD9VUHUKsEF2HrVc7U
+\restrict gVIIEmUX32JR119RyX1X03dIn2RxVhlDdgG2odb5WzxoBwlIFSwbvEeEY7gSXlL
 
 -- Dumped from database version 15.15 (Debian 15.15-1.pgdg13+1)
 -- Dumped by pg_dump version 15.15 (Debian 15.15-1.pgdg13+1)
@@ -33,12 +33,41 @@ COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UU
 
 
 --
+-- Name: enum_dispositivos_zona_radiologica; Type: TYPE; Schema: public; Owner: tfg_user
+--
+
+CREATE TYPE public.enum_dispositivos_zona_radiologica AS ENUM (
+    'LIBRE_PASO',
+    'VIGILADA',
+    'CONTROLADA',
+    'CONTROLADA_LIMITADA',
+    'CONTROLADA_REGLAMENTADA',
+    'ACCESO_PROHIBIDO'
+);
+
+
+ALTER TYPE public.enum_dispositivos_zona_radiologica OWNER TO tfg_user;
+
+--
+-- Name: enum_instalaciones_tipo_instalacion; Type: TYPE; Schema: public; Owner: tfg_user
+--
+
+CREATE TYPE public.enum_instalaciones_tipo_instalacion AS ENUM (
+    'IRA',
+    'IRD'
+);
+
+
+ALTER TYPE public.enum_instalaciones_tipo_instalacion OWNER TO tfg_user;
+
+--
 -- Name: enum_usuarios_role; Type: TYPE; Schema: public; Owner: tfg_user
 --
 
 CREATE TYPE public.enum_usuarios_role AS ENUM (
     'ADMIN',
-    'RESPONSABLE'
+    'RESPONSABLE',
+    'TITULAR'
 );
 
 
@@ -125,6 +154,47 @@ COMMENT ON TABLE public.alertas_historial IS 'Histórico de alertas disparadas';
 
 
 --
+-- Name: config_email; Type: TABLE; Schema: public; Owner: tfg_user
+--
+
+CREATE TABLE public.config_email (
+    id integer NOT NULL,
+    smtp_host character varying(100) NOT NULL,
+    smtp_port integer NOT NULL,
+    smtp_user character varying(100) NOT NULL,
+    smtp_pass character varying(100) NOT NULL,
+    smtp_secure boolean DEFAULT false,
+    activo boolean DEFAULT true,
+    updated_at timestamp without time zone DEFAULT now(),
+    nombre character varying(100)
+);
+
+
+ALTER TABLE public.config_email OWNER TO tfg_user;
+
+--
+-- Name: config_email_id_seq; Type: SEQUENCE; Schema: public; Owner: tfg_user
+--
+
+CREATE SEQUENCE public.config_email_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.config_email_id_seq OWNER TO tfg_user;
+
+--
+-- Name: config_email_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: tfg_user
+--
+
+ALTER SEQUENCE public.config_email_id_seq OWNED BY public.config_email.id;
+
+
+--
 -- Name: dispositivos; Type: TABLE; Schema: public; Owner: tfg_user
 --
 
@@ -142,7 +212,28 @@ CREATE TABLE public.dispositivos (
     fecha_instalacion date,
     notas text,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    latitud numeric(10,7),
+    longitud numeric(10,7),
+    altura numeric(8,2),
+    nivel_bateria integer,
+    titular_id uuid,
+    ip_registro character varying(45),
+    fecha_caducidad_ip date,
+    marca_comercial character varying(100),
+    modelo_electronica character varying(100),
+    num_serie_electronica character varying(100),
+    num_serie_sonda character varying(100),
+    tipo_detector character varying(100),
+    calibrado boolean DEFAULT false NOT NULL,
+    fecha_ultima_calibracion date,
+    fecha_proxima_calibracion date,
+    verificacion_periodica boolean DEFAULT false NOT NULL,
+    periodicidad_verificacion character varying(50),
+    medida_continuo boolean DEFAULT false NOT NULL,
+    unidades_medida character varying(20) DEFAULT 'µSv/h'::character varying,
+    factor_correccion numeric(10,6) DEFAULT 1.0,
+    zona_radiologica character varying(30)
 );
 
 
@@ -201,7 +292,10 @@ CREATE TABLE public.instalaciones (
     responsable_id uuid,
     activa boolean DEFAULT true,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    tipo_instalacion character varying(10),
+    direccion_instalacion text,
+    codigo_referencia character varying(50)
 );
 
 
@@ -213,6 +307,22 @@ ALTER TABLE public.instalaciones OWNER TO tfg_user;
 
 COMMENT ON TABLE public.instalaciones IS 'Instalaciones físicas donde están los IoT';
 
+
+--
+-- Name: log_accesos; Type: TABLE; Schema: public; Owner: tfg_user
+--
+
+CREATE TABLE public.log_accesos (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    usuario_id uuid,
+    username character varying(50),
+    ip character varying(45),
+    fecha timestamp without time zone DEFAULT now(),
+    exito boolean DEFAULT true
+);
+
+
+ALTER TABLE public.log_accesos OWNER TO tfg_user;
 
 --
 -- Name: usuarios; Type: TABLE; Schema: public; Owner: tfg_user
@@ -231,7 +341,8 @@ CREATE TABLE public.usuarios (
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     ultimo_acceso timestamp without time zone,
-    CONSTRAINT usuarios_role_check CHECK (((role)::text = ANY (ARRAY[('ADMIN'::character varying)::text, ('RESPONSABLE'::character varying)::text])))
+    avatar character varying(255),
+    CONSTRAINT usuarios_role_check CHECK ((role = ANY (ARRAY['ADMIN'::public.enum_usuarios_role, 'RESPONSABLE'::public.enum_usuarios_role, 'TITULAR'::public.enum_usuarios_role])))
 );
 
 
@@ -288,80 +399,10 @@ CREATE VIEW public.v_dispositivos_completos AS
 ALTER TABLE public.v_dispositivos_completos OWNER TO tfg_user;
 
 --
--- Data for Name: alertas_config; Type: TABLE DATA; Schema: public; Owner: tfg_user
+-- Name: config_email id; Type: DEFAULT; Schema: public; Owner: tfg_user
 --
 
-COPY public.alertas_config (id, instalacion_id, tipo, nombre, descripcion, campo, operador, umbral, emails_destino, mensaje_personalizado, activa, created_at, updated_at) FROM stdin;
-cf8e7393-223d-4191-b300-494833290cfe	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	Alerta radiación alta	Dispara cuando la radiación supera el umbral	radiacion	>	50	{gilrubenmartin@gmail.com}	Nivel de radiación crítico detectado	f	2026-03-16 20:13:09.16	2026-05-03 16:09:40.252076
-\.
-
-
---
--- Data for Name: alertas_historial; Type: TABLE DATA; Schema: public; Owner: tfg_user
---
-
-COPY public.alertas_historial (id, alerta_config_id, dispositivo_id, instalacion_id, tipo, valor_detectado, umbral_configurado, mensaje, email_enviado, email_error, destinatarios, fecha_disparo, fecha_email) FROM stdin;
-69e9eeca-fd99-4518-8a43-8eaf73030f35	cf8e7393-223d-4191-b300-494833290cfe	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	65.21	50	Nivel de radiación crítico detectado	f	Invalid login: 535 5.7.8 Error: authentication failed: authentication failure	{responsable@ugr.es}	2026-03-23 22:40:56.407	\N
-b660d620-a20a-4b83-a0c0-0db691591c42	cf8e7393-223d-4191-b300-494833290cfe	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	50	Nivel de radiación crítico detectado	f	connect ECONNREFUSED 150.214.204.23:587	{responsable@ugr.es}	2026-03-23 22:54:21.516	\N
-2809cf46-d9a5-4a0e-af5b-196f499f4199	cf8e7393-223d-4191-b300-494833290cfe	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	50	Nivel de radiación crítico detectado	f	Invalid login: 534-5.7.9 Application-specific password required. For more information, go to\n534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor 5b1f17b1804b1-487116ee57esm5107665e9.14 - gsmtp	{responsable@ugr.es}	2026-03-23 22:57:01.06	\N
-2f93b929-2967-4325-8070-5210ac5ca2eb	cf8e7393-223d-4191-b300-494833290cfe	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	50	Nivel de radiación crítico detectado	f	Invalid login: 534-5.7.9 Application-specific password required. For more information, go to\n534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor 5b1f17b1804b1-487113d73c0sm6536995e9.0 - gsmtp	{responsable@ugr.es}	2026-03-23 22:57:44.479	\N
-d44ee562-a883-42cc-85e4-e598d99ffe5b	cf8e7393-223d-4191-b300-494833290cfe	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	50	Nivel de radiación crítico detectado	f	Invalid login: 534-5.7.9 Application-specific password required. For more information, go to\n534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor 5b1f17b1804b1-487116f1905sm5842105e9.3 - gsmtp	{responsable@ugr.es}	2026-03-23 22:57:54.172	\N
-16115f90-ddfb-4a0d-b4a0-bb93be55687a	cf8e7393-223d-4191-b300-494833290cfe	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	50	Nivel de radiación crítico detectado	t	\N	{responsable@ugr.es}	2026-03-23 23:00:23.505	\N
-7559fb16-d2b9-4b78-8e1b-87a4eea249f7	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	46.45	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 46.45\nUmbral configurado: > 1\nFecha: Mon Mar 23 2026 23:40:38 GMT+0100 (hora estándar de Europa central)	f	Invalid login: 535 5.7.8 Error: authentication failed: authentication failure	{rubenmartin12@correo.ugr.es}	2026-03-23 22:40:40.841	\N
-fedf2f8a-d36b-4b71-9148-77c1cc8d931c	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	65.21	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 65.21\nUmbral configurado: > 1\nFecha: Mon Mar 23 2026 23:40:56 GMT+0100 (hora estándar de Europa central)	f	Invalid login: 535 5.7.8 Error: authentication failed: authentication failure	{rubenmartin12@correo.ugr.es}	2026-03-23 22:40:58.967	\N
-40c9e894-ed27-44dd-b1ca-da003ea2b50c	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	13.38	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 13.38\nUmbral configurado: > 1\nFecha: Mon Mar 23 2026 23:41:20 GMT+0100 (hora estándar de Europa central)	f	Invalid login: 535 5.7.8 Error: authentication failed: authentication failure	{rubenmartin12@correo.ugr.es}	2026-03-23 22:41:23.443	\N
-9d6dbf96-c54f-47a9-8f18-e3dfaa3b7a12	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	15.61	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 15.61\nUmbral configurado: > 1\nFecha: Mon Mar 23 2026 23:42:30 GMT+0100 (hora estándar de Europa central)	f	connect ECONNREFUSED 150.214.204.23:587	{rubenmartin12@correo.ugr.es}	2026-03-23 22:42:30.931	\N
-2bad330e-79b0-4dc4-9efb-8497bc9e14f0	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	43.83	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 43.83\nUmbral configurado: > 1\nFecha: Mon Mar 23 2026 23:47:30 GMT+0100 (hora estándar de Europa central)	f	connect ECONNREFUSED 150.214.204.23:587	{rubenmartin12@correo.ugr.es}	2026-03-23 22:47:30.98	\N
-9ce88c11-70b0-4f16-a9b7-4908c816eefa	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 99.74\nUmbral configurado: > 1\nFecha: Mon Mar 23 2026 23:54:21 GMT+0100 (hora estándar de Europa central)	f	connect ECONNREFUSED 150.214.204.23:587	{rubenmartin12@correo.ugr.es}	2026-03-23 22:54:21.616	\N
-68f3d71e-7243-4878-8281-2fced35e84f3	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 99.74\nUmbral configurado: > 1\nFecha: Mon Mar 23 2026 23:57:01 GMT+0100 (hora estándar de Europa central)	f	Invalid login: 534-5.7.9 Application-specific password required. For more information, go to\n534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor 5b1f17b1804b1-4870f6c0fa6sm5014025e9.1 - gsmtp	{rubenmartin12@correo.ugr.es}	2026-03-23 22:57:01.672	\N
-d53514eb-ee37-41aa-ab51-0c5ad6d94ce8	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 99.74\nUmbral configurado: > 1\nFecha: Mon Mar 23 2026 23:57:44 GMT+0100 (hora estándar de Europa central)	f	Invalid login: 534-5.7.9 Application-specific password required. For more information, go to\n534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor ffacd0b85a97d-43b6425eeb4sm28594757f8f.0 - gsmtp	{rubenmartin12@correo.ugr.es}	2026-03-23 22:57:45.091	\N
-67b1b750-49b3-4aeb-b585-afb332e0a187	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 99.74\nUmbral configurado: > 1\nFecha: Mon Mar 23 2026 23:57:54 GMT+0100 (hora estándar de Europa central)	f	Invalid login: 534-5.7.9 Application-specific password required. For more information, go to\n534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor ffacd0b85a97d-43b6470b243sm33442585f8f.26 - gsmtp	{rubenmartin12@correo.ugr.es}	2026-03-23 22:57:54.819	\N
-159f3861-2551-480a-be1a-526690f51343	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 99.74\nUmbral configurado: > 1\nFecha: Tue Mar 24 2026 00:00:23 GMT+0100 (hora estándar de Europa central)	t	\N	{rubenmartin12@correo.ugr.es}	2026-03-23 23:00:24.734	\N
-d99ea690-4d45-4593-96e3-dce5057c7782	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 99.74\nUmbral configurado: > 1\nFecha: Tue Mar 24 2026 00:00:24 GMT+0100 (hora estándar de Europa central)	t	\N	{runo1821@gmail.com}	2026-03-23 23:00:25.962	\N
-7ccae5b5-e75e-4f4f-af2d-3030fc60665c	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 99.74\nUmbral configurado: > 1\nFecha: Mon Mar 23 2026 23:57:54 GMT+0100 (hora estándar de Europa central)	f	Invalid login: 534-5.7.9 Application-specific password required. For more information, go to\n534 5.7.9  https://support.google.com/mail/?p=InvalidSecondFactor ffacd0b85a97d-43b647177e8sm32105428f8f.34 - gsmtp	{runo1821@gmail.com}	2026-03-23 22:57:55.432	\N
-0365e041-e327-4507-980d-99615c420fbb	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 99.74\nUmbral configurado: > 1\nFecha: Tue Mar 24 2026 00:02:00 GMT+0100 (hora estándar de Europa central)	f	No recipients defined	{sofibetancortsuarez.com}	2026-03-23 23:02:01.524	\N
-cb9d817a-4e54-4dea-99d5-681a51a09563	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 99.74\nUmbral configurado: > 1\nFecha: Tue Mar 24 2026 00:03:40 GMT+0100 (hora estándar de Europa central)	f	No recipients defined	{sofibetancortsuarez.com}	2026-03-23 23:03:41.041	\N
-4441368a-b61b-405f-8724-7b8391c1f5cc	\N	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	99.74	1	ALERTA: Test alerta radiación\nInstaalcion: Instalación A\nDispositivo:  (Direccion MAC: 84:1F:E8:39:54:D4)\nCampo: radiacion\nValor detectado: 99.74\nUmbral configurado: > 1\nFecha: Tue Mar 24 2026 00:03:41 GMT+0100 (hora estándar de Europa central)	t	\N	{sofibetancortsuarez@gmail.com}	2026-03-23 23:03:42.369	\N
-dc1bf133-7172-40a4-9721-a9c3a2fe22df	cf8e7393-223d-4191-b300-494833290cfe	55add4e0-10f0-4a4a-8b9b-80793800e1bf	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	RADIACION_ALTA	75.87	50	Nivel de radiación crítico detectado	t	\N	{responsable@ugr.es}	2026-04-27 20:59:40.129	\N
-\.
-
-
---
--- Data for Name: dispositivos; Type: TABLE DATA; Schema: public; Owner: tfg_user
---
-
-COPY public.dispositivos (id, mac_address, nombre, descripcion, instalacion_id, hw_version, fw_version, activo, ultima_conexion, ultima_ip, fecha_instalacion, notas, created_at, updated_at) FROM stdin;
-55add4e0-10f0-4a4a-8b9b-80793800e1bf	84:1F:E8:39:54:D4	Sensor-001	prueba descripcion	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	1.0	1.0	t	2026-03-13 20:09:44.838657		2026-03-13		2026-03-13 20:09:44.838657	2026-04-23 22:48:56.254795
-\.
-
-
---
--- Data for Name: informes; Type: TABLE DATA; Schema: public; Owner: tfg_user
---
-
-COPY public.informes (id, instalacion_id, mes, anio, fecha_inicio, fecha_fin, ruta_pdf, tamano_bytes, generado, email_enviado, email_destinatarios, fecha_generacion, fecha_envio_email, created_at) FROM stdin;
-87985188-9e9c-45d6-8afd-46984216e898	d9c72d36-151f-4e96-bd98-f7d3042cc6f3	3	2026	2026-03-01	2026-03-31	/home/ruben/Escritorio/tig/backend/informes/informe_INST_A_2026_03.pdf	\N	t	f	{}	2026-04-14 18:07:51.361	\N	2026-04-14 18:07:51.367
-\.
-
-
---
--- Data for Name: instalaciones; Type: TABLE DATA; Schema: public; Owner: tfg_user
---
-
-COPY public.instalaciones (id, nombre, codigo, descripcion, ubicacion, responsable_id, activa, created_at, updated_at) FROM stdin;
-9f1755fc-431d-4b89-8227-8af3f17bce9e	Instalación B	INST_B	\N	ETSIIT, Planta 2, Sala 201	0e60c4fd-3029-4dd7-b97d-bf6c0912be9e	t	2026-03-12 20:59:57.476	2026-04-14 19:48:43.544047
-d9c72d36-151f-4e96-bd98-f7d3042cc6f3	Instalación A	INST_A	Laboratorio de Física Nuclear	ETSIIT, Planta 3, Sala 301	6ad3cd3c-4b3d-4152-8db1-795d880d84af	t	2026-01-21 18:28:44.923688	2026-04-14 19:50:34.377373
-\.
-
-
---
--- Data for Name: usuarios; Type: TABLE DATA; Schema: public; Owner: tfg_user
---
-
-COPY public.usuarios (id, username, password_hash, role, nombre, apellidos, email, movil, activo, created_at, updated_at, ultimo_acceso) FROM stdin;
-0e60c4fd-3029-4dd7-b97d-bf6c0912be9e	responsable1	$2b$10$mSqX6Dk7iSs29uzLU/P/T.S7RPMpFQYlmVJotHacf8G8o4iZIGkAe	RESPONSABLE	Juan	Pérez García	prueba@gmail.com	666555444	t	2026-02-07 19:49:28.907	2026-05-03 15:54:04.846098	2026-05-03 15:54:04.844
-6ad3cd3c-4b3d-4152-8db1-795d880d84af	admin	$2b$10$/yS4MVo6oL9uzcZn351IxeyP9fx6XEwOthPPdGbosMQ1L3I/6AMXy	ADMIN	Administrador	del Sistema	admin@ugr.es	\N	t	2026-01-21 18:28:44.922508	2026-05-03 18:35:21.079137	2026-05-03 18:35:21.075
-\.
+ALTER TABLE ONLY public.config_email ALTER COLUMN id SET DEFAULT nextval('public.config_email_id_seq'::regclass);
 
 
 --
@@ -378,6 +419,14 @@ ALTER TABLE ONLY public.alertas_config
 
 ALTER TABLE ONLY public.alertas_historial
     ADD CONSTRAINT alertas_historial_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: config_email config_email_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.config_email
+    ADD CONSTRAINT config_email_pkey PRIMARY KEY (id);
 
 
 --
@@ -418,6 +467,14 @@ ALTER TABLE ONLY public.instalaciones
 
 ALTER TABLE ONLY public.instalaciones
     ADD CONSTRAINT instalaciones_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: log_accesos log_accesos_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.log_accesos
+    ADD CONSTRAINT log_accesos_pkey PRIMARY KEY (id);
 
 
 --
@@ -673,6 +730,14 @@ ALTER TABLE ONLY public.dispositivos
 
 
 --
+-- Name: dispositivos dispositivos_titular_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.dispositivos
+    ADD CONSTRAINT dispositivos_titular_id_fkey FOREIGN KEY (titular_id) REFERENCES public.usuarios(id) ON DELETE SET NULL;
+
+
+--
 -- Name: informes informes_instalacion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
 --
 
@@ -689,8 +754,16 @@ ALTER TABLE ONLY public.instalaciones
 
 
 --
+-- Name: log_accesos log_accesos_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.log_accesos
+    ADD CONSTRAINT log_accesos_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id) ON DELETE CASCADE;
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gAyTZ24zbSk3aoTC5sAduoSYTyP0g97UEe10tOZaOWKzWYD9VUHUKsEF2HrVc7U
+\unrestrict gVIIEmUX32JR119RyX1X03dIn2RxVhlDdgG2odb5WzxoBwlIFSwbvEeEY7gSXlL
 

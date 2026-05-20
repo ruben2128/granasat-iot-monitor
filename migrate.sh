@@ -12,7 +12,6 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN null;
 END $$;
 
--- Dispositivos
 ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS latitud NUMERIC(10,7);
 ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS longitud NUMERIC(10,7);
 ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS altura NUMERIC(8,2);
@@ -21,28 +20,43 @@ ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS titular_id UUID REFERENCES usu
 ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS ip_registro VARCHAR(45);
 ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS fecha_caducidad_ip DATE;
 
--- Tabla config_email
-CREATE TABLE IF NOT EXISTS config_email (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(100),
-    smtp_host VARCHAR(100) NOT NULL,
-    smtp_port INTEGER NOT NULL,
-    smtp_user VARCHAR(100) NOT NULL,
-    smtp_pass VARCHAR(100) NOT NULL,
-    smtp_secure BOOLEAN DEFAULT false,
-    activo BOOLEAN DEFAULT true,
-    updated_at TIMESTAMP DEFAULT now()
-);
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS marca_comercial VARCHAR(100);
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS modelo_electronica VARCHAR(100);
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS num_serie_electronica VARCHAR(100);
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS num_serie_sonda VARCHAR(100);
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS tipo_detector VARCHAR(100);
 
--- Tabla log_accesos
-CREATE TABLE IF NOT EXISTS log_accesos (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    usuario_id UUID REFERENCES usuarios(id) ON DELETE CASCADE,
-    username VARCHAR(50),
-    ip VARCHAR(45),
-    fecha TIMESTAMP DEFAULT now(),
-    exito BOOLEAN DEFAULT true
-);
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS calibrado BOOLEAN DEFAULT false;
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS fecha_ultima_calibracion DATE;
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS fecha_proxima_calibracion DATE;
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS verificacion_periodica BOOLEAN DEFAULT false;
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS periodicidad_verificacion VARCHAR(50);
+
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS medida_continuo BOOLEAN DEFAULT false;
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS unidades_medida VARCHAR(20) DEFAULT 'µSv/h';
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS factor_correccion NUMERIC(10,6) DEFAULT 1.0;
+
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS zona_radiologica VARCHAR(30);
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_zona_radiologica') THEN
+        CREATE TYPE enum_zona_radiologica AS ENUM ( 'LIBRE_PASO', 'VIGILADA', 'CONTROLADA', 'CONTROLADA_LIMITADA','CONTROLADA_REGLAMENTADA','ACCESO_PROHIBIDO');
+    END IF;
+END $$;
+ALTER TABLE dispositivos ALTER COLUMN zona_radiologica TYPE enum_zona_radiologica USING zona_radiologica::enum_zona_radiologica;
+
+ALTER TABLE instalaciones ADD COLUMN IF NOT EXISTS tipo_instalacion VARCHAR(10);
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_tipo_instalacion') THEN
+        CREATE TYPE enum_tipo_instalacion AS ENUM ('IRA', 'IRD');
+    END IF;
+END $$;
+ALTER TABLE instalaciones ALTER COLUMN tipo_instalacion TYPE enum_tipo_instalacion USING tipo_instalacion::enum_tipo_instalacion;
+ALTER TABLE instalaciones ADD COLUMN IF NOT EXISTS direccion_instalacion TEXT;
+ALTER TABLE instalaciones ADD COLUMN IF NOT EXISTS codigo_referencia VARCHAR(50);
+
+CREATE TABLE IF NOT EXISTS config_email (id SERIAL PRIMARY KEY,nombre VARCHAR(100),smtp_host VARCHAR(100) NOT NULL,smtp_port INTEGER NOT NULL,smtp_user VARCHAR(100) NOT NULL,smtp_pass VARCHAR(100) NOT NULL,smtp_secure BOOLEAN DEFAULT false,activo BOOLEAN DEFAULT true,updated_at TIMESTAMP DEFAULT now());
+
+CREATE TABLE IF NOT EXISTS log_accesos (id UUID DEFAULT gen_random_uuid() PRIMARY KEY,usuario_id UUID REFERENCES usuarios(id) ON DELETE CASCADE,username VARCHAR(50),ip VARCHAR(45),fecha TIMESTAMP DEFAULT now(),exito BOOLEAN DEFAULT true);
 
 SELECT 'Migracion completada' AS resultado;
 EOF

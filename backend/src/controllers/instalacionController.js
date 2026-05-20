@@ -80,7 +80,7 @@ async function obtenerInstalacionPorId(req, res) {
 */
 async function crearInstalacion(req, res) {
     try{
-        const { nombre, codigo, descripcion, ubicacion, responsable_id } = req.body;
+        const {nombre, codigo, descripcion, ubicacion, responsable_id, tipo_instalacion, direccion_instalacion, codigo_referencia} = req.body;
 
         if(!nombre || !codigo || !responsable_id) {
             return res.status(400).json({ error: 'nombre, codigo y responsable_id son obligatorios'});
@@ -109,7 +109,10 @@ async function crearInstalacion(req, res) {
             codigo: codigo.toUpperCase(),
             descripcion,
             ubicacion,
-            responsable_id: responsable_id || null
+            responsable_id: responsable_id || null,
+            tipo_instalacion: tipo_instalacion || null,
+            direccion_instalacion: direccion_instalacion || null,
+            codigo_referencia: codigo_referencia || null
         });
 
         const instalacionCompleta = await Instalacion.findByPk(instalacion.id, {
@@ -139,8 +142,7 @@ async function actualizarInstalacion(req,res){
 
     try{
         const { id } = req.params;
-        const { nombre, codigo, descripcion, ubicacion, responsable_id, activa} = req.body;
-
+        const {nombre, codigo, descripcion, ubicacion, responsable_id, activa, tipo_instalacion, direccion_instalacion, codigo_referencia} = req.body;
         const instalacion = await Instalacion.findByPk(id);
         
         if(!instalacion){
@@ -173,7 +175,10 @@ async function actualizarInstalacion(req,res){
             descripcion: descripcion ?? instalacion.descripcion,
             ubicacion: ubicacion ?? instalacion.ubicacion,
             responsable_id: responsable_id ?? instalacion.responsable_id,
-            activa: activa ?? instalacion.activa
+            activa: activa ?? instalacion.activa,
+            tipo_instalacion: tipo_instalacion ?? instalacion.tipo_instalacion,
+            direccion_instalacion: direccion_instalacion ?? instalacion.direccion_instalacion,
+            codigo_referencia: codigo_referencia ?? instalacion.codigo_referencia
         });
 
         const instalacionActualizada = await Instalacion.findByPk(id, { include: [{ model: Usuario, as:'responsable', attributes: ['id', 'username', 'nombre', 'apellidos', 'email']}]});

@@ -8,9 +8,6 @@ async function obtenerEspacioDocker(req, res){
         const rutaData = process.env.HOME + '/Escritorio/tig/data';
 
         exec(`du -sh ${rutaData}/*`, function(error,stdout, stderr){           
-            
-            console.log('stdout:', stdout);
-            console.log('stderr:', stderr);
 
             if(!stdout || stdout.trim === ''){
                 return res.json({volumenes: [], error: 'No se pudo obtener el espacio'});

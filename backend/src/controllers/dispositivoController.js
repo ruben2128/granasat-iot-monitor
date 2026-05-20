@@ -89,7 +89,7 @@ async function obtenerDispositivoPorId(req, res) {
 */
 async function crearDispositivo(req, res) {
     try {
-        const { mac_address, nombre, descripcion, instalacion_id, hw_version, fw_version, fecha_instalacion, notas, latitud, longitud, altura, nivel_bateria, titular_id, ip_registro, fecha_caducidad_ip } = req.body;
+        const { mac_address, nombre, descripcion, instalacion_id, hw_version, fw_version, fecha_instalacion, notas, latitud, longitud, altura, nivel_bateria, titular_id, ip_registro, fecha_caducidad_ip, marca_comercial, modelo_electronica, num_serie_electronica, num_serie_sonda, tipo_detector, calibrado, fecha_ultima_calibracion, fecha_proxima_calibracion, verificacion_periodica, periodicidad_verificacion, medida_continuo, unidades_medida, factor_correccion, zona_radiologica } = req.body;
 
         console.log('Coordenadas recibidas:', { latitud, longitud, altura });
 
@@ -120,7 +120,36 @@ async function crearDispositivo(req, res) {
             return res.status(403).json({error: 'No puedes crear dispositivos en instalaciones que no son tuyas'});
         }
 
-        const dispositivo = await Dispositivo.create({mac_address, nombre, descripcion, instalacion_id: instalacion_id || null, hw_version, fw_version, fecha_instalacion, notas, latitud: latitud ? parseFloat(latitud) : null, longitud: longitud ? parseFloat(longitud) : null, altura: altura ? parseFloat(altura) : null, nivel_bateria: nivel_bateria ? parseInt(nivel_bateria) : null, titular_id: titular_id || null, ip_registro: ip_registro || null, fecha_caducidad_ip: fecha_caducidad_ip || null });
+        const dispositivo = await Dispositivo.create({
+            mac_address, 
+            nombre, 
+            descripcion, 
+            instalacion_id: instalacion_id || null, 
+            hw_version, 
+            fw_version, 
+            fecha_instalacion, 
+            notas, 
+            latitud: latitud ? parseFloat(latitud) : null, 
+            longitud: longitud ? parseFloat(longitud) : null, 
+            altura: altura ? parseFloat(altura) : null, 
+            nivel_bateria: nivel_bateria ? parseInt(nivel_bateria) : null, 
+            titular_id: titular_id || null, ip_registro: ip_registro || null, 
+            fecha_caducidad_ip: fecha_caducidad_ip || null,
+            marca_comercial: marca_comercial || null,
+            modelo_electronica: modelo_electronica || null,
+            num_serie_electronica: num_serie_electronica || null,
+            num_serie_sonda: num_serie_sonda || null,
+            tipo_detector: tipo_detector || null,
+            calibrado : calibrado || null,
+            fecha_ultima_calibracion: fecha_ultima_calibracion || null,
+            fecha_proxima_calibracion: fecha_proxima_calibracion || null,
+            verificacion_periodica: verificacion_periodica || null,
+            periodicidad_verificacion: periodicidad_verificacion || null,
+            medida_continuo: medida_continuo || null,
+            unidades_medida: unidades_medida || 'µSv/h',
+            factor_correccion: factor_correccion ? parseFloat(factor_correccion) : 1.0,
+            zona_radiologica: zona_radiologica || null
+        });
 
         const dispositivoCompleto = await Dispositivo.findByPk(dispositivo.id, {
             include: [{
@@ -149,7 +178,7 @@ async function actualizarDispositivo(req,res){
 
     try{
         const { id } = req.params;
-        const { nombre, descripcion, instalacion_id, hw_version, fw_version, activo, notas,fecha_instalacion } = req.body;
+        const { nombre, descripcion, instalacion_id, hw_version, fw_version, activo, notas,fecha_instalacion, latitud, longitud, altura, nivel_bateria, titular_id, ip_registro, fecha_caducidad_ip, marca_comercial, modelo_electronica, num_serie_electronica, num_serie_sonda, tipo_detector, calibrado, fecha_ultima_calibracion, fecha_proxima_calibracion, verificacion_periodica, periodicidad_verificacion, medida_continuo, unidades_medida, factor_correccion, zona_radiologica } = req.body;
 
         const dispositivo = await Dispositivo.findByPk(id);
         
@@ -173,7 +202,28 @@ async function actualizarDispositivo(req,res){
             fw_version: fw_version ?? dispositivo.fw_version,
             activo: activo ?? dispositivo.activo,
             notas: notas ?? dispositivo.notas,
-            fecha_instalacion: fecha_instalacion ?? dispositivo.fecha_instalacion
+            fecha_instalacion: fecha_instalacion ?? dispositivo.fecha_instalacion,
+            latitud: latitud !== undefined ? parseFloat(latitud) : dispositivo.latitud,
+            longitud: longitud !== undefined ? parseFloat(longitud) : dispositivo.longitud,
+            altura: altura !== undefined ? parseFloat(altura) : dispositivo.altura,
+            nivel_bateria: nivel_bateria !== undefined ? parseInt(nivel_bateria) : dispositivo.nivel_bateria,
+            titular_id: titular_id ?? dispositivo.titular_id,
+            ip_registro: ip_registro ?? dispositivo.ip_registro,
+            fecha_caducidad_ip: fecha_caducidad_ip ?? dispositivo.fecha_caducidad_ip,
+            marca_comercial: marca_comercial ?? dispositivo.marca_comercial,
+            modelo_electronica: modelo_electronica ?? dispositivo.modelo_electronica,
+            num_serie_electronica: num_serie_electronica ?? dispositivo.num_serie_electronica,
+            num_serie_sonda: num_serie_sonda ?? dispositivo.num_serie_sonda,
+            tipo_detector: tipo_detector ?? dispositivo.tipo_detector,
+            calibrado: calibrado ?? dispositivo.calibrado,
+            fecha_ultima_calibracion: fecha_ultima_calibracion ?? dispositivo.fecha_ultima_calibracion,
+            fecha_proxima_calibracion: fecha_proxima_calibracion ?? dispositivo.fecha_proxima_calibracion,
+            verificacion_periodica: verificacion_periodica ?? dispositivo.verificacion_periodica,
+            periodicidad_verificacion: periodicidad_verificacion ?? dispositivo.periodicidad_verificacion,
+            medida_continuo: medida_continuo ?? dispositivo.medida_continuo,
+            unidades_medida: unidades_medida ?? dispositivo.unidades_medida,
+            factor_correccion: factor_correccion !== undefined ? parseFloat(factor_correccion) : dispositivo.factor_correccion,
+            zona_radiologica: zona_radiologica ?? dispositivo.zona_radiologica        
         });
 
         const dispositivoActualizado = await Dispositivo.findByPk(id, 

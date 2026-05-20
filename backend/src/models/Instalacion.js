@@ -38,6 +38,21 @@ const Instalacion = sequelize.define('Instalacion', {
     activa: {
         type: DataTypes.BOOLEAN,
         defaultValue: true
+    },
+    //Tipo según si es IRA o IRD
+    tipo_instalacion: {
+        type: DataTypes.ENUM('IRA', 'IRD'),
+        allowNull: true
+    },
+    //Dirección postal 
+    direccion_instalacion: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    //Código de referencia interno
+    codigo_referencia: {
+        type: DataTypes.STRING(50),
+        allowNull: true
     }
 }, {
     tableName: 'instalaciones',
