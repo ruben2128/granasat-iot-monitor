@@ -9,6 +9,16 @@ const nextConfig = {
   turbopack: {
     root: __dirname,
   },
+  async rewrites() {
+    return [
+        {
+            source: '/uploads/:path*',
+            destination: `${process.env.NEXT_PUBLIC_API_URL.replace('/api', '')}/uploads/:path*`
+        }
+    ]
+  }
 };
+
+
 
 export default nextConfig;

@@ -34,13 +34,7 @@ export default function Instalacion(){
     const[titularId, setTitularId] = useState('');
     const[nivel_bateria, setNivelBateria] = useState('');
     const[error, setError] = useState('');
-    const[tema, setTema] = useState(function() {
-        if(typeof window !== 'undefined'){
-            return localStorage.getItem('tema') || 'oscuro';
-        }
-
-        return 'oscuro'
-    });
+    const[tema, setTema] = useState('oscuro');
     const colores = obtenerColores(tema);
     const[ipRegistro, setIpRegistro] = useState('');
     const[fechaCaducidadIp, setFechaCaducidadIp] = useState('');
@@ -58,6 +52,27 @@ export default function Instalacion(){
     const[unidades_medida, setUnidadesMedida] = useState('µSv/h');
     const[factor_correccion, setFactorCorreccion] = useState('1.0');
     const[zona_radiologica, setZonaRadiologica] = useState('');
+    const[modoEdicionInstalacion, setModoEdicionInstalacion] = useState(false);
+    const[errorEdicionInstalacion, setErrorEdicionInstalacion] = useState('');
+    const[guardandoInstalacion, setGuardandoInstalacion] = useState(false);
+    const[responsables, setResponsables] = useState([]);
+    const[editNombre, setEditNombre] = useState('');
+    const[editCodigo, setEditCodigo] = useState('');
+    const[editDescripcion, setEditDescripcion] = useState('');
+    const[editUbicacion, setEditUbicacion] = useState('');
+    const[editResponsableId, setEditResponsableId] = useState('');
+    const[editActiva, setEditActiva] = useState(true);
+    const[editTipoInstalacion, setEditTipoInstalacion] = useState('');
+    const[editDireccionInstalacion, setEditDireccionInstalacion] = useState('');
+    const[editCodigoReferencia, setEditCodigoReferencia] = useState('');
+
+    useEffect(function() {
+        const temaGuardado = localStorage.getItem('tema');
+        
+        if(temaGuardado) {
+            setTema(temaGuardado);
+        }
+    }, []);
 
     useEffect(function(){
         async function cargarDatos(){
@@ -77,12 +92,28 @@ export default function Instalacion(){
             const respuesta = await api.get(`/instalaciones/${id}`, {headers: {Authorization: `Bearer ${token}`}}); 
             setInstalacion(respuesta.data);
 
+            const inst = respuesta.data;
+
+            setEditNombre(inst.nombre || '');
+            setEditCodigo(inst.codigo || '');
+            setEditDescripcion(inst.descripcion || '');
+            setEditUbicacion(inst.ubicacion || '');
+            setEditResponsableId(inst.responsable_id || '');
+            setEditActiva(inst.activa);
+            setEditTipoInstalacion(inst.tipo_instalacion || '');
+            setEditDireccionInstalacion(inst.direccion_instalacion || '');
+            setEditCodigoReferencia(inst.codigo_referencia || '');
+
+            //Cargar responsables
+            const respuestaResponsables = await api.get('/usuarios', {headers: {Authorization: `Bearer ${token}`}});
+            const todosUsuarios = respuestaResponsables.data.usuarios;
+
+            setResponsables(todosUsuarios.filter(function(u){return u.role === 'RESPONSABLE';}));
+
             const respuestaDispositivos = await api.get(`/dispositivos?instalacion_id=${id}`, {headers: {Authorization: `Bearer ${token}`}});
-            const todos = respuestaDispositivos.data.dispositivos;
+            const todosDispositivos = respuestaDispositivos.data.dispositivos;
             
-            const soloDeEstaInstalacion = todos.filter(function(d) {
-                return d.instalacion_id === id;
-            });
+            const soloDeEstaInstalacion = todosDispositivos.filter(function(d) {return d.instalacion_id === id;});
             setDispositivos(soloDeEstaInstalacion);
 
             const respuestaTitulares = await api.get('/usuarios/titulares', {headers: {Authorization: `Bearer ${token}`}});
@@ -168,11 +199,42 @@ export default function Instalacion(){
         }  
     }
 
+    async function handleGuardarInstalacion(e){
+        e.preventDefault();
+
+        setGuardandoInstalacion(true);
+        setErrorEdicionInstalacion('');
+
+        try{
+            const token = localStorage.getItem('token');
+            await api.put(`/instalaciones/${id}`, { 
+                nombre: editNombre,
+                codigo: editCodigo,
+                descripcion: editDescripcion,
+                ubicacion: editUbicacion,
+                responsable_id: editResponsableId,
+                activa: editActiva,
+                tipo_instalacion: editTipoInstalacion || null,
+                direccion_instalacion: editDireccionInstalacion || null,
+                codigo_referencia: editCodigoReferencia || null,
+            }, { headers: { Authorization: `Bearer ${token}` }});
+
+            const respuesta = await api.get(`/instalaciones/${id}`, {headers: { Authorization: `Bearer ${token}` }});
+
+            setInstalacion(respuesta.data);
+            setModoEdicionInstalacion(false);
+        } catch (err) {
+            setErrorEdicionInstalacion(err.response?.data?.error || 'Error al guardar los cambios');
+        }finally {
+            setGuardandoInstalacion(false);
+        }
+    }
+
     if (!instalacion) {
         return <p>Cargando...</p>;
     }
 
-    // Estilos reutilizables para los inputs
+    // Estilo para los inputs
     const estiloInput = {
         width: '100%',
         backgroundColor: colores.fondo,
@@ -228,11 +290,94 @@ export default function Instalacion(){
                                     <span style={{color: colores.texto, fontSize: '13px'}}> Responsable: {instalacion.responsable.nombre} {instalacion.responsable.apellidos}</span>
                                 </div>
                             </div>
-                            <span style={{backgroundColor: instalacion.activa ? '#1a3a2a' : '#2a2a2a', color: instalacion.activa ? '#4ade80' : colores.texto, fontSize: '12px', fontWeight: '600', padding: '4px 12px', borderRadius: '20px'}}>
-                                {instalacion.activa ? 'Activa' : 'Inactiva'}
-                            </span>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                                <span style={{backgroundColor: instalacion.activa ? '#1a3a2a' : '#2a2a2a', color: instalacion.activa ? '#4ade80' : colores.texto, fontSize: '12px', fontWeight: '600', padding: '4px 12px', borderRadius: '20px'}}>
+                                    {instalacion.activa ? 'Activa' : 'Inactiva'}
+                                </span>
+                                {usuario.role === 'ADMIN' && (
+                                    <button onClick={function() { setModoEdicionInstalacion(!modoEdicionInstalacion); setErrorEdicionInstalacion(''); }} style={{ background: 'none', border: `1px solid ${colores.borde}`, color: colores.texto, borderRadius: '8px', padding: '4px 14px', fontSize: '12px', cursor: 'pointer' }}>
+                                        {modoEdicionInstalacion ? 'Cancelar' : 'Editar'}
+                                    </button>
+                                )}
+                                {usuario.role === 'ADMIN' && (
+                                    <button onClick={async function() {
+                                        if(!confirm('¿Seguro que quieres eliminar esta instalación? Se eliminarán también todos sus dispositivos.')) return;
+                                        try {
+                                            const token = localStorage.getItem('token');
+                                            await api.delete(`/instalaciones/${id}`, { headers: { Authorization: `Bearer ${token}` }});
+                                            router.push('/dashboard');
+                                        } catch(err) {
+                                            alert(err.response?.data?.error || 'Error al eliminar la instalación');
+                                        }
+                                    }} style={{ background: 'none', border: '1px solid #f87171', color: '#f87171', borderRadius: '8px', padding: '4px 14px', fontSize: '12px', cursor: 'pointer' }}>
+                                        Eliminar
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
+
+                    {/* Formulario de edición */}
+                    {modoEdicionInstalacion && usuario.role === 'ADMIN' && (
+                        <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginBottom: '24px' }}>
+                            <h2 style={{ color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 20px 0' }}>Editar instalación</h2>
+                            {errorEdicionInstalacion && <p style={{ color: '#f87171', fontSize: '13px', marginBottom: '16px' }}>{errorEdicionInstalacion}</p>}
+                            <form onSubmit={handleGuardarInstalacion}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                    <div>
+                                        <label style={estiloLabel}>Nombre</label>
+                                        <input type="text" value={editNombre} onChange={function(e) { setEditNombre(e.target.value); }} required style={estiloInput} />
+                                    </div>
+                                    <div>
+                                        <label style={estiloLabel}>Código</label>
+                                        <input type="text" value={editCodigo} onChange={function(e) { setEditCodigo(e.target.value); }} required style={estiloInput} />
+                                    </div>
+                                    <div>
+                                        <label style={estiloLabel}>Descripción</label>
+                                        <input type="text" value={editDescripcion} onChange={function(e) { setEditDescripcion(e.target.value); }} style={estiloInput} />
+                                    </div>
+                                    <div>
+                                        <label style={estiloLabel}>Ubicación</label>
+                                        <input type="text" value={editUbicacion} onChange={function(e) { setEditUbicacion(e.target.value); }} style={estiloInput} />
+                                    </div>
+                                    <div>
+                                        <label style={estiloLabel}>Tipo de instalación</label>
+                                        <select value={editTipoInstalacion} onChange={function(e) { setEditTipoInstalacion(e.target.value); }} style={estiloInput}>
+                                            <option value="">Seleccionar tipo</option>
+                                            <option value="IRA">IRA: Instalación Radiactiva Autorizada</option>
+                                            <option value="IRD">IRD: Instalación de Radiodiagnóstico</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style={estiloLabel}>Código de referencia</label>
+                                        <input type="text" value={editCodigoReferencia} onChange={function(e) { setEditCodigoReferencia(e.target.value); }} style={estiloInput} />
+                                    </div>
+                                    <div style={{ gridColumn: '1 / -1' }}>
+                                        <label style={estiloLabel}>Dirección</label>
+                                        <input type="text" value={editDireccionInstalacion} onChange={function(e) { setEditDireccionInstalacion(e.target.value); }} style={estiloInput} />
+                                    </div>
+                                    <div style={{ gridColumn: '1 / -1' }}>
+                                        <label style={estiloLabel}>Responsable</label>
+                                        <select value={editResponsableId} onChange={function(e) { setEditResponsableId(e.target.value); }} style={estiloInput}>
+                                            <option value="">Sin responsable</option>
+                                            {responsables.map(function(r) {
+                                                return <option key={r.id} value={r.id}>{r.nombre} {r.apellidos}</option>;
+                                            })}
+                                        </select>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <input type="checkbox" id="edit_activa" checked={editActiva} onChange={function(e) { setEditActiva(e.target.checked); }} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+                                        <label htmlFor="edit_activa" style={{...estiloLabel, margin: 0 }}>Instalación activa</label>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
+                                    <button type="submit" disabled={guardandoInstalacion} style={{backgroundColor: colores.acentoBoton, color: 'white', border: 'none', borderRadius: '8px', padding: '10px 24px', fontSize: '14px', fontWeight: '600', cursor: guardandoInstalacion ? 'wait' : 'pointer', opacity: guardandoInstalacion ? 0.7 : 1 }}>
+                                        {guardandoInstalacion ? 'Guardando' : 'Guardar cambios'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
 
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                         <h1 style={{color: colores.acento, fontSize: '13px', cursor: 'pointer'}}>
@@ -472,6 +617,7 @@ export default function Instalacion(){
                             </form>
                         </div>
                     )}
+
                     {/* Lista de dispositivos */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px'}}>
                         {dispositivos.map(function(dispositivo){

@@ -13,4 +13,6 @@ router.delete('/:id', authenticateToken, requireAdmin, configEmailController.eli
 
 router.post('/test', authenticateToken, requireAdmin, configEmailController.testEmail);
 
+router.put('/:id', authenticateToken, requireAdmin, configEmailController.editarConfigEmail);
+
 module.exports = router;

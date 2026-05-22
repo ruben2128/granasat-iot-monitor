@@ -137,4 +137,43 @@ async function testEmail(req, res){
     }
 }
 
-module.exports = { obtenerConfigEmail, guardarConfigEmail, activarConfigEmail, eliminarConfigEmail, testEmail };
+async function editarConfigEmail(req,res) {
+    try {
+        if(req.user.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'No tienes permiso'});
+        }
+
+        const {id} = req.params;
+        const {smtp_host, smtp_port, smtp_user, smtp_pass, smtp_secure, nombre} = req.body;
+
+        const config = await ConfigEmail.findByPk(id);
+
+        if(!config){
+            return res.status(404).json({error: 'Configuración no encontrada'});
+        }
+
+        const contraseñaCodificada = smtp_pass ? Buffer.from(smtp_pass).toString('base64') : config.smtp_pass;
+
+        await config.update({
+            nombre: nombre ?? config.nombre,
+            smtp_host: smtp_host ?? config.smtp_host,
+            smtp_port: smtp_port ? parseInt(smtp_port) : config.smtp_port,
+            smtp_user: smtp_user ?? config.smtp_user,
+            smtp_pass: contraseñaCodificada,
+            smtp_secure: smtp_secure ?? config.smtp_secure,
+        });
+
+        if(config.activo) {
+            const pass = Buffer.from(config.smtp_pass, 'base64').toString('utf8');
+        
+            emailService.actualizarTransporter(config.smtp_host, config.smtp_port, config.smtp_user, pass, config.smtp_secure);
+        }
+
+        res.json({ message: 'Configuración actualizada correctamente', config});
+    } catch (error) {
+        console.error('Error al editar la configuración SMTP', error);
+        res.status(500).json({error: 'Error al editar la configuración'});
+    }
+}
+
+module.exports = { obtenerConfigEmail, guardarConfigEmail, activarConfigEmail, eliminarConfigEmail, testEmail, editarConfigEmail };

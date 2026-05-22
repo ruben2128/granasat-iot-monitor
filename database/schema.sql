@@ -269,7 +269,7 @@ COMMENT ON TABLE public.informes IS 'Informes PDF generados mensualmente';
 CREATE TABLE public.instalaciones (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     nombre character varying(100) NOT NULL,
-    codigo character varying(20) NOT NULL,
+    codigo character varying(100) NOT NULL,
     descripcion text,
     ubicacion character varying(255),
     responsable_id uuid,
@@ -285,7 +285,6 @@ CREATE TABLE public.instalaciones (
 ALTER TABLE public.instalaciones OWNER TO tfg_user;
 
 COMMENT ON TABLE public.instalaciones IS 'Instalaciones físicas donde están los IoT';
-
 
 --
 -- Name: log_accesos; Type: TABLE; Schema: public; Owner: tfg_user

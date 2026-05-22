@@ -29,9 +29,10 @@ export default function ConfigEmail() {
     const colores = obtenerColores(tema);
     const verdeExito = tema === 'oscuro' ? '#4ade80' : '#15803d';
     const textoSecundarioAccesible = tema === 'oscuro' ? '#a0a0a0' : '#696969';
-    const [emailTest, setEmailTest] = useState('');
-    const [testCargando, setTestCargando] = useState(false);
-    const [testResultado, setTestResultado] = useState(null);
+    const[emailTest, setEmailTest] = useState('');
+    const[testCargando, setTestCargando] = useState(false);
+    const[testResultado, setTestResultado] = useState(null);
+    const[editandoId, setEditandoId] = useState(null);
 
     async function cargarDatos(){
         const token = localStorage.getItem('token');
@@ -55,17 +56,31 @@ export default function ConfigEmail() {
 
     async function handleGuardar(e){
         e.preventDefault();
-        setError(''); setExito('');
+        setError(''); 
+        setExito('');
         try {
             const token = localStorage.getItem('token');
-            await api.post('/config-email', {
-                nombre, smtp_host: smtpHost, smtp_port: smtpPort,
-                smtp_user: smtpUser, smtp_pass: smtpPass, smtp_secure: smtpSecure
-            }, { headers: { Authorization: `Bearer ${token}` }});
-            setExito('Configuración guardada y activada correctamente');
+            
+            if(editandoId){
+                //Editar configuracion existenten
+                await api.put(`/config-email/${editandoId}`, {nombre, smtp_host: smtpHost, smtp_port: smtpPort,smtp_user: smtpUser, smtp_pass: smtpPass || undefined, smtp_secure: smtpSecure}, { headers: { Authorization: `Bearer ${token}` }});
+                
+                setExito('Configuración actualizada correctamente');
+            } else {
+                //Crear nueva
+                await api.post('/config-email', { nombre, smtp_host: smtpHost, smtp_port: smtpPort,smtp_user: smtpUser, smtp_pass: smtpPass, smtp_secure: smtpSecure}, { headers: { Authorization: `Bearer ${token}` }});
+                
+                setExito('Configuración guardada y activada correctamente');
+            }
+            
             setMostrarFormulario(false);
-            setNombre(''); setSmtpHost(''); setSmtpPort('587');
-            setSmtpUser(''); setSmtpPass(''); setSmtpSecure(false);
+            setEditandoId(null);
+            setNombre(''); 
+            setSmtpHost(''); 
+            setSmtpPort('587');
+            setSmtpUser(''); 
+            setSmtpPass(''); 
+            setSmtpSecure(false);
             await cargarDatos();
         } catch(err){
             setError(err.response?.data?.error || 'Error al guardar');
@@ -110,6 +125,19 @@ export default function ConfigEmail() {
         } finally {
             setTestCargando(false);
         }
+    }
+
+    function handleEditar(config) {
+        setEditandoId(config.id);
+        setNombre(config.nombre || '');
+        setSmtpHost(config.smtp_host);
+        setSmtpPort(String(config.smtp_port));
+        setSmtpUser(config.smtp_user);
+        setSmtpPass(''); // no precargamos la contraseña por seguridad
+        setSmtpSecure(config.smtp_secure);
+        setMostrarFormulario(true);
+        setExito(''); 
+        setError('');
     }
 
 
@@ -160,6 +188,9 @@ export default function ConfigEmail() {
                                                     Eliminar
                                                 </button>
                                             )}
+                                            <button onClick={function() { handleEditar(config); }} style={{ backgroundColor: 'transparent', color: colores.texto, border: `1px solid ${colores.borde}`, borderRadius: '6px', padding: '4px 12px', fontSize: '12px', cursor: 'pointer'}}>
+                                                Editar
+                                            </button>
                                         </div>
                                     </div>
                                 );
@@ -199,7 +230,7 @@ export default function ConfigEmail() {
 
                     {/* Botón nueva configuración */}
                     <div style={{ marginBottom: '16px'}}>
-                        <span onClick={function() { setMostrarFormulario(!mostrarFormulario); setExito(''); setError(''); }} style={{ color: colores.acento, fontSize: '13px', cursor: 'pointer'}}>
+                        <span onClick={function() { setMostrarFormulario(!mostrarFormulario); setEditandoId(null); setExito(''); setError(''); }} style={{ color: colores.acento, fontSize: '13px', cursor: 'pointer'}}>
                             {mostrarFormulario ? 'Cancelar' : 'Nueva configuración'}
                         </span>
                     </div>
@@ -207,7 +238,9 @@ export default function ConfigEmail() {
                     {/* Formulario nueva configuración */}
                     {mostrarFormulario && (
                         <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, maxWidth: '600px'}}>
-                            <h2 style={{ color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 20px 0'}}>Nueva configuración</h2>
+                            <h2 style={{ color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 20px 0'}}>
+                                {editandoId ? 'Editar configuración' : 'Nueva configuración'}
+                            </h2>
                             <form onSubmit={handleGuardar}>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px'}}>
                                     <div style={{ gridColumn: '1 / -1'}}>
@@ -237,7 +270,7 @@ export default function ConfigEmail() {
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
                                     <button type="submit" style={{ backgroundColor: colores.acentoBoton, color: 'white', border: 'none', borderRadius: '8px', padding: '10px 24px', fontSize: '14px', fontWeight: '600', cursor: 'pointer'}}>
-                                        Guardar y activar
+                                        {editandoId ? 'Guardar cambios' : 'Guardar y activar'}
                                     </button>
                                 </div>
                             </form>

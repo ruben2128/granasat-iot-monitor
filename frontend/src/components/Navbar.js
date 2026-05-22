@@ -6,6 +6,17 @@ export default function Navbar({ usuario, tema, setTema, colores }){
     const rutaActual = router.pathname;
     const rutasNav = ['dashboard', 'alertas', 'informes', 'mapa'];
     const [menuAbierto, setMenuAbierto] = useState(false);
+    const [adminMenuAbierto, setAdminMenuAbierto] = useState(false);
+
+    const rutasAdmin = [
+        {ruta: 'usuarios', label: 'Usuarios'},
+        {ruta: 'log', label: 'Logs'},
+        {ruta: 'config-email', label: 'Config. Email'},
+        {ruta: 'email-historial', label: 'Historial Email'}
+    ];
+
+    //Comprobar si la ruta actual es una ruta de admin
+    const enRutaAdmin = rutasAdmin.some(function(r) {return rutaActual === '/' + r.ruta;});
 
     function logout(){
         localStorage.removeItem('token');
@@ -14,11 +25,9 @@ export default function Navbar({ usuario, tema, setTema, colores }){
         router.push('/');
     }
 
-    if(usuario && usuario.role === 'ADMIN'){
-        rutasNav.push('usuarios');
-        rutasNav.push('log');
-        rutasNav.push('email-historial');
-        rutasNav.push('config-email');
+    function cerrarMenus(){
+        setMenuAbierto(false);
+        setAdminMenuAbierto(false);
     }
 
     return(
@@ -42,6 +51,28 @@ export default function Navbar({ usuario, tema, setTema, colores }){
                         </button>
                     );
                 })}
+            
+                {/* Menu desplegable de Administracion */}
+                {usuario && usuario.role === 'ADMIN' &&  (
+                    <div style={{position: 'relative'}}>
+                        <button onClick={function() {setAdminMenuAbierto(!adminMenuAbierto); setMenuAbierto(false);}} style={{padding: '6px 14px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: enRutaAdmin ? '600' : '400', backgroundColor: enRutaAdmin ? colores.acentoBoton : 'transparent', color: enRutaAdmin ? 'white' : colores.texto, display: 'flex', alignItems: 'center', gap: '4px'}}>
+                            Administración
+                        </button>
+
+                        {adminMenuAbierto && (
+                            <div style={{position: 'absolute', top: '40px', left: 0, backgroundColor: colores.tarjeta, border: `1px solid ${colores.border}`, borderRadius: '10px', padding: '8px', minWidth: '180px', zIndex: 100, boxShadow: '0 4px 12px rgba(0,0,0,0.3'}}>
+                                {rutasAdmin.map(function(item){
+                                    const activa = rutaActual === '/' + item.ruta;
+                                    return (
+                                        <button key={item.ruta} onClick={function() {setAdminMenuAbierto(false); router.push('/' + item.ruta);}} style ={{width: '100%', padding: '8px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: activa ? '600' : '400', backgroundColor: activa ? colores.acentoBoton : 'transparent', color: activa ? 'white' : colores.texto, textAlign: 'left'}}>
+                                            {item.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
             
             {/*Usuario y logout*/}
@@ -75,7 +106,7 @@ export default function Navbar({ usuario, tema, setTema, colores }){
                             <div onClick={function() { setMenuAbierto(!menuAbierto); }} style={{ cursor: 'pointer' }}>
                                 {usuario.avatar ? (
                                     <img
-                                        src={`${process.env.NEXT_PUBLIC_API_URL.replace('/api', '')}${usuario.avatar}`}
+                                        src={`${usuario.avatar}`}
                                         alt={usuario.nombre}
                                         style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
                                     />

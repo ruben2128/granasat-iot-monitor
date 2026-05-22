@@ -21,8 +21,12 @@ export default function Dashboard() {
     const[alertas, setAlertas] = useState('');
     const[mostrarFormulario, setMostrarFormulario] = useState(false);
     const[error, setError] = useState('');
+    const[tipoInstalacion, setTipoInstalacion] = useState('');
+    const[direccionInstalacion, setDireccionInstalacion] = useState('');
+    const[codigoReferencia, setCodigoReferencia] = useState('');
     const router = useRouter();
-    const[tema, setTema] = useState(function() {
+    const[espacioDocker, setEspacioDocker] = useState([]);
+        const[tema, setTema] = useState(function() {
         if(typeof window !== 'undefined'){
             return localStorage.getItem('tema') || 'oscuro';
         }
@@ -30,13 +34,12 @@ export default function Dashboard() {
         return 'oscuro'
     });
     const colores = obtenerColores(tema);
-    const[espacioDocker, setEspacioDocker] = useState([]);
 
     async function handleRegistrarInstalacion(e){
         e.preventDefault();
         try{
             const token = localStorage.getItem('token');
-            await api.post('/instalaciones', {nombre, codigo, descripcion, ubicacion, responsable_id: responsableId}, { headers: { Authorization: `Bearer ${token}` }});
+            await api.post('/instalaciones', {nombre, codigo, descripcion, ubicacion, responsable_id: responsableId, tipo_instalacion: tipoInstalacion || null, direccion_instalacion: direccionInstalacion || null, codigo_referencia: codigoReferencia || null}, { headers: { Authorization: `Bearer ${token}` }});
             
             const respuesta = await api.get('/instalaciones', { headers: { Authorization: `Bearer ${token}` } });
             setInstalaciones(respuesta.data.instalaciones);
@@ -45,6 +48,9 @@ export default function Dashboard() {
             setCodigoInstalacion('');
             setDescripcionInstalacion('');
             setUbicacionInstalacion('');    
+            setTipoInstalacion('');
+            setDireccionInstalacion('');
+            setCodigoReferencia('');
         } catch (err) {
             console.log('Error en el registro de la instalación:', err);
             setError('Error en el registro');
@@ -171,30 +177,7 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    {/* Espacio docker */}
-                    {usuario.role === 'ADMIN' && espacioDocker.length > 0 && (
-                        <div style={{ marginTop: '32px'}}>
-                            <h2 style = {{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 16px 0', borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px'}}>
-                                ESPACIO EN DISCO (DOCKER)
-                            </h2>
-                            <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px'}}>
-                                {espacioDocker.map(function (vol,index){
-                                    return(
-                                        <div key={index} style={{backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`}}>
-                                            <p style={{ color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0'}}>
-                                                {vol.nombre.toUpperCase()}
-                                            </p>
-                                            <p style={{ color: colores.texto, fontSize: '24px', fontWeight: '700', margin: 0}}>
-                                                {vol.tamanio}
-                                            </p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
-                    {/*Formulario solo para ADMIN*/}
+                     {/*Formulario solo para ADMIN*/}
                     { mostrarFormulario && usuario.role === 'ADMIN' && (
                         <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginTop: '24px'}}>
                             <h2 style={{color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 20px 0'}}> 
@@ -226,6 +209,34 @@ export default function Dashboard() {
                                     </label>
                                     <input id="ubicacion" type="text" value={ubicacion} onChange={function(e) {setUbicacionInstalacion(e.target.value)}} style={{width:'100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}} />
                                 </div>
+                                <div>
+                                    <label htmlFor="tipo_instalacion" style={{color: colores.texto, fontSize: '11px', fontWeight:'600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
+                                        Tipo de instalación
+                                    </label>
+                                    <select id="tipo_instalacion" value={tipoInstalacion} onChange={function(e) {setTipoInstalacion(e.target.value)}} style={{width: '100%', backgroundColor: colores.fondo, border: `1px solic ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}>
+                                        <option value="">
+                                            Seleccionar tipo
+                                        </option>
+                                        <option value="IRA">
+                                            IRA: Instalación Radiactiva Autorizada
+                                        </option>
+                                        <option value="IRD">
+                                            IRD: Instalación de Radiodiagnóstico
+                                        </option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="codigo_referencia" style={{color: colores.texto, fontSize: '11px', fontWeight:'600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
+                                        Código de referencia
+                                    </label>
+                                    <input id="codigo_referencia" type="text" value={codigoReferencia} onChange={function(e) {setCodigoReferencia(e.target.value)}} style={{width:'100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}} />
+                                </div>
+                                <div style={{gridColumn: '1 / -1'}}>
+                                    <label htmlFor="direccion_instalacion" style={{color: colores.texto, fontSize: '11px', fontWeight:'600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
+                                        Dirección
+                                    </label>
+                                    <input id="direccion_instalacion" type="text" value={direccionInstalacion} onChange={function(e) {setDireccionInstalacion(e.target.value)}} style={{width:'100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}} />
+                                </div>
                                 <div style={{gridColumn: '1 / -1'}}>
                                     <label htmlFor="responsable" style={{color: colores.texto, fontSize: '11px', fontWeight:'600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
                                         Responsable
@@ -252,6 +263,29 @@ export default function Dashboard() {
                                     </button>
                                 </div>
                             </form>
+                        </div>
+                    )}
+
+                    {/* Espacio docker */}
+                    {usuario.role === 'ADMIN' && espacioDocker.length > 0 && (
+                        <div style={{ marginTop: '32px'}}>
+                            <h2 style = {{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 16px 0', borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px'}}>
+                                ESPACIO EN DISCO (DOCKER)
+                            </h2>
+                            <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px'}}>
+                                {espacioDocker.map(function (vol,index){
+                                    return(
+                                        <div key={index} style={{backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`}}>
+                                            <p style={{ color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0'}}>
+                                                {vol.nombre.toUpperCase()}
+                                            </p>
+                                            <p style={{ color: colores.texto, fontSize: '24px', fontWeight: '700', margin: 0}}>
+                                                {vol.tamanio}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
                 </main>

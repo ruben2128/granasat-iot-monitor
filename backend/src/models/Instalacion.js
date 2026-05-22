@@ -14,7 +14,7 @@ const Instalacion = sequelize.define('Instalacion', {
     },
     //Código corto para identificar rápidamente la instalación
     codigo: {
-        type: DataTypes.STRING(20),
+        type: DataTypes.STRING(100),
         unique: true,
         allowNull: false
     },

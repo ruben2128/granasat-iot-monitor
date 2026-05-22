@@ -233,7 +233,7 @@ export default function Usuarios() {
                                 <div key={u.id} style={{ display: 'grid', gridTemplateColumns: '50px 2fr 2fr 1fr 1fr 1fr', padding: '16px 20px', borderBottom: `1px solid ${colores.borde}`, alignItems: 'center'}}>
                                     <div style={{ position: 'relative', cursor: 'pointer' }} onClick={function() { document.getElementById(`avatar-input-${u.id}`).click(); }}>
                                         {u.avatar ? (
-                                            <img src={`${process.env.NEXT_PUBLIC_API_URL.replace('/api', '')}${u.avatar}`} alt={u.nombre} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover'}}/>
+                                            <img src={u.avatar} alt={u.nombre} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover'}}/>
                                         ) : (
                                             <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: colores.borde, display: 'flex', alignItems: 'center', justifyContent: 'center', color: colores.textoSecundario, fontSize: '14px', fontWeight: '600'}}>
                                                 {u.nombre ? u.nombre.charAt(0).toUpperCase() : '?'}

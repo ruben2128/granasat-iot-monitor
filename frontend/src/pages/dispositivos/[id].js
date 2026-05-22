@@ -323,6 +323,21 @@ export default function Dispositivo(){
                                         {modoEdicion ? 'Cerrar' : 'Editar'}
                                     </button>
                                 )}
+                                {(usuario?.role === 'ADMIN' || usuario?.role === 'RESPONSABLE') && (
+                                    <button onClick={async function() {
+                                        if(!confirm('¿Seguro que quieres eliminar este dispositivo?')) return;
+                                        try {
+                                            const token = localStorage.getItem('token');
+                                            
+                                            await api.delete(`/dispositivos/${id}`, { headers: { Authorization: `Bearer ${token}` }});
+                                            router.back();
+                                        } catch(err) {
+                                            alert(err.response?.data?.error || 'Error al eliminar el dispositivo');
+                                        }
+                                    }} style={{ background: 'none', border: '1px solid #f87171', color: '#f87171', borderRadius: '8px', padding: '4px 14px', fontSize: '12px', cursor: 'pointer' }}>
+                                        Eliminar
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
