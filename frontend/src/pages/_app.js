@@ -1,8 +1,8 @@
 import "@/styles/globals.css";
 
 // Versión y fecha de última modificación — actualizar manualmente en cada commit
-const VERSION = 'v1.2.5';
-const FECHA = '20/05/2026';
+const VERSION = 'v1.3';
+const FECHA = '27/05/2026';
 
 export default function App({ Component, pageProps }) {
   return (
