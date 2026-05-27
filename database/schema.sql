@@ -269,7 +269,7 @@ COMMENT ON TABLE public.informes IS 'Informes PDF generados mensualmente';
 CREATE TABLE public.instalaciones (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     nombre character varying(100) NOT NULL,
-    codigo character varying(100) NOT NULL,
+    categoria character varying(100) NOT NULL,
     descripcion text,
     ubicacion character varying(255),
     responsable_id uuid,
@@ -315,7 +315,8 @@ CREATE TABLE public.usuarios (
     nombre character varying(100),
     apellidos character varying(100),
     email character varying(100) NOT NULL,
-    movil character varying(20),
+    telefono_movil character varying(20),
+    telefono_fijo character varying(20),
     activo boolean DEFAULT true,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
@@ -359,7 +360,7 @@ CREATE VIEW public.v_dispositivos_completos AS
     d.activo AS dispositivo_activo,
     d.ultima_conexion,
     i.nombre AS instalacion_nombre,
-    i.codigo AS instalacion_codigo,
+    i.categoria AS instalacion_categoria,
     (((u.nombre)::text || ' '::text) || (u.apellidos)::text) AS responsable_nombre,
     u.email AS responsable_email
    FROM ((public.dispositivos d
@@ -392,9 +393,6 @@ ALTER TABLE ONLY public.informes
     ADD CONSTRAINT informes_pkey PRIMARY KEY (id);
 
 ALTER TABLE ONLY public.instalaciones
-    ADD CONSTRAINT instalaciones_codigo_key UNIQUE (codigo);
-
-ALTER TABLE ONLY public.instalaciones
     ADD CONSTRAINT instalaciones_pkey PRIMARY KEY (id);
 
 ALTER TABLE ONLY public.log_accesos
@@ -425,7 +423,7 @@ CREATE INDEX idx_dispositivos_mac ON public.dispositivos USING btree (mac_addres
 CREATE INDEX idx_informes_instalacion ON public.informes USING btree (instalacion_id);
 CREATE INDEX idx_informes_periodo ON public.informes USING btree (anio DESC, mes DESC);
 CREATE UNIQUE INDEX idx_informes_unique ON public.informes USING btree (instalacion_id, anio, mes);
-CREATE INDEX idx_instalaciones_codigo ON public.instalaciones USING btree (codigo);
+CREATE INDEX idx_instalaciones_categoria ON public.instalaciones USING btree (categoria);
 CREATE INDEX idx_instalaciones_responsable ON public.instalaciones USING btree (responsable_id);
 CREATE INDEX idx_usuarios_email ON public.usuarios USING btree (email);
 CREATE INDEX idx_usuarios_role ON public.usuarios USING btree (role);
@@ -473,6 +471,8 @@ ALTER TABLE ONLY public.instalaciones
 ALTER TABLE ONLY public.log_accesos
     ADD CONSTRAINT log_accesos_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id) ON DELETE CASCADE;
 
+
+ALTER TABLE instalaciones ADD CONSTRAINT instalaciones_codigo_referencia_key UNIQUE (codigo_referencia);
 
 --
 -- PostgreSQL database dump complete

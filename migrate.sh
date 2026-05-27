@@ -62,6 +62,28 @@ DROP VIEW IF EXISTS v_dispositivos_completos;
 ALTER TABLE instalaciones ALTER COLUMN codigo TYPE VARCHAR(100);
 CREATE VIEW public.v_dispositivos_completos AS SELECT d.id, d.mac_address, d.nombre AS dispositivo_nombre, d.activo AS dispositivo_activo, d.ultima_conexion, i.nombre AS instalacion_nombre, i.codigo AS instalacion_codigo, (((u.nombre)::text || ' '::text) || (u.apellidos)::text) AS responsable_nombre, u.email AS responsable_email FROM ((public.dispositivos d LEFT JOIN public.instalaciones i ON ((d.instalacion_id = i.id))) LEFT JOIN public.usuarios u ON ((i.responsable_id = u.id)));
 
+ALTER TABLE instalaciones RENAME COLUMN codigo TO categoria;
+ALTER INDEX IF EXISTS instalaciones_codigo_key RENAME TO instalaciones_categoria_key;
+ALTER INDEX IF EXISTS idx_instalaciones_codigo RENAME TO idx_instalaciones_categoria;
+ALTER TABLE instalaciones DROP CONSTRAINT IF EXISTS instalaciones_categoria_key;
+DROP INDEX IF EXISTS idx_instalaciones_categoria;
+ALTER TABLE instalaciones ADD CONSTRAINT instalaciones_codigo_referencia_key UNIQUE (codigo_referencia);
+
+DROP VIEW IF EXISTS v_dispositivos_completos;
+CREATE VIEW public.v_dispositivos_completos AS
+ SELECT d.id, d.mac_address, d.nombre AS dispositivo_nombre, d.activo AS dispositivo_activo,
+    d.ultima_conexion, i.nombre AS instalacion_nombre, i.categoria AS instalacion_categoria,
+    (((u.nombre)::text || ' '::text) || (u.apellidos)::text) AS responsable_nombre,
+    u.email AS responsable_email
+   FROM ((public.dispositivos d
+     LEFT JOIN public.instalaciones i ON ((d.instalacion_id = i.id)))
+     LEFT JOIN public.usuarios u ON ((i.responsable_id = u.id)));
+
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefono_movil VARCHAR(20);
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefono_fijo VARCHAR(20);
+
+ALTER TABLE usuarios DROP COLUMN IF EXISTS movil;
+
 SELECT 'Migracion completada' AS resultado;
 EOF
 

@@ -33,13 +33,23 @@ export default function ConfigEmail() {
     const[testCargando, setTestCargando] = useState(false);
     const[testResultado, setTestResultado] = useState(null);
     const[editandoId, setEditandoId] = useState(null);
+    const[plantillaHtml, setPlantillaHtml] = useState('');
+    const[mostrarEditorPlantilla, setMostrarEditorPlantilla] = useState(false);
+    const[guardandoPlantilla, setGuardandoPlantilla] = useState(false);
+    const[exitoPlantilla, setExitoPlantilla] = useState('');
+    const[errorPlantilla, setErrorPlantilla] = useState('');
 
     async function cargarDatos(){
         const token = localStorage.getItem('token');
         const respuesta = await api.get('/config-email', { headers: { Authorization: `Bearer ${token}` }});
+        
         setConfigs(respuesta.data.configs);
         setConfigActiva(respuesta.data.configActiva);
         setFuente(respuesta.data.fuente);
+
+        const respuestaPlantilla = await api.get('/plantilla-email', {headers: { Authorization: `Bearer ${token}`}});
+        
+        setPlantillaHtml(respuestaPlantilla.data.html);    
     }
 
     useEffect(function(){
@@ -140,6 +150,24 @@ export default function ConfigEmail() {
         setError('');
     }
 
+    async function handleGuardarPlantilla(e){
+        e.preventDefault();
+        setGuardandoPlantilla(true);
+        setExitoPlantilla('');
+        setErrorPlantilla('');
+
+        try{
+            const token = localStorage.getItem('token');
+
+            await api.put('/plantilla-email', {html: plantillaHtml}, {headers: {Authorization: `Bearer ${token}`}});
+            setExitoPlantilla('Plantilla actualizada correctamente');
+        } catch(err){
+            setErrorPlantilla(err.response?.data?.error || 'Error al guardar la plantilla');
+        }finally{
+            setGuardandoPlantilla(false);
+        }
+    }
+
 
     if(!usuario) 
         return <p>Cargando...</p>;
@@ -225,6 +253,50 @@ export default function ConfigEmail() {
                             <p style={{ color: testResultado.ok ? verdeExito : '#f87171', fontSize: '13px', margin: '12px 0 0 0', fontWeight: '600'}}>
                                 {testResultado.ok ? '✓ ' : '✗ '}{testResultado.mensaje}
                             </p>
+                        )}
+                    </div>
+
+                    {/* Editor de plantilla */}
+                    <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginBottom: '24px'}}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
+                            <h2 style={{color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: 0, borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px'}}>
+                                PLANTILLA HTML DE EMAILS
+                            </h2>
+                            <span onClick={function() {setMostrarEditorPlantilla(!mostrarEditorPlantilla); }} style={{color: colores.acento, fontSize: '13px', cursor: 'pointer'}}>
+                                {mostrarEditorPlantilla ? 'Cerrar' : 'Editar plantilla'}
+                            </span>
+                        </div>
+
+                        {mostrarEditorPlantilla && (
+                            <form onSubmit={handleGuardarPlantilla}>
+                                <p style={{color: colores.textoSecundario, fontSize: '12px', margin: '0 0 12px 0'}}>
+                                    Usa <strong style={{color: colores.texto}}> {'{{titulo}}'}</strong> y <strong style={{color: colores.texto}}>{'{{contenido}}'}</strong> como variables.
+                                </p>
+                                <textarea
+                                    value = {plantillaHtml}
+                                    onChange={function(e) {setPlantillaHtml(e.target.value);}}
+                                    rows = {20}
+                                    style ={{width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '13px', boxSizing: 'border-box', fontFamily: 'monospace', resize: 'vertical'}}
+                                />
+
+                                {exitoPlantilla && 
+                                    <p style={{color: verdeExito, fontSize: '13px', margin:'8px 0 0 0 '}}>
+                                        {exitoPlantilla}
+                                    </p>
+                                }
+
+                                {errorPlantilla && 
+                                    <p style={{color: '#f87171', fontSize: '13px', margin:'8px 0 0 0 '}}>
+                                        {errorPlantilla}
+                                    </p>
+                                }
+
+                                <div style={{display: 'flex', justifyContent: 'flex-end', marginTop:'16px'}}>
+                                    <button type="submit" disabled={guardandoPlantilla} style={{backgroundColor: colores.acentoBoton, color:'white', border: 'none', borderRadius: '8px', padding: '10px 24px', fontSize: '14px', fontWeight: '600', cursor: guardandoPlantilla ? 'wait' : 'pointer', opacity: guardandoPlantilla ? 0.7 : 1}}>
+                                        {guardandoPlantilla ? 'Guardando...' : 'Guardar plantilla'}
+                                    </button>
+                                </div>
+                            </form>
                         )}
                     </div>
 

@@ -3,7 +3,10 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import Navbar from "../components/Navbar";
 import api from "../lib/api";
-import {temaOscuro, temaClaro, temaAltoContraste, temaAzul, obtenerColores} from '../lib/temas';
+import {obtenerColores} from '../lib/temas';
+import dynamic from "next/dynamic";
+
+const MapaLeaflet = dynamic(function(){return import('../components/MapaLeaflet');}, {ssr: false, loading: function() {return <p>Cargando mapa...</p>}});
 
 export default function Mapa() {
     const router = useRouter();
@@ -62,45 +65,4 @@ export default function Mapa() {
             </div>
         </>
     );
-}
-
-function MapaLeaflet({ dispositivos }) {
-    useEffect(function() {
-        // Importar Leaflet solo en el cliente
-        if(typeof window === 'undefined') return;
-
-        const L = require('leaflet');
-
-        // Fix para los iconos de Leaflet con Next.js
-        delete L.Icon.Default.prototype._getIconUrl;
-        L.Icon.Default.mergeOptions({
-            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-        });
-
-        // Inicializar el mapa
-        const mapa = L.map('mapa-container').setView([37.1773, -3.5986], 15);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(mapa);
-
-        // Añadir marcadores
-        dispositivos.forEach(function(dispositivo) {
-            const marker = L.marker([parseFloat(dispositivo.latitud), parseFloat(dispositivo.longitud)]);
-            marker.bindPopup(`
-                <strong>${dispositivo.nombre}</strong><br/>
-                ${dispositivo.mac_address}<br/>
-                ${dispositivo.altura ? `Altura: ${dispositivo.altura}m` : ''}
-            `);
-            marker.addTo(mapa);
-        });
-
-        return function() {
-            mapa.remove();
-        };
-    }, [dispositivos]);
-
-    return <div id="mapa-container" style={{ width: '100%', height: '600px' }}/>;
 }

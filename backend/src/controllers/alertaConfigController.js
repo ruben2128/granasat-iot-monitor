@@ -14,7 +14,7 @@ async function obtenerAlertas(req, res) {
                 include: [{
                     model: Instalacion,
                     as: 'instalacion',
-                    attributes: ['id', 'nombre', 'codigo']
+                    attributes: ['id', 'nombre', 'codigo_referencia']
                 }],
                 order: [['created_at', 'DESC']]
             });
@@ -23,7 +23,7 @@ async function obtenerAlertas(req, res) {
                 include: [{
                     model: Instalacion,
                     as: 'instalacion',
-                    attributes: ['id', 'nombre', 'codigo'],
+                    attributes: ['id', 'nombre', 'codigo_referencia'],
                     where: { responsable_id: req.user.id },
                     required: true 
                 }],
@@ -51,7 +51,7 @@ async function obtenerAlertaPorId(req, res) {
             include: [{
                 model: Instalacion,
                 as: 'instalacion',
-                attributes: ['id', 'nombre', 'codigo', 'responsable_id']
+                attributes: ['id', 'nombre', 'responsable_id']
             }]
         });
 
@@ -102,7 +102,7 @@ async function crearAlerta(req, res) {
             include: [{
                 model: Instalacion,
                 as: 'instalacion',
-                attributes: ['id', 'nombre', 'codigo']
+                attributes: ['id', 'nombre']
             }]
         });
 
@@ -156,7 +156,7 @@ async function actualizarAlerta(req,res){
             { include: [{
                 model: Instalacion, 
                 as:'instalacion', 
-                attributes: ['id', 'nombre', 'codigo']
+                attributes: ['id', 'nombre']
             }]
         });
 

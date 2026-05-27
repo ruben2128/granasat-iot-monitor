@@ -80,16 +80,18 @@ async function obtenerInstalacionPorId(req, res) {
 */
 async function crearInstalacion(req, res) {
     try{
-        const {nombre, codigo, descripcion, ubicacion, responsable_id, tipo_instalacion, direccion_instalacion, codigo_referencia} = req.body;
+        const {nombre, categoria, descripcion, ubicacion, responsable_id, tipo_instalacion, direccion_instalacion, codigo_referencia} = req.body;
 
-        if(!nombre || !codigo || !responsable_id) {
-            return res.status(400).json({ error: 'nombre, codigo y responsable_id son obligatorios'});
+        if(!nombre || !categoria || !responsable_id) {
+            return res.status(400).json({ error: 'El nombre, la categoría y el responsable son obligatorios'});
         }
 
-        const existe = await Instalacion.findOne({ where: { codigo: codigo.toUpperCase()}});
+        if(codigo_referencia){
+            const existe = await Instalacion.findOne({ where: { codigo_referencia: codigo_referencia.toUpperCase()}});
 
-        if(existe) {
-            return res.status(409).json({ error: `El código '${codigo}' ya está en uso` });
+            if(existe) {
+                return res.status(409).json({ error: `El código de referencia '${codigo_referencia}' ya está en uso` });
+            }
         }
 
         if(responsable_id){
@@ -106,7 +108,7 @@ async function crearInstalacion(req, res) {
 
         const instalacion = await Instalacion.create({
             nombre,
-            codigo: codigo.toUpperCase(),
+            categoria: categoriad.toUpperCase(),
             descripcion,
             ubicacion,
             responsable_id: responsable_id || null,
@@ -142,18 +144,18 @@ async function actualizarInstalacion(req,res){
 
     try{
         const { id } = req.params;
-        const {nombre, codigo, descripcion, ubicacion, responsable_id, activa, tipo_instalacion, direccion_instalacion, codigo_referencia} = req.body;
+        const {nombre, categoria, descripcion, ubicacion, responsable_id, activa, tipo_instalacion, direccion_instalacion, codigo_referencia} = req.body;
         const instalacion = await Instalacion.findByPk(id);
         
         if(!instalacion){
             return res.status(404).json({ error: 'Instalacion no encontrada'});
         }
 
-        if(codigo && codigo.toUpperCase() !== instalacion.codigo){
-            const existe = await Instalacion.findOne({where: { codigo: codigo.toUpperCase()}});
+        if(codigo_referencia && codigo_referencia.toUpperCase() !== instalacion.codigo_referencia){
+            const existe = await Instalacion.findOne({where: { codigo_referencia: codigo_referencia.toUpperCase()}});
             
             if(existe){
-                return res.status(409).json({ error: `El codigo '${codigo}' ya existe` });
+                return res.status(409).json({ error: `El codigo de referencia '${codigo_referencia}' ya existe` });
             }
         }
 
@@ -171,7 +173,7 @@ async function actualizarInstalacion(req,res){
 
         await instalacion.update({
             nombre: nombre ?? instalacion.nombre,
-            codigo: codigo ? codigo.toUpperCase() : instalacion.codigo,
+            categoria: categoria ? categoria.toUpperCase() : instalacion.categoria,
             descripcion: descripcion ?? instalacion.descripcion,
             ubicacion: ubicacion ?? instalacion.ubicacion,
             responsable_id: responsable_id ?? instalacion.responsable_id,

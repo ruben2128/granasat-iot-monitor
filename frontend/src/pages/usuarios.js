@@ -18,7 +18,8 @@ export default function Usuarios() {
     const[role, setRole] = useState('RESPONSABLE');
     const[nombre, setNombre] = useState('');
     const[apellidos, setApellidos] = useState('');
-    const[movil, setMovil] = useState('');
+    const[telefonoMovil, setTelefonoMovil] = useState('');
+    const[telefonoFijo, setTelefonoFijo] = useState('');
     const[dispositivos, setDispositivos] = useState([]);
     const[instalaciones, setInstalaciones] = useState([]);
     const router = useRouter();
@@ -75,7 +76,7 @@ export default function Usuarios() {
 
         try{
             const token = localStorage.getItem('token');
-            await api.post('/auth/register', {username, email, password, role, nombre, apellidos, movil}, {headers: {Authorization: `Bearer ${token}`}});
+            await api.post('/auth/register', {username, email, password, role, nombre, apellidos, telefono_movil: telefonoMovil, telefono_fijo: telefonoFijo}, {headers: {Authorization: `Bearer ${token}`}});
             
             const respuesta = await api.get('/usuarios', {headers: {Authorization: `Bearer ${token}`}});
             setUsuarios(respuesta.data.usuarios);
@@ -85,13 +86,14 @@ export default function Usuarios() {
             setPassword('');
             setNombre('');
             setApellidos('');
-            setMovil('');
+            setTelefonoFijo('');
+            setTelefonoMovil('');
             setMostrarFormulario(false);
             setExito('Usuario creado correctamente');
         
         } catch (err){
             console.log('Error al crear usuario: ', err);
-            setError('Error al crear el usuario');
+            setError(err.response?.data?.error || 'Error al crear el usuario');
         }
     }
 
@@ -196,8 +198,12 @@ export default function Usuarios() {
                                         <input id="password" type="password" value={password} onChange={function(e) { setPassword(e.target.value); }} style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
                                     </div>
                                     <div>
-                                        <label htmlFor="movil" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>MÓVIL</label>
-                                        <input id="movil" type="text" value={movil} onChange={function(e) { setMovil(e.target.value); }} style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
+                                        <label htmlFor="telefono_movil" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>TELÉFONO MÓVIL</label>
+                                        <input id="telefono_movil" type="text" value={telefonoMovil} onChange={function(e) { setTelefonoMovil(e.target.value); }} style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="telefono_fijo" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>TELÉFONO FIJO</label>
+                                        <input id="telefono_fijo" type="text" value={telefonoFijo} onChange={function(e) { setTelefonoFijo(e.target.value); }} style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
                                     </div>
                                     <div style={{ gridColumn: '1 / -1'}}>
                                         <label htmlFor="role" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>ROL</label>

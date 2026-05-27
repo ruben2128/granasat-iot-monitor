@@ -4,6 +4,7 @@ const Dispositivo = require('./Dispositivo');
 const AlertaConfig = require ('./AlertaConfig');
 const AlertaHistorial = require('./AlertaHistorial');
 const Informe = require('./Informe');
+const PlantillaEmail = require('./PlantillaEmail');
 
 // ==========================================
 // RELACIONES
@@ -72,4 +73,4 @@ Informe.belongsTo(Instalacion, {
     as: 'instalacion'
 });
 
-module.exports = {Usuario, Instalacion, Dispositivo, AlertaConfig, AlertaHistorial, Informe};
+module.exports = {Usuario, Instalacion, Dispositivo, AlertaConfig, AlertaHistorial, Informe, PlantillaEmail};

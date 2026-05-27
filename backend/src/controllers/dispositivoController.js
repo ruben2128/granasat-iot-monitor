@@ -23,7 +23,7 @@ async function obtenerDispositivos(req, res) {
                 include: [{
                     model: Instalacion,
                     as: 'instalacion',
-                    attributes: ['id', 'nombre', 'codigo']
+                    attributes: ['id', 'nombre', 'categoria']
                 }],
                 order: [['created_at', 'DESC']]
             });
@@ -34,7 +34,7 @@ async function obtenerDispositivos(req, res) {
                 include: [{
                     model: Instalacion,
                     as: 'instalacion',
-                    attributes: ['id', 'nombre', 'codigo'],
+                    attributes: ['id', 'nombre', 'categoria'],
                     where: { responsable_id: req.user.id },
                     required: true // INNER JOIN: solo dispositivos que tengan instalacion del responsable
                 }],
@@ -64,7 +64,7 @@ async function obtenerDispositivoPorId(req, res) {
             include: [{
                 model: Instalacion,
                 as: 'instalacion',
-                attributes: ['id', 'nombre', 'codigo', 'responsable_id']
+                attributes: ['id', 'nombre', 'categoria', 'responsable_id']
             }]
         });
 
@@ -91,10 +91,12 @@ async function crearDispositivo(req, res) {
     try {
         const { mac_address, nombre, descripcion, instalacion_id, hw_version, fw_version, fecha_instalacion, notas, latitud, longitud, altura, nivel_bateria, titular_id, ip_registro, fecha_caducidad_ip, marca_comercial, modelo_electronica, num_serie_electronica, num_serie_sonda, tipo_detector, calibrado, fecha_ultima_calibracion, fecha_proxima_calibracion, verificacion_periodica, periodicidad_verificacion, medida_continuo, unidades_medida, factor_correccion, zona_radiologica } = req.body;
 
-        console.log('Coordenadas recibidas:', { latitud, longitud, altura });
-
+        console.log('BODY:', req.body);
+        console.log('VALORES BOOLEAN:', { calibrado, verificacion_periodica, medida_continuo });
+        console.log('TIPOS:', { calibrado: typeof calibrado, verificacion_periodica: typeof verificacion_periodica, medida_continuo: typeof medida_continuo });
+        
         if (!mac_address || !nombre) {
-            return res.status(400).json({ error: 'mac_address y nombre son obligatorios' });
+            return res.status(400).json({ error: 'La direccion MAC y el nombre son obligatorios' });
         }
 
         const macRegex = /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/; // 5 Digitos formados de 2 caracteres que pueden tener valores entre 0-9, A-F o a-f separados por dos puntos, y último digito aparte porque no tiene 2 puntos
@@ -127,7 +129,7 @@ async function crearDispositivo(req, res) {
             instalacion_id: instalacion_id || null, 
             hw_version, 
             fw_version, 
-            fecha_instalacion, 
+            fecha_instalacion : fecha_instalacion || null , 
             notas, 
             latitud: latitud ? parseFloat(latitud) : null, 
             longitud: longitud ? parseFloat(longitud) : null, 
@@ -140,12 +142,12 @@ async function crearDispositivo(req, res) {
             num_serie_electronica: num_serie_electronica || null,
             num_serie_sonda: num_serie_sonda || null,
             tipo_detector: tipo_detector || null,
-            calibrado : calibrado || null,
+            calibrado : calibrado === true ? true : false,
             fecha_ultima_calibracion: fecha_ultima_calibracion || null,
             fecha_proxima_calibracion: fecha_proxima_calibracion || null,
-            verificacion_periodica: verificacion_periodica || null,
+            verificacion_periodica: verificacion_periodica === true ? true : false,
             periodicidad_verificacion: periodicidad_verificacion || null,
-            medida_continuo: medida_continuo || null,
+            medida_continuo: medida_continuo === true ? true : false,
             unidades_medida: unidades_medida || 'µSv/h',
             factor_correccion: factor_correccion ? parseFloat(factor_correccion) : 1.0,
             zona_radiologica: zona_radiologica || null
@@ -155,7 +157,7 @@ async function crearDispositivo(req, res) {
             include: [{
                 model: Instalacion,
                 as: 'instalacion',
-                attributes: ['id', 'nombre', 'codigo']
+                attributes: ['id', 'nombre', 'categoria']
             }]
         });
 
@@ -166,6 +168,8 @@ async function crearDispositivo(req, res) {
 
     }catch(error){
         console.error('Error al crear el dispositivo:', error);
+        console.error('Error al crear el dispositivo:', error.message);
+        console.error('Stack:', error.stack);
         res.status(500).json({ error: 'Error al crear el dispositivo'});
     }
 }
@@ -230,7 +234,7 @@ async function actualizarDispositivo(req,res){
             { include: [{
                 model: Instalacion, 
                 as:'instalacion', 
-                attributes: ['id', 'nombre', 'codigo']
+                attributes: ['id', 'nombre', 'categoria']
             }]
         });
 

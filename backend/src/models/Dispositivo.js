@@ -111,8 +111,6 @@ const Dispositivo = sequelize.define('Dispositivo', {
         type: DataTypes.STRING(100),
         allowNull: true
     },
-
-    // ── BLOQUE 2: Calibración y verificación ─────────────────────────────
     // Indica si el equipo tiene calibración vigente
     calibrado: {
         type: DataTypes.BOOLEAN,

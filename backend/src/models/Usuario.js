@@ -37,8 +37,13 @@ const Usuario = sequelize.define('Usuario', {
       isEmail: true // Validar que tenga el formato correcto de email
     }
   },
-  movil: {
-    type: DataTypes.STRING(20)
+  telefono_movil: {
+    type: DataTypes.STRING(20),
+    allowNull: true
+  },
+  telefono_fijo: {
+    type: DataTypes.STRING(20),
+    allowNull: true
   },
   avatar: {
     type: DataTypes.STRING(255),

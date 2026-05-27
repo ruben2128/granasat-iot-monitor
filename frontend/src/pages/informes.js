@@ -211,7 +211,7 @@ export default function Informes(){
                                             </p>
                                             {informe.instalacion && (
                                                 <p style={{ color: colores.acento, fontSize: '12px', fontWeight: '600', margin: '0 0 4px 0', letterSpacing: '0.5px' }}>
-                                                    {informe.instalacion.nombre} · {informe.instalacion.codigo}
+                                                    {informe.instalacion.nombre} · {informe.instalacion.codigo_referencia}
                                                 </p>
                                             )}
                                             <p style={{ color: colores.texto, fontSize: '12px', margin: '0 0 4px 0'}}>

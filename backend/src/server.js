@@ -23,6 +23,7 @@ const logRoutes = require('./routes/logRoutes');
 const emailHistorialRoutes = require('./routes/emailHistorialRoutes');
 const configEmailRoutes = require('./routes/configEmailRoutes');
 const dockerRoutes = require('./routes/dockerRoutes');
+const plantillaEmailRoutes = require('./routes/plantillaEmailRoutes');
 
 // Crear app de Express
 const app = express();
@@ -78,6 +79,7 @@ app.use('/api/email-historial', emailHistorialRoutes);
 app.use('/api/config-email', configEmailRoutes);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/docker', dockerRoutes);
+app.use('/api/plantilla-email', plantillaEmailRoutes);
 
 // Middleware para las rutas no encontradas
 app.use((req, res) => {

@@ -11,7 +11,7 @@ async function obtenerUsuarios(req, res){
         }
         
         usuarios = await Usuario.findAll({
-            attributes: ['id', 'username', 'nombre', 'apellidos', 'email', 'role', 'activo', 'avatar'],
+            attributes: ['id', 'username', 'nombre', 'apellidos', 'email', 'role', 'activo', 'avatar', 'telefono_movil', 'telefono_fijo'],
             order: [['created_at', 'DESC']]
         });
 

@@ -11,13 +11,13 @@ const LogAcceso = require('../models/LogAcceso');
 */
 async function registrarUsuario(req, res) {
   try {
-    const { username, email, password, role, nombre, apellidos, movil } = req.body;
+    const { username, email, password, role, nombre, apellidos, telefono_movil, telefono_fijo } = req.body;
     
 
     // Validar datos obligatorios
     if (!username || !email || !password || !role) {
       return res.status(400).json({
-        error: 'Faltan campos obligatorios',
+        error: 'El nombre de usuario, email, contraseña y role son obligatorios',
         required: ['username', 'email', 'password', 'role']
       });
     }
@@ -34,7 +34,7 @@ async function registrarUsuario(req, res) {
     const existeUsername = await Usuario.findOne({ where: { username } });
     if (existeUsername) {
       return res.status(409).json({
-        error: 'El username ya está en uso'
+        error: 'El nombre de usuario ya está en uso'
       });
     }
 
@@ -54,7 +54,8 @@ async function registrarUsuario(req, res) {
       role,
       nombre,
       apellidos,
-      movil,
+      telefono_movil: telefono_movil || null,
+      telefono_fijo: telefono_fijo || null,
       activo: true
     });
 
@@ -75,6 +76,8 @@ async function registrarUsuario(req, res) {
       role: nuevoUsuario.role,
       nombre: nuevoUsuario.nombre,
       apellidos: nuevoUsuario.apellidos,
+      telefono_movil: nuevoUsuario.telefono_movil,
+      telefono_fijo: nuevoUsuario.telefono_fijo,
       activo: nuevoUsuario.activo,
       created_at: nuevoUsuario.created_at
     };
@@ -85,7 +88,7 @@ async function registrarUsuario(req, res) {
     });
   } catch (error) {
     console.error('Error al crear el usuario:', error);
-    res.status(500).json({error: 'Error al crear el usuario'});
+    res.status(500).json(error.response?.data?.error || 'Error al crear el usuario');
   }
 }
 
@@ -206,7 +209,7 @@ async function obtenerMiPerfil(req, res) {
   try {
     // req.user viene del middleware de autenticación
     const usuario = await Usuario.findByPk(req.user.id, {
-      attributes: ['id', 'username', 'email', 'role', 'nombre', 'apellidos', 'movil', 'activo']
+      attributes: ['id', 'username', 'email', 'role', 'nombre', 'apellidos', 'activo']
     });
 
     if (!usuario) {

@@ -15,7 +15,7 @@ async function obtenerHistorialEmails(req, res){
             include: [{
                 model: Instalacion,
                 as: 'instalacion',
-                attributes: ['nombre', 'codigo']
+                attributes: ['nombre', 'categoria']
             }],
             order: [['fecha_disparo', 'DESC']],
             limit: 200
@@ -27,7 +27,7 @@ async function obtenerHistorialEmails(req, res){
             include: [{
                 model: Instalacion,
                 as: 'instalacion',
-                attributes: ['nombre', 'codigo']
+                attributes: ['nombre', 'categoria']
             }],
             order: [['fecha_envio_email', 'DESC']],
             limit: 200

@@ -13,7 +13,7 @@ export default function Dashboard() {
     const[instalaciones, setInstalaciones] = useState([]);
     const[dispositivos, setDispositivos] = useState([]);
     const[nombre, setNombreInstalacion] = useState('');
-    const[codigo, setCodigoInstalacion] = useState('');
+    const[categoria, setCategoriaInstalacion] = useState('');
     const[descripcion, setDescripcionInstalacion] = useState('');
     const[ubicacion, setUbicacionInstalacion] = useState('');
     const[usuarios, setUsuarios] = useState([]);
@@ -21,6 +21,7 @@ export default function Dashboard() {
     const[alertas, setAlertas] = useState('');
     const[mostrarFormulario, setMostrarFormulario] = useState(false);
     const[error, setError] = useState('');
+    const[exito, setExito] = useState('');
     const[tipoInstalacion, setTipoInstalacion] = useState('');
     const[direccionInstalacion, setDireccionInstalacion] = useState('');
     const[codigoReferencia, setCodigoReferencia] = useState('');
@@ -39,21 +40,25 @@ export default function Dashboard() {
         e.preventDefault();
         try{
             const token = localStorage.getItem('token');
-            await api.post('/instalaciones', {nombre, codigo, descripcion, ubicacion, responsable_id: responsableId, tipo_instalacion: tipoInstalacion || null, direccion_instalacion: direccionInstalacion || null, codigo_referencia: codigoReferencia || null}, { headers: { Authorization: `Bearer ${token}` }});
+            await api.post('/instalaciones', {nombre, categoria, descripcion, ubicacion, responsable_id: responsableId, tipo_instalacion: tipoInstalacion || null, direccion_instalacion: direccionInstalacion || null, codigo_referencia: codigoReferencia || null}, { headers: { Authorization: `Bearer ${token}` }});
             
             const respuesta = await api.get('/instalaciones', { headers: { Authorization: `Bearer ${token}` } });
             setInstalaciones(respuesta.data.instalaciones);
 
             setNombreInstalacion('');
-            setCodigoInstalacion('');
+            setCategoriaInstalacion('');
             setDescripcionInstalacion('');
             setUbicacionInstalacion('');    
             setTipoInstalacion('');
             setDireccionInstalacion('');
             setCodigoReferencia('');
+            setError('');
+            setExito('Instalación creada correctamente');
+            setMostrarFormulario(false);
         } catch (err) {
             console.log('Error en el registro de la instalación:', err);
-            setError('Error en el registro');
+            setError(err.response?.data?.error || 'Error en el registro');
+            setExito('');
         }  
     }
     
@@ -168,7 +173,7 @@ export default function Dashboard() {
                                     <div key={instalacion.id} onClick={function() {router.push(`/instalaciones/${instalacion.id}`)}}
                                         style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '20px', border: `1px solid ${colores.borde}`, cursor: 'pointer'}}
                                     >
-                                        <p style={{ color: colores.textoSecundario, fontSize: '11px', margin: '0 0 8px 0'}}>{instalacion.codigo}</p>
+                                        <p style={{ color: colores.textoSecundario, fontSize: '11px', margin: '0 0 8px 0'}}>{instalacion.codigo_referencia}</p>
                                         <p style={{ color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 4px 0'}}>{instalacion.nombre}</p>
                                         <p style={{ color: colores.textoSecundario, fontSize: '13px', margin: 0}}>{instalacion.ubicacion}</p>
                                     </div>
@@ -176,8 +181,15 @@ export default function Dashboard() {
                             })}
                         </div>
                     </div>
+                    
 
-                     {/*Formulario solo para ADMIN*/}
+                    {/*Formulario solo para ADMIN*/}
+                    {exito && 
+                        <p style={{color: '#4ade80', fontSize: '16px', margin: '0 0 16px 0'}}>
+                            {exito}
+                        </p>
+                    }
+
                     { mostrarFormulario && usuario.role === 'ADMIN' && (
                         <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginTop: '24px'}}>
                             <h2 style={{color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 20px 0'}}> 
@@ -192,10 +204,10 @@ export default function Dashboard() {
                                         <input id="nombre" type="text" value={nombre} onChange={function(e) {setNombreInstalacion(e.target.value)}} style={{width:'100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}} />
                                     </div>
                                 <div>
-                                    <label htmlFor="codigo" style={{color: colores.texto, fontSize: '11px', fontWeight:'600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
-                                        Código
+                                    <label htmlFor="categoria" style={{color: colores.texto, fontSize: '11px', fontWeight:'600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
+                                        Categoría
                                     </label>
-                                    <input id="codigo" type="text" value={codigo} onChange={function(e) {setCodigoInstalacion(e.target.value)}} style={{width:'100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}} />
+                                    <input id="categoria" type="text" value={categoria} onChange={function(e) {setCategoriaInstalacion(e.target.value)}} style={{width:'100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}} />
                                 </div>
                                 <div>
                                     <label htmlFor="descripcion" style={{color: colores.texto, fontSize: '11px', fontWeight:'600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
@@ -213,7 +225,7 @@ export default function Dashboard() {
                                     <label htmlFor="tipo_instalacion" style={{color: colores.texto, fontSize: '11px', fontWeight:'600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
                                         Tipo de instalación
                                     </label>
-                                    <select id="tipo_instalacion" value={tipoInstalacion} onChange={function(e) {setTipoInstalacion(e.target.value)}} style={{width: '100%', backgroundColor: colores.fondo, border: `1px solic ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}>
+                                    <select id="tipo_instalacion" value={tipoInstalacion} onChange={function(e) {setTipoInstalacion(e.target.value)}} style={{width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}>
                                         <option value="">
                                             Seleccionar tipo
                                         </option>
@@ -254,7 +266,7 @@ export default function Dashboard() {
                                     </select>
                                 </div>
                                 </div>
-                                {error && <p style={{color: '#e8550a', fontSize: '13px', margin: '0 0 16px 0'}}>
+                                {error && <p style={{color: '#e8550a', fontSize: '16px', margin: '0 0 16px 0'}}>
                                     {error}
                                 </p>}
                                 <div style={{display: 'flex', justifyContent: 'flex-end'}}> 

@@ -23,7 +23,7 @@ const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', '
 /* Generar PDF del informe mensual de una instalación y lo guarda*/
 async function generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaInicio, fechaFin, graficas) {
     return new Promise((resolve, reject) => {
-        const nombreArchivo = `informe_${instalacion.codigo}_${anio}_${String(mes).padStart(2, '0')}.pdf`;
+        const nombreArchivo = `informe_${instalacion.codigo_referencia}_${anio}_${String(mes).padStart(2, '0')}.pdf`;
         const rutaArchivo = path.join(CARPETA_INFORMES, nombreArchivo);
         const LOGO = path.join(__dirname, '../assets/granasat-logo.png');
         const doc = new PDFDocument({ margin: 50, size: 'A4' });
@@ -67,7 +67,7 @@ async function generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaIn
         doc.fillColor('#1a1a1a').fontSize(10).font('Helvetica');
 
         doc.text(`Nombre:`, 65, yTarjeta + 10, { continued: true }).font('Helvetica-Bold').text(`  ${instalacion.nombre}`);
-        doc.font('Helvetica').text(`Código:`, 65, yTarjeta + 26, { continued: true }).font('Helvetica-Bold').text(`  ${instalacion.codigo}`);
+        doc.font('Helvetica').text(`Código:`, 65, yTarjeta + 26, { continued: true }).font('Helvetica-Bold').text(`  ${instalacion.codigo_referencia}`);
         doc.font('Helvetica').text(`Ubicación:`, 65, yTarjeta + 42, { continued: true }).font('Helvetica-Bold').text(`  ${instalacion.ubicacion || 'No especificada'}`);
         doc.font('Helvetica').text(`Período:`, 65, yTarjeta + 58, { continued: true }).font('Helvetica-Bold').text(`  ${fechaInicio} - ${fechaFin}`);
 

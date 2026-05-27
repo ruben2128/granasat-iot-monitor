@@ -49,12 +49,12 @@ async function getAll(req,res) {
 
         if(req.user.role === 'ADMIN') {
             informes = await Informe.findAll({
-                include: [{ model: Instalacion, as: 'instalacion', attributes: ['id', 'nombre', 'codigo']}],
+                include: [{ model: Instalacion, as: 'instalacion', attributes: ['id', 'nombre', 'categoria']}],
                 order: [['fecha_generacion', 'DESC']]
             });
         } else {
             informes = await Informe.findAll({
-                include: [{ model: Instalacion, as: 'instalacion', attributes: ['id', 'nombre', 'codigo'], where: {responsable_id: req.user.id}, required: true}],
+                include: [{ model: Instalacion, as: 'instalacion', attributes: ['id', 'nombre', 'categoria'], where: {responsable_id: req.user.id}, required: true}],
                 order: [['fecha_generacion', 'DESC']]
             });
         }

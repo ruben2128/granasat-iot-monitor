@@ -12,10 +12,9 @@ const Instalacion = sequelize.define('Instalacion', {
         type: DataTypes.STRING(100),
         allowNull: false
     },
-    //Código corto para identificar rápidamente la instalación
-    codigo: {
+    //Categoria de la instalacion
+    categoria: {
         type: DataTypes.STRING(100),
-        unique: true,
         allowNull: false
     },
     descripcion: {

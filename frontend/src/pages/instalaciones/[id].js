@@ -57,7 +57,7 @@ export default function Instalacion(){
     const[guardandoInstalacion, setGuardandoInstalacion] = useState(false);
     const[responsables, setResponsables] = useState([]);
     const[editNombre, setEditNombre] = useState('');
-    const[editCodigo, setEditCodigo] = useState('');
+    const[editCategoria, setEditCategoria] = useState('');
     const[editDescripcion, setEditDescripcion] = useState('');
     const[editUbicacion, setEditUbicacion] = useState('');
     const[editResponsableId, setEditResponsableId] = useState('');
@@ -95,7 +95,7 @@ export default function Instalacion(){
             const inst = respuesta.data;
 
             setEditNombre(inst.nombre || '');
-            setEditCodigo(inst.codigo || '');
+            setEditCategoria(inst.categoria || '');
             setEditDescripcion(inst.descripcion || '');
             setEditUbicacion(inst.ubicacion || '');
             setEditResponsableId(inst.responsable_id || '');
@@ -194,8 +194,8 @@ export default function Instalacion(){
             setZonaRadiologica('');
             setMostrarFormulario(false);
         } catch (err) {
-            console.log('Error en el registro del dispositivo:', err.response.data);
-            setError('Error en el registro del dispositivo');
+            console.log('Error en el registro del dispositivo:', err.response?.data);
+            setError(err.response?.data?.error || 'Error en el registro del dispositivo');
         }  
     }
 
@@ -209,7 +209,7 @@ export default function Instalacion(){
             const token = localStorage.getItem('token');
             await api.put(`/instalaciones/${id}`, { 
                 nombre: editNombre,
-                codigo: editCodigo,
+                categoria: editCategoria,
                 descripcion: editDescripcion,
                 ubicacion: editUbicacion,
                 responsable_id: editResponsableId,
@@ -282,7 +282,7 @@ export default function Instalacion(){
                     <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: '1px solid #2c2c2e', marginBottom: '32px'}}>
                         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
                             <div>
-                                <p style={{ color: colores.texto, fontSize: '11px', margin: '0 0 8px 0'}}>{instalacion.codigo}</p>
+                                <p style={{ color: colores.texto, fontSize: '11px', margin: '0 0 8px 0'}}>{instalacion.categoria}</p>
                                 <p style={{ color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 4px 0'}}>{instalacion.nombre}</p>
                                 <p style={{ color: colores.texto, fontSize: '13px', margin: 0}}>{instalacion.ubicacion}</p> 
                                 <div style={{ display: 'flex', gap: '32px'}}>
@@ -329,8 +329,8 @@ export default function Instalacion(){
                                         <input type="text" value={editNombre} onChange={function(e) { setEditNombre(e.target.value); }} required style={estiloInput} />
                                     </div>
                                     <div>
-                                        <label style={estiloLabel}>Código</label>
-                                        <input type="text" value={editCodigo} onChange={function(e) { setEditCodigo(e.target.value); }} required style={estiloInput} />
+                                        <label style={estiloLabel}>Categoría</label>
+                                        <input type="text" value={editCategoria} onChange={function(e) { setEditCategoria(e.target.value); }} required style={estiloInput} />
                                     </div>
                                     <div>
                                         <label style={estiloLabel}>Descripción</label>
@@ -609,6 +609,11 @@ export default function Instalacion(){
                                         </div>
                                     )}
                                 </div>
+                                {error && (
+                                    <p style={{ color: '#f87171', fontSize: '13px', margin: '0 0 16px 0' }}>
+                                        {error}
+                                    </p>
+                                )}
                                 <div style={{display: 'flex', justifyContent:'flex-end', paddingTop: '8px'}}>
                                     <button type="submit" style={{backgroundColor: colores.acentoBoton, color: 'white', border: 'none', borderRadius: '8px', padding: '10px 24px', fontSize: '14px', fontWeight: '600', cursor: 'pointer'}}>
                                         Registrar dispositivo
