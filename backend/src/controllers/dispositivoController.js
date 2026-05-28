@@ -90,10 +90,6 @@ async function obtenerDispositivoPorId(req, res) {
 async function crearDispositivo(req, res) {
     try {
         const { mac_address, nombre, descripcion, instalacion_id, hw_version, fw_version, fecha_instalacion, notas, latitud, longitud, altura, nivel_bateria, titular_id, ip_registro, fecha_caducidad_ip, marca_comercial, modelo_electronica, num_serie_electronica, num_serie_sonda, tipo_detector, calibrado, fecha_ultima_calibracion, fecha_proxima_calibracion, verificacion_periodica, periodicidad_verificacion, medida_continuo, unidades_medida, factor_correccion, zona_radiologica } = req.body;
-
-        console.log('BODY:', req.body);
-        console.log('VALORES BOOLEAN:', { calibrado, verificacion_periodica, medida_continuo });
-        console.log('TIPOS:', { calibrado: typeof calibrado, verificacion_periodica: typeof verificacion_periodica, medida_continuo: typeof medida_continuo });
         
         if (!mac_address || !nombre) {
             return res.status(400).json({ error: 'La direccion MAC y el nombre son obligatorios' });

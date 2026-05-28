@@ -282,7 +282,7 @@ export default function Instalacion(){
                     <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: '1px solid #2c2c2e', marginBottom: '32px'}}>
                         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
                             <div>
-                                <p style={{ color: colores.texto, fontSize: '11px', margin: '0 0 8px 0'}}>{instalacion.categoria}</p>
+                                <p style={{ color: colores.texto, fontSize: '11px', margin: '0 0 8px 0'}}>{instalacion.codigo_referencia}</p>
                                 <p style={{ color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 4px 0'}}>{instalacion.nombre}</p>
                                 <p style={{ color: colores.texto, fontSize: '13px', margin: 0}}>{instalacion.ubicacion}</p> 
                                 <div style={{ display: 'flex', gap: '32px'}}>

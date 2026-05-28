@@ -108,7 +108,7 @@ async function crearInstalacion(req, res) {
 
         const instalacion = await Instalacion.create({
             nombre,
-            categoria: categoriad.toUpperCase(),
+            categoria: categoria.toUpperCase(),
             descripcion,
             ubicacion,
             responsable_id: responsable_id || null,
