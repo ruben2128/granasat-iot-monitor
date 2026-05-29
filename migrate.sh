@@ -67,8 +67,13 @@ ALTER INDEX IF EXISTS instalaciones_codigo_key RENAME TO instalaciones_categoria
 ALTER INDEX IF EXISTS idx_instalaciones_codigo RENAME TO idx_instalaciones_categoria;
 ALTER TABLE instalaciones DROP CONSTRAINT IF EXISTS instalaciones_categoria_key;
 DROP INDEX IF EXISTS idx_instalaciones_categoria;
-ALTER TABLE instalaciones ADD CONSTRAINT instalaciones_codigo_referencia_key UNIQUE (codigo_referencia);
-
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'instalaciones_codigo_referencia_key'
+    ) THEN
+        ALTER TABLE instalaciones ADD CONSTRAINT instalaciones_codigo_referencia_key UNIQUE (codigo_referencia);
+    END IF;
+END $$;
 DROP VIEW IF EXISTS v_dispositivos_completos;
 CREATE VIEW public.v_dispositivos_completos AS
  SELECT d.id, d.mac_address, d.nombre AS dispositivo_nombre, d.activo AS dispositivo_activo,
