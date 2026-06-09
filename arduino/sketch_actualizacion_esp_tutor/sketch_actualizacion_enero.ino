@@ -4,7 +4,7 @@
 const char* ssid = "DIGIFIBRA-F09B";
 const char* password = "R8#kNQA4hM";
 //const char* mqtt_server = "192.168.1.249"; //Local
-const char* mqtt_server = "mqtt.granasat.space";
+const chat* mqtt_server = "mqtt.granasat.space";
 
 // Info del dispositivo
 String device_mac;
@@ -71,15 +71,9 @@ void loop() {
     lastMsg = millis();
     
     // Simular lecturas
-    float base = 0.10 + (random(0, 40) / 100.0); // 0.10 - 0.50
-    bool pico = random(0, 100) < 10; // 10% de probabilidad de pico
-    nivel_radiacion = pico ? base + random(50, 150) / 10.0 : base; // pico: +5.0 a +15.0
-
-    // Suministro: 98% activo
-    suministro_electrico = random(0, 100) > 2;
-
-    // Elemento activo: 95% activo
-    elemento_irradiacion = random(0, 100) > 5;
+    nivel_radiacion = random(0, 10000) / 100.0; // 0.00 - 100.00
+    suministro_electrico = random(0, 100) > 5; // 95% activo
+    elemento_irradiacion = random(0, 100) > 10; // 90% activo
     
     // Formato: measurement,tags fields
     String msg = "radiacion_iot,";

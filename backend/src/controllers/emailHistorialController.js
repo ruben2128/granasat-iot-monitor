@@ -61,9 +61,6 @@ async function obtenerHistorialEmails(req, res){
         const historial = listaAlertas.concat(listaInformes).sort(function(a, b){
             return new Date(b.fecha) - new Date(a.fecha);
         });
-        
-        console.log('Historial formateado:', historial.length);
-        console.log('Primer elemento:', historial[0]);
 
         res.json({total: historial.length, historial});
     } catch (error){

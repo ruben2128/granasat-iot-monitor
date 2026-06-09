@@ -59,10 +59,17 @@ CREATE TABLE IF NOT EXISTS config_email (id SERIAL PRIMARY KEY,nombre VARCHAR(10
 CREATE TABLE IF NOT EXISTS log_accesos (id UUID DEFAULT gen_random_uuid() PRIMARY KEY,usuario_id UUID REFERENCES usuarios(id) ON DELETE CASCADE,username VARCHAR(50),ip VARCHAR(45),fecha TIMESTAMP DEFAULT now(),exito BOOLEAN DEFAULT true);
 
 DROP VIEW IF EXISTS v_dispositivos_completos;
-ALTER TABLE instalaciones ALTER COLUMN codigo TYPE VARCHAR(100);
-CREATE VIEW public.v_dispositivos_completos AS SELECT d.id, d.mac_address, d.nombre AS dispositivo_nombre, d.activo AS dispositivo_activo, d.ultima_conexion, i.nombre AS instalacion_nombre, i.codigo AS instalacion_codigo, (((u.nombre)::text || ' '::text) || (u.apellidos)::text) AS responsable_nombre, u.email AS responsable_email FROM ((public.dispositivos d LEFT JOIN public.instalaciones i ON ((d.instalacion_id = i.id))) LEFT JOIN public.usuarios u ON ((i.responsable_id = u.id)));
+DO $$ BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='instalaciones' AND column_name='codigo') THEN
+        ALTER TABLE instalaciones ALTER COLUMN codigo TYPE VARCHAR(100);
+    END IF;
+END $$;
 
-ALTER TABLE instalaciones RENAME COLUMN codigo TO categoria;
+DO $$ BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='instalaciones' AND column_name='codigo') THEN
+        ALTER TABLE instalaciones RENAME COLUMN codigo TO categoria;
+    END IF;
+END $$;
 ALTER INDEX IF EXISTS instalaciones_codigo_key RENAME TO instalaciones_categoria_key;
 ALTER INDEX IF EXISTS idx_instalaciones_codigo RENAME TO idx_instalaciones_categoria;
 ALTER TABLE instalaciones DROP CONSTRAINT IF EXISTS instalaciones_categoria_key;

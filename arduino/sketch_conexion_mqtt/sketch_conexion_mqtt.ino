@@ -59,14 +59,4 @@ void loop() {
   // Publicar mensaje cada 5 segundos
   static unsigned long lastMsg = 0;
   unsigned long now = millis();
-  
-  if (now - lastMsg > 5000) {
-    lastMsg = now;
-    
-    String mensaje = "temperatura,sensor=esp32_test value=25.5";
-    Serial.print("Publicando: ");
-    Serial.println(mensaje);
-    
-    client.publish("test", mensaje.c_str());
-  }
 }

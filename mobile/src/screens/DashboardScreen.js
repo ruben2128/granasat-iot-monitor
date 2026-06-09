@@ -58,7 +58,7 @@ export default function DashboardScreen({ navigation }){
 
             {/* Código de la instalación */}
             <Text style={[styles.tarjetaCodigo, {color: colores.acento}]}>
-                {item.codigo}
+                {item.codigo_referencia}
             </Text>
 
             {/* Ubicación física (si existe) */}

@@ -64,6 +64,13 @@ export default function Dispositivo(){
         const temaGuardado = localStorage.getItem('tema');
         if (temaGuardado) setTema(temaGuardado);
     }, []);
+
+    async function cargarLecturas(){
+        const token = localStorage.getItem('token');
+        const respuestaLectura = await api.get(`/dispositivos/${id}/lecturas?rango=${rango}`, {headers: {Authorization: `Bearer ${token}`}});
+        
+        setLecturas(respuestaLectura.data.lecturas);
+    }
  
     useEffect(function(){
         async function cargarDatos(){
@@ -117,6 +124,17 @@ export default function Dispositivo(){
         }
         cargarDatos();
     }, [id, rango]) // Ejecutar cuando id esté disponible
+
+    useEffect(function(){
+        if(!id){
+            return;
+        }
+
+        cargarLecturas();
+        const intervalo = setInterval(cargarLecturas, 5000);
+
+        return function(){ clearInterval(intervalo); }; 
+    });
 
     async function handleTestConexion() {
         setTestCargando(true);

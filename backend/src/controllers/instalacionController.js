@@ -83,7 +83,7 @@ async function crearInstalacion(req, res) {
         const {nombre, categoria, descripcion, ubicacion, responsable_id, tipo_instalacion, direccion_instalacion, codigo_referencia} = req.body;
 
         if(!nombre || !categoria || !responsable_id) {
-            return res.status(400).json({ error: 'El nombre, la categoría y el responsable son obligatorios'});
+            return res.status(400).json({ error: 'El nombre, el código de referencia y el responsable son obligatorios'});
         }
 
         if(codigo_referencia){

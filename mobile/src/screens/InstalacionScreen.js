@@ -35,7 +35,7 @@ export default function InstalacionScreen({ navigation, route}){
                 </Text>
                 <View style={[styles.badge, { backgroundColor: item.activo ? '#22c55e22' : '#ef444422'}]}>
                     <Text style={[styles.badgeTexto, { color: item.activo ? '#22c55e' : '#ef4444'}]}>
-                        {item.activo ? 'ACtivo' : 'Inactivo'}
+                        {item.activo ? 'Activo' : 'Inactivo'}
                     </Text>
                 </View>
             </View>
