@@ -142,3 +142,4 @@ vite.config.ts.timestamp-*
 update-admin-password.js
 test-model.js
 dudas.txt
+uploads/

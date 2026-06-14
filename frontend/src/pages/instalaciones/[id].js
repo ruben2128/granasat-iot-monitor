@@ -65,6 +65,7 @@ export default function Instalacion(){
     const[editTipoInstalacion, setEditTipoInstalacion] = useState('');
     const[editDireccionInstalacion, setEditDireccionInstalacion] = useState('');
     const[editCodigoReferencia, setEditCodigoReferencia] = useState('');
+    const[modelo_sonda, setModeloSonda] = useState('');
 
     useEffect(function() {
         const temaGuardado = localStorage.getItem('tema');
@@ -104,11 +105,13 @@ export default function Instalacion(){
             setEditDireccionInstalacion(inst.direccion_instalacion || '');
             setEditCodigoReferencia(inst.codigo_referencia || '');
 
-            //Cargar responsables
-            const respuestaResponsables = await api.get('/usuarios', {headers: {Authorization: `Bearer ${token}`}});
-            const todosUsuarios = respuestaResponsables.data.usuarios;
-
-            setResponsables(todosUsuarios.filter(function(u){return u.role === 'RESPONSABLE';}));
+            //Cargar responsables (Solo Admin)
+            if(usuarioGuardado.role === 'ADMIN') {
+                const respuestaResponsables = await api.get('/usuarios', {headers: {Authorization: `Bearer ${token}`}});
+                const todosUsuarios = respuestaResponsables.data.usuarios;
+                
+                setResponsables(todosUsuarios.filter(function(u){return u.role === 'RESPONSABLE';}));
+            }            
 
             const respuestaDispositivos = await api.get(`/dispositivos?instalacion_id=${id}`, {headers: {Authorization: `Bearer ${token}`}});
             const todosDispositivos = respuestaDispositivos.data.dispositivos;
@@ -155,6 +158,7 @@ export default function Instalacion(){
                 unidades_medida: unidades_medida || 'µSv/h',
                 factor_correccion: factor_correccion ? parseFloat(factor_correccion) : 1.0,
                 zona_radiologica: zona_radiologica || null,
+                modelo_sonda: modelo_sonda || null,
             }, { headers: { Authorization: `Bearer ${token}` }});
             
             const respuestaDispositivos = await api.get(`/dispositivos?instalacion_id=${id}`, {headers: {Authorization: `Bearer ${token}`}});
@@ -193,6 +197,7 @@ export default function Instalacion(){
             setFactorCorreccion('1.0');
             setZonaRadiologica('');
             setMostrarFormulario(false);
+            setModeloSonda('');
         } catch (err) {
             console.log('Error en el registro del dispositivo:', err.response?.data);
             setError(err.response?.data?.error || 'Error en el registro del dispositivo');
@@ -405,10 +410,6 @@ export default function Instalacion(){
                                         <input id="nombre" type="text" value={nombre} onChange={function(e) {setNombreDispositivo(e.target.value);}} style={estiloInput}/>
                                     </div>
                                     <div>
-                                        <label htmlFor="direccion_mac" style={estiloLabel}>DIRECCIÓN MAC</label>
-                                        <input id="direccion_mac" type="text" value={mac_address} placeholder="AA:BB:CC:DD:EE:FF" onChange={function(e) {setDireccionMacDispositivo(e.target.value);}} style={estiloInput}/>
-                                    </div>
-                                    <div>
                                         <label htmlFor="descripcion" style={estiloLabel}>DESCRIPCIÓN</label>
                                         <input id="descripcion" type="text" value={descripcion} onChange={function(e) {setDescripcionDispositivo(e.target.value);}} style={estiloInput}/>
                                     </div>
@@ -427,7 +428,7 @@ export default function Instalacion(){
                                 </div>
                                 <div style={estiloSeccion}>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                        <div style={{girdColumn: '1 / -1'}}>
+                                        <div style={{gridColumn: '1 / -1'}}>
                                             <label htmlFor="titular" style={estiloLabel}>
                                                 TITULAR
                                             </label>
@@ -468,36 +469,38 @@ export default function Instalacion(){
                                             </label>
                                             <input id="altura" type="number" value={altura} onChange={function(e) {setAltura(e.target.value);}} placeholder="Ej: 680" style={estiloInput}/>
                                         </div>
-                                        <div>
-                                            <label htmlFor="ip_registro" style={estiloLabel}>
-                                                IP REGISTRO UGR
-                                            </label>
-                                            <input id="ip_registro" type="text" value={ipRegistro} onChange={function(e) {setIpRegistro(e.target.value);}} placeholder="150.214.X.X" style={estiloInput}/>                                        
-                                        </div>
-                                        <div>
-                                            <label htmlFor="fecha_caducidad_ip" style={estiloLabel}>
-                                                FECHA CADUCIDAD IP
-                                            </label>
-                                            <input id="fecha_caducidad_ip" type="date" value={fechaCaducidadIp} onChange={function(e) {setFechaCaducidadIp(e.target.value);}} style={estiloInput}/>                                        
-                                        </div>
                                     </div>
                                 </div>
                                 <div style={estiloSeccion}>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                         <div>
-                                            <label style={estiloLabel}>MARCA COMERCIAL</label>
+                                            <label style={estiloLabel}>
+                                                MARCA COMERCIAL
+                                            </label>
                                             <input type="text" value={marca_comercial} placeholder="Ej: Ludlum, Thermo Scientific" onChange={function (e) { setMarcaComercial(e.target.value); }} style={estiloInput} />
                                         </div>
                                         <div>
-                                            <label style={estiloLabel}>MODELO DE LA ELECTRÓNICA</label>
+                                            <label style={estiloLabel}>
+                                                MODELO DE LA ELECTRÓNICA
+                                            </label>
                                             <input type="text" value={modelo_electronica} onChange={function (e) { setModeloElectronica(e.target.value); }} style={estiloInput} />
                                         </div>
                                         <div>
-                                            <label style={estiloLabel}>Nº SERIE ELECTRÓNICA</label>
+                                            <label style={estiloLabel}>
+                                                Nº SERIE ELECTRÓNICA
+                                            </label>
                                             <input type="text" value={num_serie_electronica} onChange={function (e) { setNumSerieElectronica(e.target.value); }} style={estiloInput} />
                                         </div>
                                         <div>
-                                            <label style={estiloLabel}>Nº SERIE SONDA</label>
+                                            <label style={estiloLabel}>
+                                                MODELO SONDA
+                                            </label>
+                                            <input type="text" value={modelo_sonda} onChange={function (e) { setModeloSonda(e.target.value); }} style={estiloInput} />
+                                        </div>
+                                        <div>
+                                            <label style={estiloLabel}>
+                                                Nº SERIE SONDA
+                                            </label>
                                             <input type="text" value={num_serie_sonda} onChange={function (e) { setNumSerieSonda(e.target.value); }} style={estiloInput} />
                                         </div>
                                         <div style={{ gridColumn: '1 / -1' }}>
@@ -528,7 +531,9 @@ export default function Instalacion(){
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                             <input type="checkbox" id="calibrado" checked={calibrado} onChange={function (e) { setCalibrado(e.target.checked); }} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
-                                            <label htmlFor="calibrado" style={{ ...estiloLabel, margin: 0 }}>EQUIPO CALIBRADO</label>
+                                            <label htmlFor="calibrado" style={{ ...estiloLabel, margin: 0 }}>
+                                                EQUIPO CALIBRADO
+                                            </label>
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                             <input type="checkbox" id="verificacion_periodica" checked={verificacion_periodica} onChange={function (e) { setVerificacionPeriodica(e.target.checked); }} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
@@ -569,7 +574,27 @@ export default function Instalacion(){
                                     {medida_continuo && (
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                             <div>
-                                                <label style={estiloLabel}>UNIDADES DE MEDIDA</label>
+                                                <label htmlFor="direccion_mac" style={estiloLabel}>
+                                                    DIRECCIÓN MAC
+                                                </label>
+                                                <input id="direccion_mac" type="text" value={mac_address} placeholder="AA:BB:CC:DD:EE:FF" onChange={function(e) {setDireccionMacDispositivo(e.target.value);}} style={estiloInput}/>
+                                            </div>
+                                            <div>
+                                                <label htmlFor="ip_registro" style={estiloLabel}>
+                                                    IP REGISTRO UGR
+                                                </label>
+                                                <input id="ip_registro" type="text" value={ipRegistro} onChange={function(e) {setIpRegistro(e.target.value);}} placeholder="150.214.X.X" style={estiloInput}/>                                        
+                                            </div>
+                                            <div>
+                                                <label htmlFor="fecha_caducidad_ip" style={estiloLabel}>
+                                                    FECHA CADUCIDAD IP
+                                                </label>
+                                                <input id="fecha_caducidad_ip" type="date" value={fechaCaducidadIp} onChange={function(e) {setFechaCaducidadIp(e.target.value);}} style={estiloInput}/>                                        
+                                            </div>
+                                            <div>
+                                                <label style={estiloLabel}>
+                                                    UNIDADES DE MEDIDA
+                                                </label>
                                                 <input type="text" value={unidades_medida} onChange={function (e) { setUnidadesMedida(e.target.value); }} style={estiloInput} />
                                             </div>
                                             <div>
@@ -629,8 +654,19 @@ export default function Instalacion(){
                             return (
                                 <div key={dispositivo.id} onClick={function() {router.push(`/dispositivos/${dispositivo.id}`);}} style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '16px 20px', border: '1px solid #2c2c2e', cursor: 'pointer', display: 'flex',  alignItems: 'center', justifyContent: 'space-between'}}>
                                     <div>
-                                        <p style={{ color: colores.texto, fontSize: '15px', fontWeight: '600', margin: '0 0 4px 0'}}> {dispositivo.nombre}</p> 
-                                        <p style={{ color: colores.texto, fontSize: '12px', margin: 0}}>{dispositivo.mac_address}</p>   
+                                        <p style={{ color: colores.texto, fontSize: '15px', fontWeight: '600', margin: '0 0 4px 0'}}> 
+                                            {dispositivo.nombre}
+                                        </p> 
+                                        {dispositivo.medida_continuo && (
+                                            <p style={{ color: colores.texto, fontSize: '12px', margin: 0}}>
+                                                MAC: {dispositivo.mac_address}
+                                            </p>
+                                        )}
+                                        {dispositivo.ip_registro &&(
+                                            <p style={{ color: colores.texto, fontSize: '12px', margin: 0}}>
+                                                IP: {dispositivo.ip_registro}
+                                            </p>  
+                                        )}   
                                     </div> 
                                     <span style={{backgroundColor: dispositivo.activo ? '#1a3a2a' : '#2a2a2a', color: dispositivo.activo ? '#4ade80' : '#a0a0a0', fontSize: '12px', fontWeight: '600', padding: '4px 12px', borderRadius: '20px'}}>
                                         {dispositivo.activo ? 'Activo' : 'No activo'}

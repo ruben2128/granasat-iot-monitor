@@ -89,7 +89,7 @@ async function obtenerDispositivoPorId(req, res) {
 */
 async function crearDispositivo(req, res) {
     try {
-        const { mac_address, nombre, descripcion, instalacion_id, hw_version, fw_version, fecha_instalacion, notas, latitud, longitud, altura, nivel_bateria, titular_id, ip_registro, fecha_caducidad_ip, marca_comercial, modelo_electronica, num_serie_electronica, num_serie_sonda, tipo_detector, calibrado, fecha_ultima_calibracion, fecha_proxima_calibracion, verificacion_periodica, periodicidad_verificacion, medida_continuo, unidades_medida, factor_correccion, zona_radiologica } = req.body;
+        const { mac_address, nombre, descripcion, instalacion_id, hw_version, fw_version, fecha_instalacion, notas, latitud, longitud, altura, nivel_bateria, titular_id, ip_registro, fecha_caducidad_ip, marca_comercial, modelo_electronica, num_serie_electronica, num_serie_sonda, tipo_detector, calibrado, fecha_ultima_calibracion, fecha_proxima_calibracion, verificacion_periodica, periodicidad_verificacion, medida_continuo, unidades_medida, factor_correccion, zona_radiologica, modelo_sonda } = req.body;
         
         if (!mac_address || !nombre) {
             return res.status(400).json({ error: 'La direccion MAC y el nombre son obligatorios' });
@@ -106,16 +106,22 @@ async function crearDispositivo(req, res) {
             return res.status(409).json({error: `La MAC '${mac_address}' ya existe`});
         }
 
-        if (instalacion_id){
-            const instalacion = await Instalacion.findByPk(instalacion_id);
+        let instalacion = null;
 
-            if(!instalacion){
-                return res.status(404).json({error: 'La instalación no existe'});
+        if (instalacion_id) {
+            instalacion = await Instalacion.findByPk(instalacion_id);
+            if (!instalacion) {
+                return res.status(404).json({ error: 'La instalación no existe' });
             }
         }
 
-        if(req.user.role === 'RESPONSABLE' && instalacion.responsable_id !== req.user.id){
-            return res.status(403).json({error: 'No puedes crear dispositivos en instalaciones que no son tuyas'});
+        if (req.user.role === 'RESPONSABLE') {
+            if (!instalacion) {
+                return res.status(400).json({ error: 'Debes especificar una instalación' });
+            }
+            if (instalacion.responsable_id !== req.user.id) {
+                return res.status(403).json({ error: 'No puedes crear dispositivos en instalaciones que no son tuyas' });
+            }
         }
 
         const dispositivo = await Dispositivo.create({
@@ -146,7 +152,8 @@ async function crearDispositivo(req, res) {
             medida_continuo: medida_continuo === true ? true : false,
             unidades_medida: unidades_medida || 'µSv/h',
             factor_correccion: factor_correccion ? parseFloat(factor_correccion) : 1.0,
-            zona_radiologica: zona_radiologica || null
+            zona_radiologica: zona_radiologica || null,
+            modelo_sonda: modelo_sonda || null
         });
 
         const dispositivoCompleto = await Dispositivo.findByPk(dispositivo.id, {
@@ -178,7 +185,7 @@ async function actualizarDispositivo(req,res){
 
     try{
         const { id } = req.params;
-        const { nombre, descripcion, instalacion_id, hw_version, fw_version, activo, notas,fecha_instalacion, latitud, longitud, altura, nivel_bateria, titular_id, ip_registro, fecha_caducidad_ip, marca_comercial, modelo_electronica, num_serie_electronica, num_serie_sonda, tipo_detector, calibrado, fecha_ultima_calibracion, fecha_proxima_calibracion, verificacion_periodica, periodicidad_verificacion, medida_continuo, unidades_medida, factor_correccion, zona_radiologica } = req.body;
+        const { mac_address, nombre, descripcion, instalacion_id, hw_version, fw_version, activo, notas,fecha_instalacion, latitud, longitud, altura, nivel_bateria, titular_id, ip_registro, fecha_caducidad_ip, marca_comercial, modelo_electronica, num_serie_electronica, num_serie_sonda, tipo_detector, calibrado, fecha_ultima_calibracion, fecha_proxima_calibracion, verificacion_periodica, periodicidad_verificacion, medida_continuo, unidades_medida, factor_correccion, zona_radiologica, modelo_sonda } = req.body;
 
         const dispositivo = await Dispositivo.findByPk(id);
         
@@ -223,7 +230,9 @@ async function actualizarDispositivo(req,res){
             medida_continuo: medida_continuo ?? dispositivo.medida_continuo,
             unidades_medida: unidades_medida ?? dispositivo.unidades_medida,
             factor_correccion: factor_correccion !== undefined ? parseFloat(factor_correccion) : dispositivo.factor_correccion,
-            zona_radiologica: zona_radiologica ?? dispositivo.zona_radiologica        
+            zona_radiologica: zona_radiologica ?? dispositivo.zona_radiologica,
+            modelo_sonda: modelo_sonda ?? dispositivo.modelo_sonda,
+            mac_address: mac_address && !dispositivo.mac_address ? mac_address : dispositivo.mac_address,       
         });
 
         const dispositivoActualizado = await Dispositivo.findByPk(id, 
@@ -294,5 +303,47 @@ async function testConexion(req, res){
     }
 }
 
-module.exports = {obtenerDispositivos, obtenerDispositivoPorId, crearDispositivo, actualizarDispositivo, eliminarDispositivo, testConexion};
+/*
+    Subir una foto para reconocer el dispositivo
+ */
+async function subirFotoDispositivo(req, res){
+    try{
+        if(!req.file){
+            return res.status(400).json({ error: 'No se ha subido ninguna imagen'});
+        }
+
+        const {id} = req.params;
+        const dispositivo = await Dispositivo.findByPk(id);
+
+        if(!dispositivo){
+            return res.status(400).json({ error: 'Dispositivo no encontrado'});
+        }
+
+        //Eliminar foto anterior si existe
+        const path = require('path');
+        const fs = require('fs');
+
+        if(dispositivo.foto){
+            const rutaAnterior = path.join(__dirname, '../../uploads/dispositivos', path.basename(dispositivo.foto));
+
+            if(fs.existsSync(rutaAnterior)){
+                fs.unlinkSync(rutaAnterior);
+            }
+        }
+
+        const rutaFotos = `/uploads/dispositivos/${req.file.filename}`;
+        await dispositivo.update({
+            foto: rutaFotos
+        });
+
+        res.json({message: 'Foto actualizada correctamente', foto: rutaFotos});
+    
+    } catch(error){
+        console.error('Error al subir la foto:', error);
+        res.status(500).json({error: 'Error al subir la foto'});
+    }
+}
+
+
+module.exports = {obtenerDispositivos, obtenerDispositivoPorId, crearDispositivo, actualizarDispositivo, eliminarDispositivo, testConexion, subirFotoDispositivo};
 

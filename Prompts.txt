@@ -1,0 +1,122 @@
+HISTORIAL DE PROMPTS - TFG GRANASAT
+Sistema Web y Móvil para Monitorización de Datos IoT
+ETSIIT - Universidad de Granada
+Período: febrero 2026 - junio 2026
+================================================================
+
+FASE 1 — PLANIFICACIÓN Y CONFIGURACIÓN INICIAL (febrero - marzo 2026)
+================================================================
+
+[1] Quiero empezar a organizar mi TFG sobre un sistema IoT para el grupo GranaSAT de la UGR. El tutor me ha pasado un docker-compose con servicios de InfluxDB, Telegraf, Grafana y Mosquitto ya configurados. Necesito que me organices la planificación desde hoy hasta el 22 de junio, diferenciando los módulos principales y el tiempo a dedicar a cada uno.
+
+[2] El docker-compose que me pasó el tutor no usa volúmenes persistentes. Necesito que los datos sobrevivan a reinicios del contenedor. ¿Cómo lo adaptamos para que use volúmenes que cuelguen del mismo directorio que el docker-compose?
+
+[3] Pero ese docker-compose me lo dio el profesor, ¿qué sentido tendría cambiarlo? ¿No usamos ya carpetas que cuelgan del mismo directorio?
+
+[4] Vale, entendido. Vamos a empezar con el backend. Necesito crear la estructura base del proyecto Node.js con Express. ¿Cómo organizamos las carpetas y qué dependencias necesito instalar?
+
+[5] He creado el modelo de Usuario con Sequelize pero me sale este error al arrancar el servidor:
+SequelizeDatabaseError: column "role" is of type enum_usuarios_role but expression is of type character varying
+¿Qué está pasando y cómo lo soluciono?
+
+[6] El endpoint de login me devuelve 401 aunque las credenciales son correctas. He añadido un console.log y veo que el usuario se encuentra en la BD pero la comparación de contraseña falla. Aquí está el código del comparePassword:
+[pegó código del modelo Usuario]
+
+FASE 2 — DESARROLLO DEL BACKEND (marzo - abril 2026)
+================================================================
+
+[7] Me sale este error cuando intento crear una instalación:
+SequelizeForeignKeyConstraintError: insert or update on table "instalaciones" violates foreign key constraint
+El responsable_id que mando existe en la tabla usuarios. ¿Por qué falla?
+
+[8] Necesito implementar el servicio de alertas que se ejecute cada 5 minutos. Debe consultar InfluxDB, comparar con los umbrales configurados y enviar emails cuando se superen. ¿Cómo estructuramos esto?
+
+[9] El servicio de alertas me lanza este error al consultar InfluxDB:
+HttpError: unauthorized access
+Estoy usando el token que aparece en el .env. ¿Qué puede estar fallando?
+
+[10] Necesito generar informes PDF mensuales con los datos de medición. El tutor me recomendó PDFKit. ¿Cómo implementamos la generación del PDF con gráficas de los datos de InfluxDB?
+
+FASE 3 — DESARROLLO DEL FRONTEND WEB (abril - mayo 2026)
+================================================================
+
+[11] Vamos a empezar con el frontend en Next.js. El tutor quiere que tenga modo oscuro y modo claro. ¿Cómo implementamos el sistema de temas de forma que sea fácil de mantener?
+
+[12] He instalado axe DevTools para validar la accesibilidad WCAG y me da estos errores:
+- Element has insufficient color contrast of 3.64 (foreground: #e8450a, background: #f5f5f5). Expected 4.5:1
+- Link does not have discernible text
+¿Cómo los soluciono sin romper el diseño visual?
+
+[13] Al intentar usar Leaflet en Next.js me sale este error:
+ReferenceError: window is not defined
+¿Por qué pasa esto y cómo lo soluciono?
+
+[14] El tutor me ha pedido una pantalla donde se pueda modificar la plantilla HTML del email de alertas, con cabecera con logo de GranaSAT y tabla con los datos. ¿Cómo implementamos esto?
+
+[15] Vamos a enfocarnos en la accesibilidad WCAG. Tengo instalado axe DevTools y estos son los resultados tras ejecutar la prueba. Indícame por qué dan estos errores y medidas para arreglarlos.
+[pegó resultados axe DevTools]
+
+FASE 4 — APP MÓVIL (mayo 2026)
+================================================================
+
+[16] Teniendo en cuenta que he usado Expo para la app móvil, ¿deberíamos descartar hacer la build para iOS?
+
+[17] Entonces, ¿hay alguna manera de pasarle una build al profesor aunque no la publique en la App Store?
+
+[18] La pantalla de login de la app móvil me funciona en Android pero al intentar conectar con el backend en producción me sale:
+Network request failed
+En el frontend web sí que funciona con la misma URL. ¿Qué puede estar pasando?
+
+FASE 5 — MEMORIA EN LATEX (mayo - junio 2026)
+================================================================
+
+[19] ¿Me puedes ayudar a instalar LaTeX en mi equipo según el tutorial del profesor? Me ha pasado una plantilla muy pesada que recomienda usar localmente.
+
+[20] Al compilar la plantilla del tutor con TeXnicCenter me sale este error:
+!pdfTeX error: pdflatex.exe (file ts1-qtmr): Font ts1-qtmr at 480 not found
+==> Fatal error occurred, no output PDF file produced!
+Cómo lo soluciono?
+
+[21] Cómo me recomiendas estructurar la memoria del TFG de ingeniería informática en la UGR? Te adjunto el documento de orientación del profesor con aspectos sobre la memoria, tono, defensa, etc.
+
+FASE 6 — DESPLIEGUE EN PRODUCCIÓN (junio 2026)
+================================================================
+
+[22] El profesor está intentando desplegar el proyecto en el servidor de GranaSAT pero le salen estos errores al hacer el docker compose up:
+[pegó logs de error del despliegue]
+Cuáles son las causas y cómo las solucionamos?
+
+[23] Le dije las soluciones que me propusiste pero no han funcionado y ahora le sale este otro error. Qué hacemos?
+
+[24] El frontend en producción no puede conectar con el backend. La URL de la API está hardcodeada como localhost:3001 pero en producción debería ser https://radiacion.granasat.space/api. ¿Cómo pasamos la URL como variable de entorno en el build de Docker?
+
+FASE 7 — MEJORAS FINALES Y TESTING (junio 2026)
+================================================================
+
+[25] Quiero hacer testing del proyecto actual. Analiza el zip adjunto con el código y dime qué herramienta me recomiendas y qué casos de uso debería cubrir con los tests.
+
+[26] He añadido la búsqueda de dirección con Nominatim pero me sale este error en la consola al buscar:
+TypeError: Cannot read properties of undefined (reading '_leaflet_pos')
+at getPosition (DomUtil.js:247:12)
+¿Qué está pasando?
+
+[27] Cuando un usuario no admin entra en la pantalla de una instalación me sale este error en la consola:
+AxiosError: Request failed with status code 403
+Y no le cargan los dispositivos. ¿Dónde está el problema?
+
+[28] Al intentar subir el avatar desde la pantalla de perfil con un usuario no admin me sale:
+POST http://localhost:3001/api/usuarios/[id]/avatar 403 (Forbidden)
+¿Cómo lo arreglamos?
+
+[29] He cambiado la foto de perfil de un usuario y se ve bien en la pantalla de usuarios y en el dashboard. Sin embargo, cuando cierro sesión y vuelvo a entrar, no se ve la foto de perfil. Internamente sigue teniendo la foto. ¿Dónde está el bug?
+
+[30] El tutor me dijo que hay que guardar en el log los cambios realizados por los usuarios para que el administrador los pueda ver. ¿Cómo implementamos esto?
+
+[31] Quiero unificar los logs de accesos y los logs de cambios de perfil en una sola pantalla con filtros por tipo, en vez de tener dos tablas separadas. ¿Cuál es la opción más limpia?
+
+================================================================
+FIN DEL HISTORIAL
+Total de prompts: 31
+Período: febrero 2026 - junio 2026
+Entrega TFG: 22 de junio de 2026
+================================================================

@@ -19,7 +19,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - influxdb_rad
-      - mqtt_rad
     restart: always
     networks:
       - RadiacionN
@@ -80,6 +79,8 @@ services:
     build: ./backend
     ports:
       - "3001:3001"
+    volumes:
+      - ./uploads:/app/uploads
     environment:
       NODE_ENV: production
       PORT: 3001
@@ -98,8 +99,6 @@ services:
       SMTP_PORT: 587
       SMTP_USER: gilrubenmartin@gmail.com
       SMTP_PASS: ogjrrxmkgonuhbsl
-      MQTT_HOST: mqtt_rad
-      MQTT_PORT: 1883
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.radiacion-api.rule=Host(`radiacion.granasat.space`) && PathPrefix(`/api`)"
@@ -115,7 +114,6 @@ services:
     networks:
       - traefik
       - RadiacionN
-
   frontend_rad:
     container_name: frontend_rad
     build:

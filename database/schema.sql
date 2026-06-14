@@ -16,23 +16,12 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
---
--- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
---
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 
 
---
--- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
---
-
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
 
-
---
--- Name: enum_dispositivos_zona_radiologica; Type: TYPE; Schema: public; Owner: tfg_user
---
 
 CREATE TYPE public.enum_dispositivos_zona_radiologica AS ENUM (
     'LIBRE_PASO',
@@ -46,9 +35,6 @@ CREATE TYPE public.enum_dispositivos_zona_radiologica AS ENUM (
 
 ALTER TYPE public.enum_dispositivos_zona_radiologica OWNER TO tfg_user;
 
---
--- Name: enum_instalaciones_tipo_instalacion; Type: TYPE; Schema: public; Owner: tfg_user
---
 
 CREATE TYPE public.enum_instalaciones_tipo_instalacion AS ENUM (
     'IRA',
@@ -58,9 +44,6 @@ CREATE TYPE public.enum_instalaciones_tipo_instalacion AS ENUM (
 
 ALTER TYPE public.enum_instalaciones_tipo_instalacion OWNER TO tfg_user;
 
---
--- Name: enum_usuarios_role; Type: TYPE; Schema: public; Owner: tfg_user
---
 
 CREATE TYPE public.enum_usuarios_role AS ENUM (
     'ADMIN',
@@ -70,10 +53,6 @@ CREATE TYPE public.enum_usuarios_role AS ENUM (
 
 
 ALTER TYPE public.enum_usuarios_role OWNER TO tfg_user;
-
---
--- Name: actualizar_updated_at(); Type: FUNCTION; Schema: public; Owner: tfg_user
---
 
 CREATE FUNCTION public.actualizar_updated_at() RETURNS trigger
     LANGUAGE plpgsql
@@ -91,9 +70,6 @@ SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
---
--- Name: alertas_config; Type: TABLE; Schema: public; Owner: tfg_user
---
 
 CREATE TABLE public.alertas_config (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
@@ -111,15 +87,9 @@ CREATE TABLE public.alertas_config (
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
 
-
 ALTER TABLE public.alertas_config OWNER TO tfg_user;
 
 COMMENT ON TABLE public.alertas_config IS 'Configuración de alertas por instalación';
-
-
---
--- Name: alertas_historial; Type: TABLE; Schema: public; Owner: tfg_user
---
 
 CREATE TABLE public.alertas_historial (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
@@ -137,15 +107,9 @@ CREATE TABLE public.alertas_historial (
     fecha_email timestamp without time zone
 );
 
-
 ALTER TABLE public.alertas_historial OWNER TO tfg_user;
 
 COMMENT ON TABLE public.alertas_historial IS 'Histórico de alertas disparadas';
-
-
---
--- Name: config_email; Type: TABLE; Schema: public; Owner: tfg_user
---
 
 CREATE TABLE public.config_email (
     id integer NOT NULL,
@@ -162,10 +126,6 @@ CREATE TABLE public.config_email (
 
 ALTER TABLE public.config_email OWNER TO tfg_user;
 
---
--- Name: config_email_id_seq; Type: SEQUENCE; Schema: public; Owner: tfg_user
---
-
 CREATE SEQUENCE public.config_email_id_seq
     AS integer
     START WITH 1
@@ -180,11 +140,6 @@ ALTER TABLE public.config_email_id_seq OWNER TO tfg_user;
 ALTER SEQUENCE public.config_email_id_seq OWNED BY public.config_email.id;
 
 ALTER TABLE ONLY public.config_email ALTER COLUMN id SET DEFAULT nextval('public.config_email_id_seq'::regclass);
-
-
---
--- Name: dispositivos; Type: TABLE; Schema: public; Owner: tfg_user
---
 
 CREATE TABLE public.dispositivos (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
@@ -208,23 +163,22 @@ CREATE TABLE public.dispositivos (
     titular_id uuid,
     ip_registro character varying(45),
     fecha_caducidad_ip date,
-    -- Bloque 1: Identificación del equipo de medición
     marca_comercial character varying(100),
     modelo_electronica character varying(100),
     num_serie_electronica character varying(100),
     num_serie_sonda character varying(100),
     tipo_detector character varying(100),
-    -- Bloque 2: Calibración y verificación
     calibrado boolean DEFAULT false NOT NULL,
     fecha_ultima_calibracion date,
     fecha_proxima_calibracion date,
     verificacion_periodica boolean DEFAULT false NOT NULL,
     periodicidad_verificacion character varying(50),
-    -- Bloque 3: Medida en continuo
     medida_continuo boolean DEFAULT false NOT NULL,
     unidades_medida character varying(20) DEFAULT 'µSv/h'::character varying,
     factor_correccion numeric(10,6) DEFAULT 1.0,
-    zona_radiologica public.enum_dispositivos_zona_radiologica
+    zona_radiologica public.enum_dispositivos_zona_radiologica,
+    modelo_sonda character varying(100),
+    foto character varying(255)
 );
 
 
@@ -233,9 +187,6 @@ ALTER TABLE public.dispositivos OWNER TO tfg_user;
 COMMENT ON TABLE public.dispositivos IS 'Dispositivos IoT registrados';
 
 
---
--- Name: informes; Type: TABLE; Schema: public; Owner: tfg_user
---
 
 CREATE TABLE public.informes (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
@@ -262,10 +213,6 @@ ALTER TABLE public.informes OWNER TO tfg_user;
 COMMENT ON TABLE public.informes IS 'Informes PDF generados mensualmente';
 
 
---
--- Name: instalaciones; Type: TABLE; Schema: public; Owner: tfg_user
---
-
 CREATE TABLE public.instalaciones (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     nombre character varying(100) NOT NULL,
@@ -286,10 +233,6 @@ ALTER TABLE public.instalaciones OWNER TO tfg_user;
 
 COMMENT ON TABLE public.instalaciones IS 'Instalaciones físicas donde están los IoT';
 
---
--- Name: log_accesos; Type: TABLE; Schema: public; Owner: tfg_user
---
-
 CREATE TABLE public.log_accesos (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     usuario_id uuid,
@@ -301,11 +244,6 @@ CREATE TABLE public.log_accesos (
 
 
 ALTER TABLE public.log_accesos OWNER TO tfg_user;
-
-
---
--- Name: usuarios; Type: TABLE; Schema: public; Owner: tfg_user
---
 
 CREATE TABLE public.usuarios (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
@@ -330,6 +268,30 @@ ALTER TABLE public.usuarios OWNER TO tfg_user;
 
 COMMENT ON TABLE public.usuarios IS 'Usuarios del sistema (admin y responsables)';
 
+CREATE TABLE IF NOT EXISTS public.licencias (
+    id UUID DEFAULT public.uuid_generate_v4() NOT NULL,
+    usuario_id uuid NOT NULL,
+    instalacion_id uuid,
+    campo_aplicacion character varying(255) NOT NULL,
+    fecha_concesion date,
+    fecha_caducidad date,
+    created_at TIMESTAMP without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.licencias OWNER TO tfg_user;
+
+
+CREATE TABLE public.log_cambios (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    usuario_id uuid,
+    username character varying(50),
+    campo_modificado character varying(100) NOT NULL,
+    valor_anterior text,
+    valor_nuevo text,
+    fecha timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.log_cambios OWNER TO tfg_user;
 
 --
 -- Views

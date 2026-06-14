@@ -159,7 +159,17 @@ const Dispositivo = sequelize.define('Dispositivo', {
     zona_radiologica: {
         type: DataTypes.ENUM('LIBRE_PASO', 'VIGILADA', 'CONTROLADA', 'CONTROLADA_LIMITADA', 'CONTROLADA_REGLAMENTADA', 'ACCESO_PROHIBIDO'),
         allowNull: true
-    }
+    },
+    //Modelo de la sonda 
+    modelo_sonda: {
+        type: DataTypes.STRING(100),
+        allowNull: true
+    },
+    //Foto del dispositivo
+    foto: {
+        type: DataTypes.STRING(255),
+        allowNull: true
+    },
 }, {
     tableName: 'dispositivos',
     timestamps: true,

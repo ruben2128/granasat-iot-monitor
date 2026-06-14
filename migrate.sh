@@ -96,8 +96,35 @@ ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefono_fijo VARCHAR(20);
 
 ALTER TABLE usuarios DROP COLUMN IF EXISTS movil;
 
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS modelo_sonda VARCHAR(100);
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS foto VARCHAR(255);
+
+CREATE TABLE IF NOT EXISTS licencias (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    instalacion_id UUID REFERENCES instalaciones(id) ON DELETE SET NULL,
+    campo_aplicacion VARCHAR(255) NOT NULL,
+    fecha_concesion DATE,
+    fecha_caducidad DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS log_cambios (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    usuario_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    username VARCHAR(50),
+    campo_modificado VARCHAR(100) NOT NULL,
+    valor_anterior TEXT,
+    valor_nuevo TEXT,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
 SELECT 'Migracion completada' AS resultado;
 EOF
+
+mkdir -p uploads/avatares
+mkdir -p uploads/dispositivos
 
 echo "Reiniciando backend"
 docker restart backend_rad

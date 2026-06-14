@@ -226,17 +226,30 @@ export default function Usuarios() {
 
                     {/* Lista de usuarios */}
                     <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`}}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '50px 2fr 2fr 1fr 1fr 1fr', padding: '12px 20px', borderBottom: `1px solid ${colores.borde}`}}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '50px 2fr 2fr 1fr 1fr 1fr 1fr', padding: '12px 20px', borderBottom: `1px solid ${colores.borde}`}}>
                             <p style={{ margin: 0}}></p>
-                            <p style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: 0}}>Nombre</p>
-                            <p style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: 0}}>Email</p>
-                            <p style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: 0}}>Rol</p>
-                            <p style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: 0}}>Acción</p>
-                            <p style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: 0}}>Estado</p>
+                            <p style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: 0}}>
+                                Nombre
+                            </p>
+                            <p style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: 0}}>
+                                Email
+                            </p>
+                            <p style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: 0}}>
+                                Rol
+                            </p>
+                            <p style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: 0}}>
+                                Acción
+                            </p>
+                            <p style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: 0}}>
+                                Perfil
+                            </p>
+                            <p style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: 0}}>
+                                Estado
+                            </p>
                         </div>
                         {usuarios.map(function(u){
                             return(
-                                <div key={u.id} style={{ display: 'grid', gridTemplateColumns: '50px 2fr 2fr 1fr 1fr 1fr', padding: '16px 20px', borderBottom: `1px solid ${colores.borde}`, alignItems: 'center'}}>
+                                <div key={u.id} style={{ display: 'grid', gridTemplateColumns: '50px 2fr 2fr 1fr 1fr 1fr 1fr', padding: '16px 20px', borderBottom: `1px solid ${colores.borde}`, alignItems: 'center'}}>
                                     <div style={{ position: 'relative', cursor: 'pointer' }} onClick={function() { document.getElementById(`avatar-input-${u.id}`).click(); }}>
                                         {u.avatar ? (
                                             <img src={u.avatar} alt={u.nombre} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover'}}/>
@@ -270,6 +283,9 @@ export default function Usuarios() {
                                     </span>
                                     <button onClick={function() { handleCambiarEstadoUsuario(u.id); }} style={{ backgroundColor: u.activo ? '#2a2a2a' : '#1a3a2a', color: u.activo ? '#a0a0a0' : '#4ade80', fontSize: '12px', fontWeight: '600', padding: '4px 12px', borderRadius: '20px', border: 'none', cursor: usuario.id === u.id ? 'not-allowed' : 'pointer', opacity: usuario.id === u.id ? 0.5 : 1 }} disabled={usuario.id === u.id}>
                                         {u.activo ? 'Desactivar' : 'Activar'}
+                                    </button>
+                                    <button onClick={function() {router.push('/perfil?id=' + u.id); }} style={{background: 'none', border: `1px solid ${colores.borde}`, color: colores.texto, fontSize: '12px', padding: '4px 12px', borderRadius: '20px', cursor: 'pointer'}}>
+                                        Ver perfil
                                     </button>
                                     <span style={{ backgroundColor: u.activo ? '#1a3a2a' : '#2a2a2a', color: u.activo ? '#4ade80' : '#a0a0a0', fontSize: '12px', fontWeight: '600', padding: '4px 12px', borderRadius: '20px', display: 'inline-block'}}>
                                         {u.activo ? 'Activo' : 'Inactivo'}

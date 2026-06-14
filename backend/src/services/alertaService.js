@@ -24,6 +24,29 @@ function superaUmbral(valor,operador, umbral){
     }
 }
 
+async function actualizarUltimasConexiones(){
+    const dispositivos = await Dispositivo.findAll({
+        where: {activo: true}
+    });
+
+    for(const dispositivo of dispositivos){
+        if(!dispositivo.mac_address){
+            continue;
+        }
+
+        try{
+            const ultimaLectura = await influxService.obtenerUltimaLectura(dispositivo.mac_address);
+
+            if(ultimaLectura){
+                await dispositivo.update({ ultima_conexion: new Date()});
+            }
+
+        } catch(err){
+            console.error(`Error actualizando ultima conexion de ${dispositivo.nombre}: `, err.message);
+        }
+    }
+}
+
 async function yaAlertadoRecientemente(alertaConfigId, dispositivoId){
     const limite = new Date(Date.now() - COOLDOWN_MINUTOS*60*1000); // Convierte a ms
 
@@ -44,6 +67,8 @@ async function yaAlertadoRecientemente(alertaConfigId, dispositivoId){
 }
 
 async function procesarAlertas(){
+    await actualizarUltimasConexiones();
+    
     const alertas = await AlertaConfig.findAll({
         where: { activa : true },
         include: [{

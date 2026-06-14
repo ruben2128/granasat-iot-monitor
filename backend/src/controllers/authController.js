@@ -1,4 +1,3 @@
-// backend/src/controllers/authController.js
 const jwt = require('jsonwebtoken');
 const Usuario = require('../models/Usuario');
 const { enviarEmailBienvenida } = require('../services/emailService');
@@ -7,7 +6,6 @@ const LogAcceso = require('../models/LogAcceso');
 /*
   Ruta: POST /api/auth/register
   Registrar nuevo usuario (solo ADMIN puede hacerlo)
- 
 */
 async function registrarUsuario(req, res) {
   try {
@@ -191,7 +189,8 @@ async function iniciarSesion(req, res) {
         email: usuario.email,
         role: usuario.role,
         nombre: usuario.nombre,
-        apellidos: usuario.apellidos
+        apellidos: usuario.apellidos,
+        avatar: usuario.avatar || null
       }
     });
 

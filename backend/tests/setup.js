@@ -1,0 +1,16 @@
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = 'secreto_para_tests_locales';
+process.env.JWT_EXPIRES_IN = '1h';
+process.env.DB_NAME = 'test_db';
+process.env.DB_USER = 'test_user';
+process.env.DB_PASSWORD = 'test_password';
+process.env.DB_HOST = 'localhost';
+process.env.DB_PORT = '5432';
+process.env.INFLUX_URL = 'http://localhost:8086';
+process.env.INFLUX_TOKEN = 'token_test';
+process.env.INFLUX_ORG = 'GranaSAT';
+process.env.INFLUX_BUCKET = 'NeutronSource';
+process.env.SMTP_HOST = 'smtp.test.com';
+process.env.SMTP_PORT = '587';
+process.env.SMTP_USER = 'test@test.com';
+process.env.SMTP_PASS = 'test_pass';

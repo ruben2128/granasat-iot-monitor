@@ -20,7 +20,7 @@ function obtenerInfoZona(valor){
 }
 
 export default function Dispositivo(){
-     const router = useRouter();
+    const router = useRouter();
     const { id } = router.query;
     const [dispositivo, setDispositivo] = useState(null);
     const [usuario, setUsuario] = useState(null);
@@ -59,6 +59,8 @@ export default function Dispositivo(){
     const [editUnidadesMedida, setEditUnidadesMedida] = useState('µSv/h');
     const [editFactorCorreccion, setEditFactorCorreccion] = useState('1.0');
     const [editZonaRadiologica, setEditZonaRadiologica] = useState('');
+    const [editModeloSonda, setEditModeloSonda] = useState('');
+    const [editDireccionMAC, setEditDireccionMAC] = useState('');
 
     useEffect(function () {
         const temaGuardado = localStorage.getItem('tema');
@@ -118,6 +120,7 @@ export default function Dispositivo(){
             setEditUnidadesMedida(d.unidades_medida || 'µSv/h');
             setEditFactorCorreccion(d.factor_correccion !== null ? String(d.factor_correccion) : '1.0');
             setEditZonaRadiologica(d.zona_radiologica || '');
+            setEditModeloSonda(d.modelo_sonda || '');
  
             const respuestaLecturas = await api.get(`/dispositivos/${id}/lecturas?rango=${rango}`, { headers: { Authorization: `Bearer ${token}` } });
             setLecturas(respuestaLecturas.data.lecturas);
@@ -185,6 +188,8 @@ export default function Dispositivo(){
                 unidades_medida: editUnidadesMedida || 'µSv/h',
                 factor_correccion: editFactorCorreccion ? parseFloat(editFactorCorreccion) : 1.0,
                 zona_radiologica: editZonaRadiologica || null,
+                modelo_sonda: editModeloSonda || null,
+                mac_address: !dispositivo.mac_address && editDireccionMAC ? editDireccionMAC : undefined,
             }, { headers: { Authorization: `Bearer ${token}` } });
             const respuesta = await api.get(`/dispositivos/${id}`, { headers: { Authorization: `Bearer ${token}` } });
             
@@ -253,6 +258,53 @@ export default function Dispositivo(){
         return new Date(fechaISO).toLocaleDateString('es-ES');
     }
 
+    function obtenerEstadoConexion(fechaConexion){
+        if(!fechaConexion){
+            return {color: '#a0a0a0', texto: 'Sin datos'};
+        }
+
+        const ahora = new Date();
+        const conexion = new Date(fechaConexion);
+        const minutosTranscurridos = Math.floor((ahora-conexion) / (1000*60));
+
+        if(minutosTranscurridos < 10){
+            return {color: '#4ade80', texto: 'Conectado hace ' + minutosTranscurridos + ' min'};
+        } else if(minutosTranscurridos < 60){
+            return {color: '#fbbf24', texto: 'Hace ' + minutosTranscurridos + ' min'};
+        } else if(minutosTranscurridos < 1440){
+            const horas = Math.floor(minutosTranscurridos / 60);
+
+            return {color: '#f97316', texto: 'Hace ' + horas + ' h'};
+        } else{
+            const dias = Math.floor(minutosTranscurridos / 1440);
+
+            return {color: '#f87171', texto: 'Hace ' + dias + ' días'};
+        }
+    }
+
+    async function handleSubirFoto(archivo){
+        if(!archivo){
+            return;
+        }
+
+        try{
+            const token = localStorage.getItem('token');
+            const formData = new FormData();
+
+            formData.append('foto', archivo);
+
+            await api.post(`/dispositivos/${id}/foto`, formData, {
+                headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data'}
+            });
+
+            const respuesta = await api.get(`/dispositivos/${id}`, {headers: {Authorization: `Bearer ${token}`}});
+
+            setDispositivo(respuesta.data);
+        } catch(err){
+            console.error('Erro al subir la foto: ', err);
+        }
+    }
+
     const estiloInput = {
         width: '100%',
         backgroundColor: colores.fondo,
@@ -307,10 +359,22 @@ export default function Dispositivo(){
                     {/* Tarjeta principal */}
                     <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginBottom: '24px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div style={{cursor: 'pointer', flexShrink: 0}} onClick={function() {document.getElementById('foto-input').click();}}>
+                                {dispositivo.foto ? (
+                                    <img src={dispositivo.foto} alt={dispositivo.nombre} style={{width: '80px', height: '80px', borderRadius: '8px', objectFit: 'cover', border: `1px solid ${colores.borde}`}}/>
+                                ) : (
+                                    <div style={{width:'80px', height:'80px', borderRadius: '8px', backgroundColor: colores.borde, display: 'flex', alignItems: 'center', justifyContent: 'center', color: colores.textoSecundario, fontSize: '11px', textAlign: 'center', padding: '4px'}}>
+                                        + Foto
+                                    </div>
+                                )}
+                                <input id="foto-input" type="file" accept="image/jpeg, image/png, image/webp" style={{display: 'none'}} onChange={function(e) {handleSubirFoto(e.target.files[0]);}}/>
+                            </div>
                             <div>
-                                <p style={{ color: colores.textoSecundario, fontSize: '11px', margin: '0 0 8px 0' }}>
-                                    {dispositivo.mac_address}
-                                </p>
+                                {dispositivo.medida_continuo && (
+                                    <p style={{ color: colores.textoSecundario, fontSize: '11px', margin: '0 0 8px 0' }}>
+                                        {dispositivo.mac_address}
+                                    </p>
+                                )}
                                 <h1 style={{ color: colores.texto, fontSize: '22px', fontWeight: '700', margin: '0 0 8px 0' }}>
                                     {dispositivo.nombre}
                                 </h1>
@@ -423,18 +487,6 @@ export default function Dispositivo(){
                                         </label>
                                         <input type="number" step="any" value={editAltura} onChange={function (e) { setEditAltura(e.target.value); }} style={estiloInput} />
                                     </div>
-                                    <div>
-                                        <label style={estiloLabel}>
-                                            IP REGISTRO UGR
-                                        </label>
-                                        <input type="text" value={editIpRegistro} onChange={function (e) { setEditIpRegistro(e.target.value); }} style={estiloInput} />
-                                    </div>
-                                    <div>
-                                        <label style={estiloLabel}>
-                                            FECHA CADUCIDAD IP
-                                        </label>
-                                        <input type="date" value={editFechaCaducidadIp} onChange={function (e) { setEditFechaCaducidadIp(e.target.value); }} style={estiloInput} />
-                                    </div>
                                     <div style={{ gridColumn: '1 / -1' }}>
                                         <label style={estiloLabel}>
                                             NOTAS
@@ -467,6 +519,12 @@ export default function Dispositivo(){
                                                 Nº SERIE SONDA
                                             </label>
                                             <input type="text" value={editNumSerieSonda} onChange={function (e) { setEditNumSerieSonda(e.target.value); }} style={estiloInput} />
+                                        </div>
+                                        <div>
+                                            <label style={estiloLabel}>
+                                                MODELO SONDA
+                                            </label>
+                                            <input type="text" value={editModeloSonda} onChange={function (e) { setEditModeloSonda(e.target.value); }} style={estiloInput} />
                                         </div>
                                         <div style={{ gridColumn: '1 / -1' }}>
                                             <label style={estiloLabel}>TIPO DE DETECTOR</label>
@@ -544,8 +602,28 @@ export default function Dispositivo(){
                                             EQUIPO DE MEDIDA EN CONTINUO
                                         </label>
                                     </div>
+                                    {editMedidaContinuo && !dispositivo.mac_address && (
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px'}}>
+                                            <div>
+                                                <label style={estiloLabel}>DIRECCIÓN MAC</label>
+                                                <input type="text" value={editDireccionMAC} onChange={function(e) {setEditDireccionMAC(e.target.value)}} placeholder="AA:BB:CC:DD:EE:FF" style={estiloInput}/>
+                                            </div>
+                                        </div>
+                                    )}
                                     {editMedidaContinuo && (
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                            <div>
+                                                <label style={estiloLabel}>
+                                                    IP REGISTRO UGR
+                                                </label>
+                                                <input type="text" value={editIpRegistro} onChange={function (e) { setEditIpRegistro(e.target.value); }} style={estiloInput} />
+                                            </div>
+                                            <div>
+                                                <label style={estiloLabel}>
+                                                    FECHA CADUCIDAD IP
+                                                </label>
+                                                <input type="date" value={editFechaCaducidadIp} onChange={function (e) { setEditFechaCaducidadIp(e.target.value); }} style={estiloInput} />
+                                            </div>
                                             <div>
                                                 <label style={estiloLabel}>UNIDADES DE MEDIDA</label>
                                                 <input type="text" value={editUnidadesMedida} onChange={function (e) { setEditUnidadesMedida(e.target.value); }} style={estiloInput} />
@@ -672,10 +750,9 @@ export default function Dispositivo(){
                             {[
                                 { label: 'Versión hardware', value: dispositivo.hw_version },
                                 { label: 'Versión firmware', value: dispositivo.fw_version },
-                                { label: 'Última conexión', value: formatearFecha(dispositivo.ultima_conexion) },
                                 { label: 'Fecha de instalación', value: formatearFechaSolo(dispositivo.fecha_instalacion) },
                                 { label: 'Nivel de batería', value: dispositivo.nivel_bateria !== null ? `${dispositivo.nivel_bateria}%` : '-' },
-                                { label: 'IP de registro UGR', value: dispositivo.ip_registro },
+                                { label: 'IP de registro UGR', value: dispositivo.medida_continuo ? dispositivo.ip_registro : null},
                                 { label: 'Latitud', value: dispositivo.latitud },
                                 { label: 'Longitud', value: dispositivo.longitud },
                                 { label: 'Altura (m)', value: dispositivo.altura },
@@ -691,6 +768,19 @@ export default function Dispositivo(){
                                     </div>
                                 );
                             })}
+                            {dispositivo.ultima_conexion && (
+                                <div>
+                                    <p style={{ color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', margin: '0 0 6px 0' }}>
+                                        ÚLTIMA CONEXIÓN
+                                    </p>
+                                    <p style={{ color: colores.texto, fontSize: '14px', margin: '0 0 4px 0'}}>
+                                        {formatearFecha(dispositivo.ultima_conexion)}
+                                    </p>
+                                    <span style={{color: obtenerEstadoConexion(dispositivo.ultima_conexion).color, fontSize: '12px', fontWeight: '600'}}>
+                                        {obtenerEstadoConexion(dispositivo.ultima_conexion).texto}
+                                    </span>
+                                </div>
+                            )}
                             {dispositivo.fecha_caducidad_ip && (
                                 <div>
                                     <p style={{ color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 6px 0' }}>
@@ -714,6 +804,7 @@ export default function Dispositivo(){
                                         { label: 'Modelo electrónica', value: dispositivo.modelo_electronica },
                                         { label: 'Nº serie electrónica', value: dispositivo.num_serie_electronica },
                                         { label: 'Nº serie sonda', value: dispositivo.num_serie_sonda },
+                                        { label: 'Modelo sonda', value: dispositivo.modelo_sonda},
                                         { label: 'Tipo de detector', value: dispositivo.tipo_detector },
                                     ].map(function (item) {
                                         return (

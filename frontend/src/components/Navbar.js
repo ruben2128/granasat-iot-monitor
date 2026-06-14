@@ -126,7 +126,10 @@ export default function Navbar({ usuario, tema, setTema, colores }){
                                     <p style={{ color: colores.textoSecundario, fontSize: '11px', margin: '0 0 8px 8px' }}>
                                         {usuario.email || usuario.username}
                                     </p>
-                                    <div style={{ height: '1px', backgroundColor: colores.borde, margin: '4px 0' }}/>
+                                    <button onClick={function()  {cerrarMenus(); router.push('/perfil'); }} style={{width: '100%', padding: '8px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', backgroundColor: 'transparent', color: colores.texto, textAlign: 'left'}}>
+                                        Mi perfil
+                                    </button>
+                                    <div style={{height: '1px', backgroundColor: colores.borde, margin: '4px 0'}}/>
                                     <button onClick={logout} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', backgroundColor: 'transparent', color: colores.acento, textAlign: 'left' }}>
                                         Cerrar sesión
                                     </button>

@@ -3,12 +3,14 @@ const path = require('path');
 
 const storage = multer.diskStorage({
     destination: function(req, file, cb){
-        cb(null, path.join(__dirname, '../../uploads/avatares'));
+        const carpeta = req.baseUrl.includes('dispositivo') ? 'dispositivos' : 'avatares';
+        cb(null, path.join(__dirname, '../../uploads/' + carpeta));
     },
     filename: function(req, file, cb){
         // Nombre unico: timestamp + id usuario + extensión original
         const extension = path.extname(file.originalname);
-        cb(null, `avatar_${req.params.id}_${Date.now()}${extension}`);
+        const prefijo = req.baseUrl.includes('dispositivo') ? 'dispositivo' : 'avatar';
+        cb(null, `${prefijo}_${req.params.id}_${Date.now()}${extension}`);
     }
 });
 

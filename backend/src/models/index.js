@@ -5,11 +5,11 @@ const AlertaConfig = require ('./AlertaConfig');
 const AlertaHistorial = require('./AlertaHistorial');
 const Informe = require('./Informe');
 const PlantillaEmail = require('./PlantillaEmail');
+const Licencia = require('./Licencia');
+const LogCambio = require('./LogCambio');
+const { Log } = require('@influxdata/influxdb-client');
 
-// ==========================================
 // RELACIONES
-// ==========================================
-
 
 // USUARIO --> INSTALACIONES
 Usuario.hasMany(Instalacion, {
@@ -62,7 +62,6 @@ AlertaHistorial.belongsTo(Dispositivo, {
     as: 'dispositivo'
 });
 
-
 //INSTALACION --> INFORMES
 Instalacion.hasMany(Informe, {
     foreignKey: 'instalacion_id',
@@ -73,4 +72,34 @@ Informe.belongsTo(Instalacion, {
     as: 'instalacion'
 });
 
-module.exports = {Usuario, Instalacion, Dispositivo, AlertaConfig, AlertaHistorial, Informe, PlantillaEmail};
+// USUARIO --> LICENCIAS
+Usuario.hasMany(Licencia, {
+    foreignKey: 'usuario_id',
+    as: 'licencias'
+});
+Licencia.belongsTo(Usuario, {
+    foreignKey: 'usuario_id',
+    as: 'usuario'
+});
+
+//INSTALACION --> LICENCIAS
+Instalacion.hasMany(Licencia, {
+    foreignKey: 'instalacion_id',
+    as: 'licencias'
+});
+Licencia.belongsTo(Instalacion, {
+    foreignKey: 'instalacion_id',
+    as: 'instalacion'
+});
+
+// USUARIO --> LOG_CAMBIOS
+Usuario.hasMany(LogCambio, {
+    foreignKey: 'usuario_id',
+    as: 'log_cambios'
+});
+LogCambio.belongsTo(Usuario, {
+    foreignKey: 'usuario_id',
+    as: 'usuario'
+});
+
+module.exports = {Usuario, Instalacion, Dispositivo, AlertaConfig, AlertaHistorial, Informe, PlantillaEmail, Licencia, LogCambio};
