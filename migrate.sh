@@ -4,6 +4,8 @@ echo "Aplicando migraciones"
 
 docker exec -i postgres_rad psql -U tfg_user -d tfg_iot << 'EOF'
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Usuarios
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS avatar VARCHAR(255);
 ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_role_check;
