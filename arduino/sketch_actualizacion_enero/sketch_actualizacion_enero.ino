@@ -67,7 +67,7 @@ void loop() {
   client.loop();
   
   static unsigned long lastMsg = 0;
-  if (millis() - lastMsg > 10000) {
+  if (millis() - lastMsg > 60000) {
     lastMsg = millis();
     
     // Simular lecturas
