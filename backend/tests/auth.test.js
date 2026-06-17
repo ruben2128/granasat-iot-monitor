@@ -4,24 +4,24 @@
  * Cubre los casos de login:
  * credenciales correctas, incorrectas y usuario inactivo.
  */
-const request  = require('supertest');
-const app      = require('../src/app');
+const request = require('supertest');
+const app = require('../src/app');
 
-jest.mock('../src/models/index',       () => ({}));
+jest.mock('../src/models/index', () => ({}));
 jest.mock('../src/services/alertaService', () => ({ procesarAlertas: jest.fn() }));
-jest.mock('../src/services/emailService',  () => ({ enviarEmailBienvenida: jest.fn(), enviarEmailAlerta: jest.fn() }));
-jest.mock('../src/models/LogAcceso',   () => ({ create: jest.fn().mockResolvedValue(true), findOne: jest.fn().mockResolvedValue(null) }));
+jest.mock('../src/services/emailService', () => ({ enviarEmailBienvenida: jest.fn(), enviarEmailAlerta: jest.fn() }));
+jest.mock('../src/models/LogAcceso', () => ({ create: jest.fn().mockResolvedValue(true), findOne: jest.fn().mockResolvedValue(null) }));
 jest.mock('../src/models/Usuario', () => ({ findOne: jest.fn(), findByPk: jest.fn(), create: jest.fn() }));
 
 const Usuario = require('../src/models/Usuario');
 
 const USUARIO_MOCK = {
-  id:        'uuid-admin-001',
-  username:  'admin',
-  role:      'ADMIN',
-  activo:    true,
+  id: 'uuid-admin-001',
+  username: 'admin',
+  role: 'ADMIN',
+  activo: true,
   comparePassword: jest.fn(),
-  update:    jest.fn().mockResolvedValue(true),
+  update: jest.fn().mockResolvedValue(true),
 };
 
 beforeEach(() => jest.clearAllMocks());
@@ -56,6 +56,7 @@ describe('POST /api/auth/login', () => {
 
   test('devuelve 400 cuando faltan campos obligatorios', async () => {
     const res = await request(app).post('/api/auth/login').send({ username: 'admin' });
+    
     expect(res.status).toBe(400);
   });
 

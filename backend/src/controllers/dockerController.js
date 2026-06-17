@@ -5,7 +5,7 @@ async function obtenerEspacioDocker(req, res){
         if(req.user.role !== 'ADMIN'){
             return res.status(403).json({error: 'No tienes permiso'});
         }
-        const rutaData = process.env.HOME + '/Escritorio/tig/data';
+        const rutaData = process.env.HOME + '/Escritorio/tig/data';  // TO-DO ADAPTAR A PROD
 
         exec(`du -sh ${rutaData}/*`, function(error,stdout, stderr){           
 

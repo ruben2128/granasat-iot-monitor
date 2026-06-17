@@ -410,6 +410,7 @@ export default function Dispositivo(){
                                         if(!confirm('¿Seguro que quieres eliminar este dispositivo?')) return;
                                         try {
                                             const token = localStorage.getItem('token');
+                                            console.log('ID dispositivo:', id);
                                             
                                             await api.delete(`/dispositivos/${id}`, { headers: { Authorization: `Bearer ${token}` }});
                                             router.back();

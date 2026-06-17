@@ -19,7 +19,7 @@ jest.mock('../src/models/Usuario', () => ({ findAll: jest.fn(), findOne: jest.fn
 const Usuario = require('../src/models/Usuario');
 
 const ID_ADMIN = 'admin-001';
-const ID_RESP  = 'resp-001';
+const ID_RESP = 'resp-001';
 
 function token(role, id) {
   return jwt.sign({ id, username: role, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
