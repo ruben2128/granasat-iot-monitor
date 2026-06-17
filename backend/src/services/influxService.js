@@ -81,7 +81,7 @@ async function obtenerUltimaLectura(mac){
  */
 async function testConexionDispositivo(mac){
     try{
-        const lecturas = await obtenerLecturas(mac, '-10m', 'radiacion');
+        const lecturas = await obtenerLecturas(mac, '-3m', 'radiacion');
 
         return {
             activo: lecturas.length > 0,

@@ -267,7 +267,7 @@ export default function Dispositivo(){
         const conexion = new Date(fechaConexion);
         const minutosTranscurridos = Math.floor((ahora-conexion) / (1000*60));
 
-        if(minutosTranscurridos < 10){
+        if(minutosTranscurridos < 3){
             return {color: '#4ade80', texto: 'Conectado hace ' + minutosTranscurridos + ' min'};
         } else if(minutosTranscurridos < 60){
             return {color: '#fbbf24', texto: 'Hace ' + minutosTranscurridos + ' min'};
@@ -736,8 +736,7 @@ export default function Dispositivo(){
                                 <XAxis dataKey="hora" stroke={colores.textoSecundario} fontSize={11} />
                                 <YAxis stroke={colores.textoSecundario} fontSize={11} scale="log" domain={['auto', 'auto']} />
                                 <Tooltip contentStyle={{ backgroundColor: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: '8px', color: colores.texto }} />
-                                <Line type="monotone" dataKey="valor" stroke={colores.acento} strokeWidth={2} dot={false} />
-                            </LineChart>
+                                <Line type="monotone" dataKey="valor" stroke={colores.acento} strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 5 }} />                            </LineChart>
                         </ResponsiveContainer>
                     </div>
 

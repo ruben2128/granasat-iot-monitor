@@ -72,7 +72,7 @@ void loop() {
     
     // Simular lecturas
     float base = 0.10 + (random(0, 40) / 100.0); // 0.10 - 0.50
-    bool pico = random(0, 100) < 10; // 10% de probabilidad de pico
+    bool pico = random(0, 100) < 2; // 2% de probabilidad de pico
     nivel_radiacion = pico ? base + random(50, 150) / 10.0 : base; // pico: +5.0 a +15.0
 
     // Suministro: 98% activo
