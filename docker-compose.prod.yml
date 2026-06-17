@@ -99,7 +99,7 @@ services:
       SMTP_PASS: ogjrrxmkgonuhbsl
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.radiacion-api.rule=Host(`radiacion.granasat.space`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.radiacion-api.rule=Host(`radiacion.granasat.space`) && (PathPrefix(`/api`) || PathPrefix(`/uploads`))"
       - "traefik.http.routers.radiacion-api.tls=true"
       - "traefik.http.services.radiacion-api.loadbalancer.server.port=3001"
       - "traefik.http.routers.radiacion-api.tls.certresolver=resolver"
