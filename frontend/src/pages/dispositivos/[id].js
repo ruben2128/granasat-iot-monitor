@@ -16,7 +16,9 @@ const ZONAS_RADIOLOGICAS = [
 ];
 
 function obtenerInfoZona(valor){
-    return ZONAS_RADIOLOGICAS.find(function (z) {return z.value == valor;}) || null;
+    return ZONAS_RADIOLOGICAS.find(function (z) {
+        return z.value == valor;
+    }) || null;
 }
 
 export default function Dispositivo(){
@@ -304,6 +306,17 @@ export default function Dispositivo(){
             console.error('Erro al subir la foto: ', err);
         }
     }
+
+    function dispositivoEstaActivo(){
+        if(!dispositivo.ultima_conexion) {
+            return false;
+        }
+
+        const minutosTranscurridos = Math.floor((new Date() - new Date(dispositivo.ultima_conexion)) / (1000*60));
+        
+        return minutosTranscurridos < 3;
+    }
+
 
     const estiloInput = {
         width: '100%',
@@ -693,23 +706,23 @@ export default function Dispositivo(){
                                 RADIACIÓN ({dispositivo.unidades_medida || 'µSv/h'})
                             </p>
                             <p style={{ color: colores.acento, fontSize: '32px', fontWeight: '700', margin: 0 }}>
-                                {ultimoValor('radiacion') !== null ? ultimoValor('radiacion').toFixed(1) : '-'}
+                                {dispositivoEstaActivo() && ultimoValor('radiacion') !== null ? ultimoValor('radiacion').toFixed(1) : '-'}
                             </p>
                         </div>
                         <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '20px', border: `1px solid ${colores.borde}` }}>
                             <p style={{ color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0' }}>
                                 SUMINISTRO
                             </p>
-                            <p style={{ color: ultimoValor('suministro') === 1 ? '#4ade80' : '#a0a0a0', fontSize: '32px', fontWeight: '700', margin: 0 }}>
-                                {ultimoValor('suministro') !== null ? (ultimoValor('suministro') === 1 ? 'ON' : 'OFF') : '-'}
+                            <p style={{ color: dispositivoEstaActivo() && ultimoValor('suministro') === 1 ? '#4ade80' : '#a0a0a0', fontSize: '32px', fontWeight: '700', margin: 0 }}>
+                                {dispositivoEstaActivo() && ultimoValor('suministro') !== null ? (ultimoValor('suministro') === 1 ? 'ON' : 'OFF') : '-'}
                             </p>
                         </div>
                         <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '20px', border: `1px solid ${colores.borde}` }}>
                             <p style={{ color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0' }}>
                                 ELEMENTO ACTIVO
                             </p>
-                            <p style={{ color: ultimoValor('elemento_activo') === 1 ? '#4ade80' : '#a0a0a0', fontSize: '32px', fontWeight: '700', margin: 0 }}>
-                                {ultimoValor('elemento_activo') !== null ? (ultimoValor('elemento_activo') === 1 ? 'ON' : 'OFF') : '-'}
+                            <p style={{ color: dispositivoEstaActivo() && ultimoValor('elemento_activo') === 1 ? '#4ade80' : '#a0a0a0', fontSize: '32px', fontWeight: '700', margin: 0 }}>
+                                {dispositivoEstaActivo() && ultimoValor('elemento_activo') !== null ? (ultimoValor('elemento_activo') === 1 ? 'ON' : 'OFF') : '-'}
                             </p>
                         </div>
                     </div>
