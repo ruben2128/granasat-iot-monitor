@@ -88,7 +88,7 @@ services:
       DB_USER: tfg_user
       DB_PASSWORD: tfg_password_seguro_2024
       INFLUX_URL: http://influxdb:8086
-      INFLUX_TOKEN: fEbHJjtGuX28Y8nbGp6JCIoRPzHimHBc-lR08haWQzpfE5b2MB-cldIoYihKLbPDX-U3HypDJ5zD0kFPx4oPQA==
+      INFLUX_TOKEN: eVASuizyVUt-kbzFC8SDKrp_6ifHrDO0eYerjl7w6dmmn8mWMXZzO9wE-cIDCvNPQRvHtHILfCMC2JPIb-77HQ==
       INFLUX_ORG: RadiationMonitor
       INFLUX_BUCKET: RadiationMonitorBucket
       JWT_SECRET: mi_secreto_super_seguro_cambiar_en_produccion_123456
