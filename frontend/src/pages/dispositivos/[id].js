@@ -308,13 +308,13 @@ export default function Dispositivo(){
     }
 
     function dispositivoEstaActivo(){
-        if(!dispositivo.ultima_conexion) {
-            return false;
-        }
+        const lecturaRadiacion = lecturas.find(function(l) { return l.variable === 'radiacion'; });
+        if(!lecturaRadiacion){
+            return false; 
+        } 
 
-        const minutosTranscurridos = Math.floor((new Date() - new Date(dispositivo.ultima_conexion)) / (1000*60));
-        
-        return minutosTranscurridos < 3;
+        const minutosTranscurridos = Math.floor((new Date() - new Date(lecturaRadiacion.time)) / (1000*60));
+        return minutosTranscurridos < 2;
     }
 
 
