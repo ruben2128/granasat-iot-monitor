@@ -36,9 +36,14 @@ async function actualizarUltimasConexiones(){
 
         try{
             const ultimaLectura = await influxService.obtenerUltimaLectura(dispositivo.mac_address);
+            const camposConDatos = Object.values(ultimaLectura);
 
-            if(ultimaLectura){
-                await dispositivo.update({ ultima_conexion: new Date()});
+            if(camposConDatos.length > 0){
+                const fechaMasReciente = camposConDatos.reduce(function(masReciente, campo){
+                    return new Date(campo.time) > new Date(masReciente) ? campo.time : masReciente;
+                }, camposConDatos[0].time);
+
+                await dispositivo.update({ ultima_conexion: fechaMasReciente });
             }
 
         } catch(err){
@@ -93,10 +98,6 @@ async function procesarAlertas(){
             try {
                 const ultimaLectura = await influxService.obtenerUltimaLectura(dispositivo.mac_address);
                 const lecturaDelCampo = ultimaLectura[alerta.campo];
-
-                if(ultimaLectura){
-                    await dispositivo.update({ ultima_conexion: new Date() });
-                }
                 
                 if(!lecturaDelCampo){
                     continue;
