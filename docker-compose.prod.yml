@@ -32,8 +32,6 @@ services:
     volumes:
       - ./data/grafana:/var/lib/grafana
       - ./log/grafana:/var/log/grafana
-    depends_on:
-      - influxdb_rad
     restart: always
     networks:
       - RadiacionN
@@ -108,8 +106,6 @@ services:
     depends_on:
       postgres_rad:
         condition: service_healthy
-      influxdb_rad:
-        condition: service_started
     restart: always
     networks:
       - traefik
