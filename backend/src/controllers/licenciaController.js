@@ -23,7 +23,7 @@ async function obtenerLicencias(req, res) {
 async function crearLicencia(req, res) {
     try {
         const { usuario_id } = req.params;
-        const { instalacion_id, campo_aplicacion, fecha_concesion, fecha_caducidad } = req.body;
+        const { instalacion_id, campo_aplicacion, nivel, fecha_concesion, fecha_caducidad } = req.body;
 
         if (!campo_aplicacion) {
             return res.status(400).json({ error: 'El campo de aplicación es obligatorio' });
@@ -34,7 +34,8 @@ async function crearLicencia(req, res) {
             instalacion_id: instalacion_id || null,
             campo_aplicacion,
             fecha_concesion: fecha_concesion || null,
-            fecha_caducidad: fecha_caducidad || null
+            fecha_caducidad: fecha_caducidad || null,
+            nivel: nivel || null
         });
 
         res.status(201).json({ message: 'Licencia creada correctamente', licencia });

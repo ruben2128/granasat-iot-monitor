@@ -57,6 +57,15 @@ const AlertaConfig = sequelize.define('AlertaConfig', {
   activa: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
+  },
+  dispositivo_id:{
+    type: DataTypes.UUID,
+    references: {
+      model: 'dispositivos',
+      key: 'id'
+    },
+    onDelete: 'CASCADE',
+    allowNull: false
   }
 }, {
   tableName: 'alertas_config',

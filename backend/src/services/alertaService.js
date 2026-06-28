@@ -1,6 +1,7 @@
 const AlertaConfig = require('../models/AlertaConfig');
 const AlertaHistorial = require('../models/AlertaHistorial');
 const Dispositivo = require('../models/Dispositivo');
+const Instalacion = require('../models/Instalacion');
 const influxService = require('./influxService');
 const emailService = require('./emailService');
 const {Op} = require('sequelize');
@@ -77,96 +78,89 @@ async function procesarAlertas(){
     const alertas = await AlertaConfig.findAll({
         where: { activa : true },
         include: [{
-            model: require('../models/Instalacion'),
+            model: Instalacion,
             as: 'instalacion'
+        }, {
+            model: Dispositivo,
+            as: 'dispositivo'
         }]
     });
 
     for (const alerta of alertas){
-        const dispositivos = await Dispositivo.findAll({
-            where: {
-                instalacion_id: alerta.instalacion_id,
-                activo: true
-            }
-        });
+        const dispositivo = alerta.dispositivo;
 
-        for(const dispositivo of dispositivos){
-            if(!dispositivo.mac_address){
+        if(!dispositivo || !dispositivo.mac_address || !dispositivo.activo){
+            continue;
+        }
+
+        try {
+            const ultimaLectura = await influxService.obtenerUltimaLectura(dispositivo.mac_address);
+            const lecturaDelCampo = ultimaLectura[alerta.campo];
+            
+            if(!lecturaDelCampo){
                 continue;
             }
 
-            try {
-                const ultimaLectura = await influxService.obtenerUltimaLectura(dispositivo.mac_address);
-                const lecturaDelCampo = ultimaLectura[alerta.campo];
-                
-                if(!lecturaDelCampo){
-                    continue;
-                }
+            const valor = lecturaDelCampo.valor;
 
-                const valor = lecturaDelCampo.valor;
-
-                if(!superaUmbral(valor, alerta.operador, alerta.umbral)){
-                    continue;
-                }
-
-                const yaAlertado = await yaAlertadoRecientemente(alerta.id, dispositivo.id);
-
-                if(yaAlertado){
-                    continue;
-                }
-
-                const mensaje = alerta.mensaje_personalizado ||
-                    `ALERTA: ${alerta.nombre}\n` +
-                    `Instaalcion: ${alerta.instalacion.nombre}\n` +
-                    `Dispositivo: ${dispositivo.nombre} (Direccion MAC: ${dispositivo.mac_address})\n` +
-                    `Campo: ${alerta.campo}\n` +
-                    `Valor detectado: ${valor}\n` +
-                    `Umbral configurado: ${alerta.operador} ${alerta.umbral}\n`+
-                    `Fecha: ${new Date()}`;
-
-                let emailEnviado = false;
-                let emailError = null;
-                let fechaEnvio = null;
-
-                try {
-                    await emailService.enviarEmailAlerta(
-                        alerta.emails_destino,
-                        `[IOT ALERTA] ${alerta.nombre}`,
-                        mensaje
-                    );
-                    emailEnviado = true;
-                    console.log(`Email de alerta enviado: ${alerta.nombre} - ${dispositivo.nombre}`);
-                }catch (err){
-                    emailError = err.message;
-                    console.error(`Ha habido un error enviando el email de alerta: ${err.mesage}`);
-                }
-
-                if(emailEnviado){
-                    const fechaEnvio = new Date();
-                }
-
-                await AlertaHistorial.create({
-                    alerta_config_id : alerta.id,
-                    dispositivo_id: dispositivo.id,
-                    instalacion_id: alerta.instalacion_id,
-                    tipo: alerta.tipo,
-                    valor_detectado: valor,
-                    umbral_configurado: alerta.umbral,
-                    mensaje,
-                    email_enviado: emailEnviado,
-                    email_error: emailError,
-                    destinatarios: alerta.emails_destino,
-                    fecha_disparo: new Date(),
-                    fecha_email: fechaEnvio
-                });
-            } catch(err){
-                console.error(`Ha ocurrido un error en la alerta ${alerta.nombre} del dispositivo ${dispositivo.nombre}:`, err.message);
+            if(!superaUmbral(valor, alerta.operador, alerta.umbral)){
+                continue;
             }
 
+            const yaAlertado = await yaAlertadoRecientemente(alerta.id, dispositivo.id);
+
+            if(yaAlertado){
+                continue;
+            }
+
+            const mensaje = alerta.mensaje_personalizado ||
+                `ALERTA: ${alerta.nombre}\n` +
+                `Instaalcion: ${alerta.instalacion.nombre}\n` +
+                `Dispositivo: ${dispositivo.nombre} (Direccion MAC: ${dispositivo.mac_address})\n` +
+                `Campo: ${alerta.campo}\n` +
+                `Valor detectado: ${valor}\n` +
+                `Umbral configurado: ${alerta.operador} ${alerta.umbral}\n`+
+                `Fecha: ${new Date()}`;
+
+            let emailEnviado = false;
+            let emailError = null;
+            let fechaEnvio = null;
+
+            try {
+                await emailService.enviarEmailAlerta(
+                    alerta.emails_destino,
+                    `[IOT ALERTA] ${alerta.nombre}`,
+                    mensaje
+                );
+                emailEnviado = true;
+                console.log(`Email de alerta enviado: ${alerta.nombre} - ${dispositivo.nombre}`);
+            }catch (err){
+                emailError = err.message;
+                console.error(`Ha habido un error enviando el email de alerta: ${err.message}`);
+            }
+
+            if(emailEnviado){
+                fechaEnvio = new Date();
+            }
+
+            await AlertaHistorial.create({
+                alerta_config_id : alerta.id,
+                dispositivo_id: dispositivo.id,
+                instalacion_id: alerta.instalacion_id,
+                tipo: alerta.tipo,
+                valor_detectado: valor,
+                umbral_configurado: alerta.umbral,
+                mensaje,
+                email_enviado: emailEnviado,
+                email_error: emailError,
+                destinatarios: alerta.emails_destino,
+                fecha_disparo: new Date(),
+                fecha_email: fechaEnvio
+            });
+        } catch(err){
+            console.error(`Ha ocurrido un error en la alerta ${alerta.nombre} del dispositivo ${dispositivo.nombre}:`, err.message);
         }
-
     }
-
 }
 
 module.exports = {procesarAlertas};

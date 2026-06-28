@@ -111,6 +111,13 @@ CREATE TABLE IF NOT EXISTS licencias (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_licencias_nivel') THEN
+        CREATE TYPE enum_licencias_nivel AS ENUM ('OPERADOR', 'SUPERVISOR');
+    END IF;
+END $$;
+ALTER TABLE licencias ADD COLUMN IF NOT EXISTS nivel enum_licencias_nivel;
+
 CREATE TABLE IF NOT EXISTS log_cambios (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     usuario_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
@@ -120,6 +127,8 @@ CREATE TABLE IF NOT EXISTS log_cambios (
     valor_nuevo TEXT,
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE alertas_config ADD COLUMN IF NOT EXISTS dispositivo_id UUID REFERENCES dispositivos(id) ON DELETE CASCADE;
 
 
 SELECT 'Migracion completada' AS resultado;

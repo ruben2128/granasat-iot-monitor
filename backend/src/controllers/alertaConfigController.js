@@ -1,5 +1,6 @@
 const AlertaConfig = require('../models/AlertaConfig');
 const Instalacion = require('../models/Instalacion');
+const Dispositivo = require('../models/Dispositivo');
 
 /*
     Ruta: GET /api/alertas-config/ 
@@ -15,6 +16,10 @@ async function obtenerAlertas(req, res) {
                     model: Instalacion,
                     as: 'instalacion',
                     attributes: ['id', 'nombre', 'codigo_referencia']
+                }, {
+                    model: Dispositivo,
+                    as: 'dispositivo',
+                    attributes: ['id', 'nombre', 'mac_address']
                 }],
                 order: [['created_at', 'DESC']]
             });
@@ -26,6 +31,10 @@ async function obtenerAlertas(req, res) {
                     attributes: ['id', 'nombre', 'codigo_referencia'],
                     where: { responsable_id: req.user.id },
                     required: true 
+                }, {
+                    model: Dispositivo,
+                    as: 'dispositivo',
+                    attributes: ['id', 'nombre', 'mac_address']
                 }],
                 order: [['created_at', 'DESC']]
             });
@@ -52,6 +61,10 @@ async function obtenerAlertaPorId(req, res) {
                 model: Instalacion,
                 as: 'instalacion',
                 attributes: ['id', 'nombre', 'responsable_id']
+            }, {
+                model: Dispositivo,
+                as: 'dispositivo',
+                attributes: ['id', 'nombre', 'mac_address']
             }]
         });
 
@@ -79,10 +92,10 @@ async function obtenerAlertaPorId(req, res) {
 */
 async function crearAlerta(req, res) {
     try {
-        const { instalacion_id, tipo, nombre, descripcion, campo, operador, umbral, emails_destino, mensaje_personalizado } = req.body;
+        const { instalacion_id, dispositivo_id, tipo, nombre, descripcion, campo, operador, umbral, emails_destino, mensaje_personalizado } = req.body;
 
-        if (!instalacion_id || !tipo || !nombre || !campo || !operador) {
-            return res.status(400).json({ error: 'instalacion_id, tipo, nombre, campo y operador son obligatorios' });
+        if (!instalacion_id || !tipo || !nombre || !campo || !operador || !dispositivo_id) {
+            return res.status(400).json({ error: 'Instalacion, tipo, nombre, campo, operador y dispositivo son obligatorios' });
         }
 
         const operadoresValidos = ['>', '<', '>=', '<=', '=='];
@@ -96,13 +109,31 @@ async function crearAlerta(req, res) {
             return res.status(404).json( { error: 'La instalacion no existe'});
         }
 
-        const alerta = await AlertaConfig.create({instalacion_id, tipo, nombre, descripcion, campo, operador, umbral, emails_destino, mensaje_personalizado});
+        const dispositivo = await Dispositivo.findByPk(dispositivo_id);
+
+        if(!dispositivo){
+            return res.status(404).json({ error: 'El dispositivo no existe'});
+        }
+
+        if(dispositivo.instalacion_id !== instalacion_id){
+            return res.status(400).json({ error: 'El dispositivo no pertenece a la instalación indicada'});
+        } 
+
+        if(!dispositivo.medida_continuo){
+            return res.status(400).json({ error: 'El dispositivo no es un equipo de medida remota o monitorización'});
+        }
+
+        const alerta = await AlertaConfig.create({instalacion_id, dispositivo_id, tipo, nombre, descripcion, campo, operador, umbral, emails_destino, mensaje_personalizado});
 
         const alertaCompleta = await AlertaConfig.findByPk(alerta.id, {
             include: [{
                 model: Instalacion,
                 as: 'instalacion',
                 attributes: ['id', 'nombre']
+            }, {
+                model: Dispositivo,
+                as: 'dispositivo',
+                attributes: ['id', 'nombre', 'mac_address']
             }]
         });
 

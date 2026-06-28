@@ -26,6 +26,10 @@ const Licencia = sequelize.define('Licencia', {
     fecha_caducidad: {
         type: DataTypes.DATEONLY,
         allowNull: true
+    },
+    nivel: {
+        type: DataTypes.ENUM('OPERADOR', 'SUPERVISOR'),
+        allowNull: true
     }
 }, {
     tableName: 'licencias',

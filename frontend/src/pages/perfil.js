@@ -29,6 +29,7 @@ export default function Perfil() {
     const [editTelefonoMovil, setEditTelefonoMovil] = useState('');
     const [editTelefonoFijo, setEditTelefonoFijo] = useState('');
     const [guardando, setGuardando] = useState(false);
+    const [nivel, setNivel] = useState('');
 
     useEffect(function() {
         const temaGuardado = localStorage.getItem('tema');
@@ -62,7 +63,6 @@ export default function Perfil() {
                 console.log('respUsuario.data:', respUsuario.data);
                 
                 setUsuarioPerfil(respUsuario.data);
-
                 setEditNombre(respUsuario.data.nombre || '');
                 setEditApellidos(respUsuario.data.apellidos || '');
                 setEditEmail(respUsuario.data.email || '');
@@ -70,7 +70,6 @@ export default function Perfil() {
                 setEditTelefonoFijo(respUsuario.data.telefono_fijo || '');
             } else {
                 setUsuarioPerfil(usuarioGuardado);
-
                 setEditNombre(usuarioGuardado.nombre || '');
                 setEditApellidos(usuarioGuardado.apellidos || '');
                 setEditEmail(usuarioGuardado.email || '');
@@ -85,8 +84,6 @@ export default function Perfil() {
             const respInstalaciones = await api.get('/instalaciones', { headers: { Authorization: `Bearer ${token}` }});
             
             setInstalaciones(respInstalaciones.data.instalaciones);
-
-            
         }
         cargarDatos();
     }, [idQuery, router.isReady]);
@@ -102,7 +99,8 @@ export default function Perfil() {
                 instalacion_id: instalacionId || null,
                 campo_aplicacion: campoAplicacion,
                 fecha_concesion: fechaConcesion || null,
-                fecha_caducidad: fechaCaducidad || null
+                fecha_caducidad: fechaCaducidad || null,
+                nivel: nivel || null
             }, { headers: { Authorization: `Bearer ${token}` }});
 
             const resp = await api.get(`/usuarios/${idObjetivo}/licencias`, { headers: { Authorization: `Bearer ${token}` }});
@@ -112,8 +110,8 @@ export default function Perfil() {
             setInstalacionId('');
             setFechaConcesion('');
             setFechaCaducidad('');
+            setNivel('');
             setMostrarFormulario(false);
-
         } catch(err) {
             setError(err.response?.data?.error || 'Error al crear la licencia');
         }
@@ -387,6 +385,16 @@ export default function Perfil() {
                                             })}
                                         </select>
                                     </div>
+                                    <div style={{ gridColumn: '1 / -1' }}>
+                                        <label style={estiloLabel}>
+                                            NIVEL
+                                        </label>
+                                        <select value={nivel} onChange={function(e){ setNivel(e.target.value); }} style={estiloInput}>
+                                            <option value="">Sin especificar</option>
+                                            <option value="OPERADOR">Operador</option>
+                                            <option value="SUPERVISOR">Supervisor</option>
+                                        </select>
+                                    </div>
                                     <div>
                                         <label style={estiloLabel}>
                                             FECHA DE CONCESIÓN
@@ -418,7 +426,7 @@ export default function Perfil() {
                                         <div key={licencia.id} style={{ padding: '16px', border: `1px solid ${colores.borde}`, borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                             <div>
                                                 <p style={{ color: colores.texto, fontSize: '14px', fontWeight: '600', margin: '0 0 6px 0' }}>
-                                                    {licencia.campo_aplicacion}
+                                                    {licencia.campo_aplicacion} {licencia.nivel && `(${licencia.nivel === 'OPERADOR' ? 'Operador' : 'Supervisor'})`} 
                                                 </p>
                                                 {licencia.instalacion && (
                                                     <p style={{ color: colores.textoSecundario, fontSize: '12px', margin: '0 0 4px 0' }}>

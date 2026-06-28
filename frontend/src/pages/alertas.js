@@ -32,6 +32,8 @@ export default function Alertas(){
     const[alertaDescripcion, setAlertaDescripcion] = useState('');
     const[alertaMensaje, setAlertaMensaje] = useState('');
     const[editandoId, setEditandoId] = useState(null);
+    const[dispositivos, setDispositivos] = useState([]);
+    const[alertaDispositivoId, setAlertaDispositivoId] = useState('');
 
     useEffect(function(){
         async function cargarDatos(){
@@ -50,9 +52,16 @@ export default function Alertas(){
 
             const respuestaInstalaciones = await api.get('/instalaciones', {headers: {Authorization: `Bearer ${token}`}});
             setInstalaciones(respuestaInstalaciones.data.instalaciones);
+
+            const respuestaDispositivos = await api.get('/dispositivos', {headers: {Authorization: `Bearer ${token}`}});
+            setDispositivos(respuestaDispositivos.data.dispositivos);
         }
         cargarDatos();
     }, [])
+
+    const dispositivosFiltrados = dispositivos.filter(function(d){
+        return d.instalacion_id === alertaInstalacionId && d.medida_continuo === true;
+    });
 
     if (!alertas) {
         return <p>Cargando...</p>;
@@ -82,6 +91,7 @@ export default function Alertas(){
                     nombre: alertaNombre,
                     tipo: alertaTipo,
                     instalacion_id: alertaInstalacionId,
+                    dispositivo_id: alertaDispositivoId,
                     campo: alertaCampo,
                     operador: alertaOperador,
                     umbral: parseFloat(alertaUmbral),
@@ -96,6 +106,7 @@ export default function Alertas(){
                     nombre: alertaNombre,
                     tipo: alertaTipo,
                     instalacion_id: alertaInstalacionId,
+                    dispositivo_id: alertaDispositivoId,
                     campo: alertaCampo,
                     operador: alertaOperador,
                     umbral: parseFloat(alertaUmbral),
@@ -111,6 +122,7 @@ export default function Alertas(){
             setAlertaNombre('');
             setAlertaTipo('');
             setAlertaInstalacionId('');
+            setAlertaDispositivoId('');
             setAlertaCampo('');
             setAlertaOperador('>');
             setAlertaUmbral('');
@@ -134,6 +146,7 @@ export default function Alertas(){
         setAlertaNombre(alerta.nombre);
         setAlertaTipo(alerta.tipo);
         setAlertaInstalacionId(alerta.instalacion_id);
+        setAlertaDispositivoId(alerta.dispositivo_id);
         setAlertaCampo(alerta.campo);
         setAlertaOperador(alerta.operador);
         setAlertaUmbral(String(alerta.umbral));
@@ -252,8 +265,7 @@ export default function Alertas(){
                                         <label htmlFor="alerta_instalacion" style={estiloLabel}>
                                             INSTALACIÓN
                                         </label>
-                                        <select id="alerta_instalacion" value={alertaInstalacionId} onChange={function(e){ setAlertaInstalacionId(e.target.value); }} required style={estiloInput}>
-                                            <option value="">
+                                        <select id="alerta_instalacion" value={alertaInstalacionId} onChange={function(e){ setAlertaInstalacionId(e.target.value); setAlertaDispositivoId(''); }} required style={estiloInput}>                                            <option value="">
                                                 Seleccionar instalación
                                             </option>
                                             {instalaciones.map(function(i){
@@ -264,22 +276,37 @@ export default function Alertas(){
                                         </select>
                                     </div>
                                     <div>
+                                        <label htmlFor="alerta_dispositivo" style={estiloLabel}>
+                                            DISPOSITIVO
+                                        </label>
+                                        <select id="alerta_dispositivo" value={alertaDispositivoId} onChange={function(e){ setAlertaDispositivoId(e.target.value); }} disabled={!alertaInstalacionId} style={estiloInput}>
+                                            <option value="">
+                                                Toda la instalación
+                                            </option>
+                                            {dispositivosFiltrados.map(function(d){
+                                                return <option key={d.id} value={d.id}>
+                                                    {d.nombre}
+                                                </option>;
+                                            })}
+                                        </select>
+                                    </div>
+                                    <div>
                                         <label htmlFor="alerta_tipo" style={estiloLabel}>
                                             TIPO
                                         </label>
-                                        <input id="alerta_tipo" type="text" value={alertaTipo} onChange={function(e){ setAlertaTipo(e.target.value); }} style={estiloInput}/>
+                                        <input id="alerta_tipo" type="text" value={alertaTipo} required onChange={function(e){ setAlertaTipo(e.target.value); }} style={estiloInput}/>
                                     </div>
                                     <div>
                                         <label htmlFor="alerta_campo" style={estiloLabel}>
                                             CAMPO
                                         </label>
-                                        <input id="alerta_campo" type="text" value={alertaCampo} onChange={function(e){ setAlertaCampo(e.target.value); }} style={estiloInput}/>
+                                        <input id="alerta_campo" type="text" value={alertaCampo} required onChange={function(e){ setAlertaCampo(e.target.value); }} style={estiloInput}/>
                                     </div>
                                     <div>
                                         <label htmlFor="alerta_operador" style={estiloLabel}>
                                             OPERADOR
                                         </label>
-                                        <select id="alerta_operador" value={alertaOperador} onChange={function(e){setAlertaOperador(e.target.value); }} style={estiloInput}>
+                                        <select id="alerta_operador" value={alertaOperador} required onChange={function(e){setAlertaOperador(e.target.value); }} style={estiloInput}>
                                             <option value=">">
                                                 {'>'} Mayor que
                                             </option>
@@ -357,7 +384,7 @@ export default function Alertas(){
                                         {alerta.nombre}
                                     </p> 
                                     <p style={{color: colores.texto, fontSize: '14px', margin: 0}}>
-                                        {alerta.instalacion.nombre}
+                                        {alerta.instalacion.nombre}{alerta.dispositivo ? `/${alerta.dispositivo.nombre}` : ''}
                                     </p> 
                                     <div style={{ display: 'flex'}}> 
                                         <span style={{backgroundColor: colores.fondo , color: textoSecundarioAccesible, fontSize: '11px', fontWeight: '600', padding: '3px 8px', borderRadius: '4px', display: 'inline-block'}}>

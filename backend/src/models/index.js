@@ -35,11 +35,21 @@ Dispositivo.belongsTo(Instalacion, {
 Instalacion.hasMany(AlertaConfig, {
     foreignKey: 'instalacion_id', 
     as: 'alertas'
-})
+});
 AlertaConfig.belongsTo(Instalacion, {
     foreignKey: 'instalacion_id',
     as: 'instalacion'
-})
+});
+
+//DISPOSITIVO --> ALERTASCONFIG
+Dispositivo.hasMany(AlertaConfig, {
+    foreignKey: 'dispositivo_id',
+    as: 'alertas_dispositivo'
+});
+AlertaConfig.belongsTo(Dispositivo, {
+    foreignKey: 'dispositivo_id',
+    as: 'dispositivo'
+});
 
 
 //ALERTACONFIG --> ALERTAHISTORIAL
