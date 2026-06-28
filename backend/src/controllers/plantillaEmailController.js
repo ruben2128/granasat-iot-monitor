@@ -27,13 +27,13 @@ async function actualizarPlantilla(req, res){
             return res.status(400).json({ error: 'El campo html es obligatoria'});
         }
 
-        const plantilla = await PlantillaEmail.findOne();
+        let plantilla = await PlantillaEmail.findOne();
 
         if(!plantilla){
-            return res.status(404).json({ error: 'Plantilla no encontrada'});
+            plantilla = await PlantillaEmail.create({ html, updated_at: new Date() });
+        } else {
+            await plantilla.update({ html, updated_at: new Date()});
         }
-
-        await plantilla.update({ html, updated_at: new Date()});
 
         res.json({ message: 'Plantilla actualizada correctamente', plantilla});
     } catch (error) {
