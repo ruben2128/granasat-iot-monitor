@@ -139,7 +139,7 @@ export default function Dispositivo(){
         const intervalo = setInterval(cargarLecturas, 5000);
 
         return function(){ clearInterval(intervalo); }; 
-    });
+    }, [id, rango]);
 
     async function handleTestConexion() {
         setTestCargando(true);
