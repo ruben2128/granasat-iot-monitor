@@ -101,6 +101,12 @@ async function procesarAlertas(){
                 continue;
             }
 
+            const minutosTranscurridos = (new Date() - new Date(lecturaDelCampo.time)) / (1000*60);
+
+            if(minutosTranscurridos > 6){
+                continue;
+            }
+
             const valor = lecturaDelCampo.valor;
 
             if(!superaUmbral(valor, alerta.operador, alerta.umbral)){
