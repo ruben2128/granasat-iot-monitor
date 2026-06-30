@@ -44,6 +44,9 @@ async function startServer() {
     await sequelize.sync({ alter: false });
     console.log('Tablas sincronizadas con la BD');
 
+    const emailService = require('./services/emailService');
+    await emailService.cargarConfigEmailActiva();
+
     app.listen(PORT, () => {
       const intervalo = 5*60*1000; // 5 Minutos en ms
 
