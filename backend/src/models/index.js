@@ -8,6 +8,7 @@ const PlantillaEmail = require('./PlantillaEmail');
 const Licencia = require('./Licencia');
 const LogCambio = require('./LogCambio');
 const { Log } = require('@influxdata/influxdb-client');
+const Invitacion = require('./Invitacion');
 
 // RELACIONES
 
@@ -112,4 +113,14 @@ LogCambio.belongsTo(Usuario, {
     as: 'usuario'
 });
 
-module.exports = {Usuario, Instalacion, Dispositivo, AlertaConfig, AlertaHistorial, Informe, PlantillaEmail, Licencia, LogCambio};
+// USUARIO --> INVITACIONES
+Usuario.hasMany(Invitacion, {
+    foreignKey: 'invitado_por',
+    as: 'invitaciones_enviadas'
+});
+Invitacion.belongsTo(Usuario, {
+    foreignKey: 'invitado_por',
+    as: 'invitado_por_usuario'
+});
+
+module.exports = {Usuario, Instalacion, Dispositivo, AlertaConfig, AlertaHistorial, Informe, PlantillaEmail, Licencia, LogCambio, Invitacion};

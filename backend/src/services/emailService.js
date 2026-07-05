@@ -150,7 +150,7 @@ async function aplicarPlantilla(titulo, contenido){
 
 async function cargarConfigEmailActiva(){
     try {
-        const ConfigEmail = require('../models/ConfigEmail');
+        const ConfigEmail = require('../models/ConfigEmail'); //Require dentro de la propia función (no arriba del archivo) para evitar problemas de orden de carga circular entre emailService.js y los modelos
         const config = await ConfigEmail.findOne({ where: { activo: true } });
 
         if(config){

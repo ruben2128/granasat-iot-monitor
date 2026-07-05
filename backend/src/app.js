@@ -21,6 +21,7 @@ const dockerRoutes = require('./routes/dockerRoutes');
 const plantillaEmailRoutes = require('./routes/plantillaEmailRoutes');
 const licenciaRoutes = require('./routes/licenciaRoutes');
 const logCambioRoutes = require('./routes/logCambioRoutes');
+const invitacionRoutes = require('./routes/invitacionRoutes');
 
 const app = express();
 
@@ -65,6 +66,7 @@ app.use('/api/docker', dockerRoutes);
 app.use('/api/plantilla-email', plantillaEmailRoutes);
 app.use('/api/usuarios/:usuario_id/licencias', licenciaRoutes);
 app.use('/api/log-cambios', logCambioRoutes);
+app.use('/api/invitaciones', invitacionRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada', path: req.path });

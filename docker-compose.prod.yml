@@ -98,6 +98,7 @@ services:
       SMTP_PORT: 587
       SMTP_USER: gilrubenmartin@gmail.com
       SMTP_PASS: ogjrrxmkgonuhbsl
+      FRONTEND_URL: https://radiacion.granasat.space
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.radiacion-api.rule=Host(`radiacion.granasat.space`) && (PathPrefix(`/api`) || PathPrefix(`/uploads`))"

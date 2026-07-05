@@ -130,6 +130,16 @@ CREATE TABLE IF NOT EXISTS log_cambios (
 
 ALTER TABLE alertas_config ADD COLUMN IF NOT EXISTS dispositivo_id UUID REFERENCES dispositivos(id) ON DELETE CASCADE;
 
+CREATE TABLE IF NOT EXISTS invitaciones (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    email VARCHAR(100) NOT NULL,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    role VARCHAR(20) NOT NULL DEFAULT 'RESPONSABLE' CHECK (role IN ('RESPONSABLE', 'TITULAR')),
+    fecha_caducidad TIMESTAMP NOT NULL,
+    usado BOOLEAN DEFAULT FALSE,
+    invitado_por UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 SELECT 'Migracion completada' AS resultado;
 EOF

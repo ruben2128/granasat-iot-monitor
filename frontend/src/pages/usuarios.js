@@ -32,6 +32,10 @@ export default function Usuarios() {
     });
     const colores = obtenerColores(tema);
     const verdeExito = tema === 'oscuro' ? '#4ade80' : '#15803d';
+    const[mostrarFormularioInvitacion, setMostrarFormularioInvitacion] = useState(false);
+    const[emailInvitacion, setEmailInvitacion] = useState('');
+    const[roleInvitacion, setRoleInvitacion] = useState('RESPONSABLE');
+    const[invitaciones, setInvitaciones] = useState([]);
     
     /*
         useEffect se ejecuta despues de que el componenente se pinte en pantalla
@@ -63,7 +67,8 @@ export default function Usuarios() {
             const respuesta = await api.get('/usuarios', {headers: {Authorization: `Bearer ${token}`}});
             setUsuarios(respuesta.data.usuarios);
 
-            console.log('Dispositivos:', respuestaDispositivos.data);
+            const respuestaInvitaciones = await api.get('/invitaciones', { headers: { Authorization: `Bearer ${token}` }});
+            setInvitaciones(respuestaInvitaciones.data.invitaciones);
 
         }
         cargarDatos();
@@ -94,6 +99,32 @@ export default function Usuarios() {
         } catch (err){
             console.log('Error al crear usuario: ', err);
             setError(err.response?.data?.error || 'Error al crear el usuario');
+        }
+    }
+
+    async function handleEnviarInvitacion(e) {
+        e.preventDefault();
+        setError('');
+        setExito('');
+
+        try {
+            const token = localStorage.getItem('token');
+            await api.post('/invitaciones', {
+                email: emailInvitacion,
+                role: roleInvitacion
+            }, { headers: { Authorization: `Bearer ${token}` }});
+
+            // Recargar lista de invitaciones
+            const respuesta = await api.get('/invitaciones', { headers: { Authorization: `Bearer ${token}` }});
+            setInvitaciones(respuesta.data.invitaciones);
+
+            setEmailInvitacion('');
+            setRoleInvitacion('RESPONSABLE');
+            setMostrarFormularioInvitacion(false);
+            setExito('Invitación enviada correctamente');
+
+        } catch(err) {
+            setError(err.response?.data?.error || 'Error al enviar la invitación');
         }
     }
 
@@ -159,10 +190,18 @@ export default function Usuarios() {
                         <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: 0, borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px'}}>
                             USUARIOS ({usuarios.length})
                         </h2>
-                        <span onClick={function() { setMostrarFormulario(!mostrarFormulario); setError(''); setExito(''); }} style={{ color: colores.acento, fontSize: '13px', cursor: 'pointer'}}>
-                            {mostrarFormulario ? 'x Cancelar' : '+ Nuevo usuario'}
-                        </span>
+                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                            <span onClick={function() { setMostrarFormulario(!mostrarFormulario); setError(''); setExito(''); }} 
+                                style={{ color: colores.acento, fontSize: '13px', cursor: 'pointer'}}>
+                                {mostrarFormulario ? 'x Cancelar' : '+ Nuevo usuario'}
+                            </span>
+                            <span onClick={function() { setMostrarFormularioInvitacion(!mostrarFormularioInvitacion); setError(''); setExito(''); }} 
+                                style={{ color: colores.acento, fontSize: '13px', cursor: 'pointer'}}>
+                                {mostrarFormularioInvitacion ? 'x Cancelar' : 'Invitar usuario'}
+                            </span>
+                        </div>
                     </div>
+                    
 
                     {/* Mensaje de éxito */}
                     {exito && (
@@ -221,6 +260,65 @@ export default function Usuarios() {
                                     </button>
                                 </div>
                             </form>
+                        </div>
+                    )}
+
+                    {mostrarFormularioInvitacion && (
+                        <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginBottom: '24px'}}>
+                            <h2 style={{ color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 20px 0'}}>
+                                Invitar usuario por email
+                            </h2>
+                            <form onSubmit={handleEnviarInvitacion}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px'}}>
+                                    <div>
+                                        <label style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
+                                            EMAIL
+                                        </label>
+                                        <input type="email" value={emailInvitacion} onChange={function(e){ setEmailInvitacion(e.target.value); }} required
+                                            style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
+                                    </div>
+                                    <div>
+                                        <label style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
+                                            ROL
+                                        </label>
+                                        <select value={roleInvitacion} onChange={function(e){ setRoleInvitacion(e.target.value); }}
+                                            style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}>
+                                            <option value="RESPONSABLE">RESPONSABLE</option>
+                                            <option value="TITULAR">TITULAR</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                {error && <p style={{ color: colores.acento, fontSize: '13px', margin: '0 0 16px 0'}}>{error}</p>}
+                                <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
+                                    <button type="submit" style={{ backgroundColor: colores.acentoBoton, color: 'white', border: 'none', borderRadius: '8px', padding: '10px 24px', fontSize: '14px', fontWeight: '600', cursor: 'pointer'}}>
+                                        Enviar invitación
+                                    </button>
+                                </div>
+                            </form>
+
+                            {/* Lista de invitaciones enviadas */}
+                            {invitaciones.length > 0 && (
+                                <div style={{ marginTop: '24px', borderTop: `1px solid ${colores.borde}`, paddingTop: '16px'}}>
+                                    <p style={{ color: colores.textoSecundario, fontSize: '12px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 12px 0'}}>
+                                        INVITACIONES ENVIADAS
+                                    </p>
+                                    {invitaciones.map(function(inv){
+                                        const caducada = new Date() > new Date(inv.fecha_caducidad);
+                                        const estado = inv.usado ? 'Registrado' : caducada ? 'Caducada' : 'Pendiente';
+                                        const colorEstado = inv.usado ? '#4ade80' : caducada ? '#f87171' : '#fbbf24';
+
+                                        return (
+                                            <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: `1px solid ${colores.borde}`}}>
+                                                <div>
+                                                    <p style={{ color: colores.texto, fontSize: '13px', margin: '0 0 2px 0'}}>{inv.email}</p>
+                                                    <p style={{ color: colores.textoSecundario, fontSize: '11px', margin: 0}}>{inv.role} · Caduca: {new Date(inv.fecha_caducidad).toLocaleString('es-ES')}</p>
+                                                </div>
+                                                <span style={{ color: colorEstado, fontSize: '11px', fontWeight: '600'}}>{estado}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     )}
 
