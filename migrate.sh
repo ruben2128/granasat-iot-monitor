@@ -141,6 +141,8 @@ CREATE TABLE IF NOT EXISTS invitaciones (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS conectado BOOLEAN NOT NULL DEFAULT false;
+
 SELECT 'Migracion completada' AS resultado;
 EOF
 

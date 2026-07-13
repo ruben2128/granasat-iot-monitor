@@ -242,11 +242,21 @@ export default function Dispositivo(){
     // Invertir para que vayan de más antigua a más reciente
     const lecturasOrdenadas = lecturasRadiacion.reverse();
 
-    // Transformar al formato que necesita la gráfica
+    // Calcular media y desviacion estandar para el Z-Score
+    const valoresRadiacion = lecturasOrdenadas.map(function(l) { return l.valor; });
+    const mediaRadiacion = valoresRadiacion.length > 0 ? valoresRadiacion.reduce(function(a, b) { return a + b; }, 0) / valoresRadiacion.length : 0;
+    const varianzaRadiacion = valoresRadiacion.length > 0 ? valoresRadiacion.reduce(function(acc, v) { return acc + Math.pow(v - mediaRadiacion, 2); }, 0) / valoresRadiacion.length : 0;
+    const desviacionRadiacion = Math.sqrt(varianzaRadiacion);
+
+    // Transformar al formato que necesita la gráfica, incluyendo si el punto es anomalo
     const datosRadiacion = lecturasOrdenadas.map(function(lectura) {
+        const zScore = desviacionRadiacion > 0
+            ? Math.abs((lectura.valor - mediaRadiacion) / desviacionRadiacion)
+            : 0;
         return {
             hora: new Date(lectura.time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-            valor: parseFloat(lectura.valor.toFixed(2))
+            valor: parseFloat(lectura.valor.toFixed(2)),
+            anomalo: zScore > 3
         };
     });
 
@@ -749,7 +759,23 @@ export default function Dispositivo(){
                                 <XAxis dataKey="hora" stroke={colores.textoSecundario} fontSize={11} />
                                 <YAxis stroke={colores.textoSecundario} fontSize={11} scale="log" domain={['auto', 'auto']} />
                                 <Tooltip contentStyle={{ backgroundColor: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: '8px', color: colores.texto }} />
-                                <Line type="monotone" dataKey="valor" stroke={colores.acento} strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 5 }} />                            </LineChart>
+                                <Line 
+                                    type="monotone" 
+                                    dataKey="valor" 
+                                    stroke={colores.acento} 
+                                    strokeWidth={2}
+                                    dot={function(props) {
+                                        const { cx, cy, payload } = props;
+                                        if (payload.anomalo) {
+                                            // Punto anomalo: circulo rojo mas grande
+                                            return <circle key={`dot-${cx}-${cy}`} cx={cx} cy={cy} r={5} fill="#f87171" stroke="#f87171" />;
+                                        }
+                                        // Punto normal
+                                        return <circle key={`dot-${cx}-${cy}`} cx={cx} cy={cy} r={2} fill={colores.acento} stroke={colores.acento} />;
+                                    }}
+                                    activeDot={{ r: 5 }}
+                                />                            
+                            </LineChart>
                         </ResponsiveContainer>
                     </div>
 

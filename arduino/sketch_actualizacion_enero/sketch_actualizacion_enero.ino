@@ -20,6 +20,7 @@ const char* fw_version = "v1.5.2";
 bool suministro_electrico = true;
 float nivel_radiacion = 0.0;
 bool elemento_irradiacion = true;
+float nivel_bateria = 100.0; 
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -80,6 +81,13 @@ void loop() {
 
     // Elemento activo: 95% activo
     elemento_irradiacion = random(0, 100) > 5;
+
+    // Bateria: baja 1% cada envio, se recarga al llegar a 0
+    nivel_bateria -= 1.0;
+
+    if (nivel_bateria < 0.0) {
+      nivel_bateria = 100.0;
+    }
     
     // Formato: measurement,tags fields
     String msg = "radiacion_iot,";
@@ -90,6 +98,7 @@ void loop() {
     msg += "radiacion=" + String(nivel_radiacion, 2) + ",";
     msg += "suministro=" + String(suministro_electrico) + ",";
     msg += "elemento_activo=" + String(elemento_irradiacion);
+    msg += ",bateria=" + String(nivel_bateria, 1);
     
     Serial.println(": " + msg);
     
