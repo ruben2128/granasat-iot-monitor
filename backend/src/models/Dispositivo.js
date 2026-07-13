@@ -170,6 +170,11 @@ const Dispositivo = sequelize.define('Dispositivo', {
         type: DataTypes.STRING(255),
         allowNull: true
     },
+    conectado: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false
+    },
 }, {
     tableName: 'dispositivos',
     timestamps: true,
