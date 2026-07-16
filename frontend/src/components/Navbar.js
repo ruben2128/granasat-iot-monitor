@@ -12,7 +12,8 @@ export default function Navbar({ usuario, tema, setTema, colores }){
         {ruta: 'usuarios', label: 'Usuarios'},
         {ruta: 'log', label: 'Logs'},
         {ruta: 'config-email', label: 'Config. Email'},
-        {ruta: 'email-historial', label: 'Historial Email'}
+        {ruta: 'email-historial', label: 'Historial Email'},
+        {ruta: 'configuracion', label: 'Configuración'} 
     ];
 
     //Comprobar si la ruta actual es una ruta de admin

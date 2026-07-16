@@ -143,6 +143,24 @@ CREATE TABLE IF NOT EXISTS invitaciones (
 
 ALTER TABLE dispositivos ADD COLUMN IF NOT EXISTS conectado BOOLEAN NOT NULL DEFAULT false;
 
+
+CREATE TABLE IF NOT EXISTS configuracion (
+    clave VARCHAR(100) PRIMARY KEY,
+    valor VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Valores por defecto según normativa de zonas radiológicas (µSv/h)
+INSERT INTO configuracion (clave, valor, descripcion) VALUES
+    ('umbral_vigilada', '0.5', 'Límite inferior zona vigilada (µSv/h)'),
+    ('umbral_controlada', '3.0', 'Límite inferior zona controlada (µSv/h)'),
+    ('umbral_controlada_limitada', '10.0', 'Límite inferior zona controlada de permanencia limitada (µSv/h)'),
+    ('umbral_controlada_reglamentada', '1000', 'Límite inferior zona controlada de permanencia reglamentada (µSv/h)'),
+    ('umbral_acceso_prohibido', '100000', 'Límite inferior zona de acceso prohibido (µSv/h)')
+ON CONFLICT (clave) DO NOTHING;
+
 SELECT 'Migracion completada' AS resultado;
 EOF
 

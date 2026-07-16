@@ -4,7 +4,7 @@ import api from '../../lib/api';
 import Navbar from "../../components/Navbar";
 import Head from "next/head";
 import {obtenerColores} from '../../lib/temas';
-import {LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer} from "recharts";
+import {LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea} from "recharts";
 
 const ZONAS_RADIOLOGICAS = [
     {value: 'LIBRE_PASO', label: 'Libre paso', color: '#a0a0a0'},
@@ -63,6 +63,7 @@ export default function Dispositivo(){
     const [editZonaRadiologica, setEditZonaRadiologica] = useState('');
     const [editModeloSonda, setEditModeloSonda] = useState('');
     const [editDireccionMAC, setEditDireccionMAC] = useState('');
+    const [umbrales, setUmbrales] = useState(null);
 
     useEffect(function () {
         const temaGuardado = localStorage.getItem('tema');
@@ -126,6 +127,9 @@ export default function Dispositivo(){
  
             const respuestaLecturas = await api.get(`/dispositivos/${id}/lecturas?rango=${rango}`, { headers: { Authorization: `Bearer ${token}` } });
             setLecturas(respuestaLecturas.data.lecturas);
+
+            const respuestaConfig = await api.get('/configuracion/publica');
+            setUmbrales(respuestaConfig.data.configuracion);
         }
         cargarDatos();
     }, [id, rango]) // Ejecutar cuando id esté disponible
@@ -774,7 +778,17 @@ export default function Dispositivo(){
                                         return <circle key={`dot-${cx}-${cy}`} cx={cx} cy={cy} r={2} fill={colores.acento} stroke={colores.acento} />;
                                     }}
                                     activeDot={{ r: 5 }}
-                                />                            
+                                />
+                                {umbrales && (
+                                    <>
+                                        <ReferenceArea y1={0} y2={umbrales.umbral_vigilada} fill="#a0a0a0" fillOpacity={0.05} />
+                                        <ReferenceArea y1={umbrales.umbral_vigilada} y2={umbrales.umbral_controlada} fill="#7b9fc7" fillOpacity={0.1} label={{ value: 'Vigilada', position: 'insideTopLeft', fontSize: 10, fill: '#7b9fc7' }} />
+                                        <ReferenceArea y1={umbrales.umbral_controlada} y2={umbrales.umbral_controlada_limitada} fill="#4ade80" fillOpacity={0.1} label={{ value: 'Controlada', position: 'insideTopLeft', fontSize: 10, fill: '#4ade80' }} />
+                                        <ReferenceArea y1={umbrales.umbral_controlada_limitada} y2={umbrales.umbral_controlada_reglamentada} fill="#fbbf24" fillOpacity={0.1} label={{ value: 'C. Limitada', position: 'insideTopLeft', fontSize: 10, fill: '#fbbf24' }} />
+                                        <ReferenceArea y1={umbrales.umbral_controlada_reglamentada} y2={umbrales.umbral_acceso_prohibido} fill="#f97316" fillOpacity={0.1} label={{ value: 'C. Reglamentada', position: 'insideTopLeft', fontSize: 10, fill: '#f97316' }} />
+                                        <ReferenceArea y1={umbrales.umbral_acceso_prohibido} fill="#f87171" fillOpacity={0.1} label={{ value: 'Acceso prohibido', position: 'insideTopLeft', fontSize: 10, fill: '#f87171' }} />
+                                    </>
+                                )}                            
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
