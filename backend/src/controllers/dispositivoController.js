@@ -295,7 +295,7 @@ async function testConexion(req, res){
         res.json({
             activo: resultado.activo,
             ultimaLectura: resultado.ultimaLectura,
-            mensaje: resultado.activo ? 'Dispositivo activo' : 'Sin datos en los últimos 10 minutos'
+            mensaje: resultado.activo ? 'Dispositivo activo' : 'Dispositivo inactivo'
         });
     }catch (error){
         console.error('Error al testear la conexión del dispositivo: ',error );
