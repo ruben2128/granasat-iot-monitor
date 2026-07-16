@@ -781,12 +781,19 @@ export default function Dispositivo(){
                                 />
                                 {umbrales && (
                                     <>
-                                        <ReferenceArea y1={0} y2={umbrales.umbral_vigilada} fill="#a0a0a0" fillOpacity={0.05} />
-                                        <ReferenceArea y1={umbrales.umbral_vigilada} y2={umbrales.umbral_controlada} fill="#7b9fc7" fillOpacity={0.1} label={{ value: 'Vigilada', position: 'insideTopLeft', fontSize: 10, fill: '#7b9fc7' }} />
-                                        <ReferenceArea y1={umbrales.umbral_controlada} y2={umbrales.umbral_controlada_limitada} fill="#4ade80" fillOpacity={0.1} label={{ value: 'Controlada', position: 'insideTopLeft', fontSize: 10, fill: '#4ade80' }} />
-                                        <ReferenceArea y1={umbrales.umbral_controlada_limitada} y2={umbrales.umbral_controlada_reglamentada} fill="#fbbf24" fillOpacity={0.1} label={{ value: 'C. Limitada', position: 'insideTopLeft', fontSize: 10, fill: '#fbbf24' }} />
-                                        <ReferenceArea y1={umbrales.umbral_controlada_reglamentada} y2={umbrales.umbral_acceso_prohibido} fill="#f97316" fillOpacity={0.1} label={{ value: 'C. Reglamentada', position: 'insideTopLeft', fontSize: 10, fill: '#f97316' }} />
-                                        <ReferenceArea y1={umbrales.umbral_acceso_prohibido} fill="#f87171" fillOpacity={0.1} label={{ value: 'Acceso prohibido', position: 'insideTopLeft', fontSize: 10, fill: '#f87171' }} />
+                                        {(() => {
+                                            const maxValor = Math.max(...datosRadiacion.map(function(d) { return d.valor; }), umbrales.umbral_acceso_prohibido * 10);
+                                            return (
+                                                <>
+                                                    <ReferenceArea y1={0} y2={umbrales.umbral_vigilada} fill="#a0a0a0" fillOpacity={0.05} />
+                                                    <ReferenceArea y1={umbrales.umbral_vigilada} y2={umbrales.umbral_controlada} fill="#7b9fc7" fillOpacity={0.1} label={{ value: 'Vigilada', position: 'insideTopLeft', fontSize: 10, fill: '#7b9fc7' }} />
+                                                    <ReferenceArea y1={umbrales.umbral_controlada} y2={umbrales.umbral_controlada_limitada} fill="#4ade80" fillOpacity={0.1} label={{ value: 'Controlada', position: 'insideTopLeft', fontSize: 10, fill: '#4ade80' }} />
+                                                    <ReferenceArea y1={umbrales.umbral_controlada_limitada} y2={umbrales.umbral_controlada_reglamentada} fill="#fbbf24" fillOpacity={0.1} label={{ value: 'C. Limitada', position: 'insideTopLeft', fontSize: 10, fill: '#fbbf24' }} />
+                                                    <ReferenceArea y1={umbrales.umbral_controlada_reglamentada} y2={umbrales.umbral_acceso_prohibido} fill="#f97316" fillOpacity={0.1} label={{ value: 'C. Reglamentada', position: 'insideTopLeft', fontSize: 10, fill: '#f97316' }} />
+                                                    <ReferenceArea y1={umbrales.umbral_acceso_prohibido} y2={maxValor} fill="#f87171" fillOpacity={0.1} label={{ value: 'Acceso prohibido', position: 'insideTopLeft', fontSize: 10, fill: '#f87171' }} />
+                                                </>
+                                            );
+                                        })()}
                                     </>
                                 )}                            
                             </LineChart>
