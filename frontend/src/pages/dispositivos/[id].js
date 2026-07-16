@@ -783,15 +783,30 @@ export default function Dispositivo(){
                                 {umbrales && (
                                     <>
                                         {(() => {
-                                            const maxValor = Math.max(...datosRadiacion.map(function(d) { return d.valor; }), umbrales.umbral_acceso_prohibido * 10);
+                                            // Determinar qué zonas son visibles dentro del dominio
                                             return (
                                                 <>
-                                                    <ReferenceArea y1={0} y2={umbrales.umbral_vigilada} fill="#a0a0a0" fillOpacity={0.05} />
-                                                    <ReferenceArea y1={umbrales.umbral_vigilada} y2={umbrales.umbral_controlada} fill="#7b9fc7" fillOpacity={0.1} label={{ value: 'Vigilada', position: 'insideTopLeft', fontSize: 10, fill: '#7b9fc7' }} />
-                                                    <ReferenceArea y1={umbrales.umbral_controlada} y2={umbrales.umbral_controlada_limitada} fill="#4ade80" fillOpacity={0.1} label={{ value: 'Controlada', position: 'insideTopLeft', fontSize: 10, fill: '#4ade80' }} />
-                                                    <ReferenceArea y1={umbrales.umbral_controlada_limitada} y2={umbrales.umbral_controlada_reglamentada} fill="#fbbf24" fillOpacity={0.1} label={{ value: 'C. Limitada', position: 'insideTopLeft', fontSize: 10, fill: '#fbbf24' }} />
-                                                    <ReferenceArea y1={umbrales.umbral_controlada_reglamentada} y2={umbrales.umbral_acceso_prohibido} fill="#f97316" fillOpacity={0.1} label={{ value: 'C. Reglamentada', position: 'insideTopLeft', fontSize: 10, fill: '#f97316' }} />
-                                                    <ReferenceArea y1={umbrales.umbral_acceso_prohibido} y2={maxDominio} fill="#f87171" fillOpacity={0.1} label={{ value: 'Acceso prohibido', position: 'insideTopLeft', fontSize: 10, fill: '#f87171' }} />
+                                                    <ReferenceArea y1={0.1} y2={umbrales.umbral_vigilada} fill="#a0a0a0" fillOpacity={0.1} />
+                                                    <ReferenceArea y1={umbrales.umbral_vigilada} y2={Math.min(umbrales.umbral_controlada, maxDominio)} fill="#7b9fc7" fillOpacity={0.1} label={{ value: 'Vigilada', position: 'insideTopLeft', fontSize: 10, fill: '#7b9fc7' }} />
+                                                    {maxDominio > umbrales.umbral_controlada && (
+                                                        <ReferenceArea y1={umbrales.umbral_controlada} y2={Math.min(umbrales.umbral_controlada_limitada, maxDominio)} fill="#4ade80" fillOpacity={0.1} label={{ value: 'Controlada', position: 'insideTopLeft', fontSize: 10, fill: '#4ade80' }} />
+                                                    )}
+                                                    {maxDominio > umbrales.umbral_controlada_limitada && (
+                                                        <ReferenceArea y1={umbrales.umbral_controlada_limitada} y2={Math.min(umbrales.umbral_controlada_reglamentada, maxDominio)} fill="#fbbf24" fillOpacity={0.1} label={{ value: 'C. Limitada', position: 'insideTopLeft', fontSize: 10, fill: '#fbbf24' }} />
+                                                    )}
+                                                    {maxDominio > umbrales.umbral_controlada_reglamentada && (
+                                                        <ReferenceArea y1={umbrales.umbral_controlada_reglamentada} y2={Math.min(umbrales.umbral_acceso_prohibido, maxDominio)} fill="#f97316" fillOpacity={0.1} label={{ value: 'C. Reglamentada', position: 'insideTopLeft', fontSize: 10, fill: '#f97316' }} />
+                                                    )}
+                                                    {maxDominio > umbrales.umbral_acceso_prohibido && (
+                                                        <ReferenceArea y1={umbrales.umbral_acceso_prohibido} y2={maxDominio} fill="#f87171" fillOpacity={0.1} label={{ value: 'Acceso prohibido', position: 'insideTopLeft', fontSize: 10, fill: '#f87171' }} />
+                                                    )}
+                                                    {/* Zona que cubre desde el maximo de datos hasta el tope del dominio con el color de la zona correspondiente */}
+                                                    {maxDominio <= umbrales.umbral_controlada_limitada && maxDominio > umbrales.umbral_controlada && (
+                                                        <ReferenceArea y1={Math.min(umbrales.umbral_controlada_limitada, maxDominio * 0.9)} y2={maxDominio} fill="#4ade80" fillOpacity={0.1} />
+                                                    )}
+                                                    {maxDominio <= umbrales.umbral_controlada && maxDominio > umbrales.umbral_vigilada && (
+                                                        <ReferenceArea y1={Math.min(umbrales.umbral_controlada, maxDominio * 0.9)} y2={maxDominio} fill="#7b9fc7" fillOpacity={0.1} />
+                                                    )}
                                                 </>
                                             );
                                         })()}
