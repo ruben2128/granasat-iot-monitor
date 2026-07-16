@@ -370,6 +370,7 @@ export default function Dispositivo(){
 
     const puedeEditar = usuario?.role === 'ADMIN' || usuario?.role === 'RESPONSABLE';
     const zonaInfo = obtenerInfoZona(dispositivo.zona_radiologica);
+    const maxDominio = datosRadiacion.length > 0 ? Math.max(...datosRadiacion.map(function(d) { return d.valor; })) * 2 : 100;
 
     return (
         <>
@@ -761,7 +762,7 @@ export default function Dispositivo(){
                             <LineChart data={datosRadiacion}>
                                 <CartesianGrid strokeDasharray="3 3" stroke={colores.borde} />
                                 <XAxis dataKey="hora" stroke={colores.textoSecundario} fontSize={11} />
-                                <YAxis stroke={colores.textoSecundario} fontSize={11} scale="log" domain={['auto', 'auto']} />
+                                <YAxis stroke={colores.textoSecundario} fontSize={11} scale="log" domain={[0.1, maxDominio]} />
                                 <Tooltip contentStyle={{ backgroundColor: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: '8px', color: colores.texto }} />
                                 <Line 
                                     type="monotone" 
@@ -790,7 +791,7 @@ export default function Dispositivo(){
                                                     <ReferenceArea y1={umbrales.umbral_controlada} y2={umbrales.umbral_controlada_limitada} fill="#4ade80" fillOpacity={0.1} label={{ value: 'Controlada', position: 'insideTopLeft', fontSize: 10, fill: '#4ade80' }} />
                                                     <ReferenceArea y1={umbrales.umbral_controlada_limitada} y2={umbrales.umbral_controlada_reglamentada} fill="#fbbf24" fillOpacity={0.1} label={{ value: 'C. Limitada', position: 'insideTopLeft', fontSize: 10, fill: '#fbbf24' }} />
                                                     <ReferenceArea y1={umbrales.umbral_controlada_reglamentada} y2={umbrales.umbral_acceso_prohibido} fill="#f97316" fillOpacity={0.1} label={{ value: 'C. Reglamentada', position: 'insideTopLeft', fontSize: 10, fill: '#f97316' }} />
-                                                    <ReferenceArea y1={umbrales.umbral_acceso_prohibido} y2={maxValor} fill="#f87171" fillOpacity={0.1} label={{ value: 'Acceso prohibido', position: 'insideTopLeft', fontSize: 10, fill: '#f87171' }} />
+                                                    <ReferenceArea y1={umbrales.umbral_acceso_prohibido} y2={maxDominio} fill="#f87171" fillOpacity={0.1} label={{ value: 'Acceso prohibido', position: 'insideTopLeft', fontSize: 10, fill: '#f87171' }} />
                                                 </>
                                             );
                                         })()}
