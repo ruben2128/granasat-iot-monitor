@@ -6,7 +6,7 @@ import api from '../lib/api';
 export default function DispositivoScreen({ navigation, route }) {
     const { dispositivo } = route.params;
     const [cargando, setCargando] = useState(true);
-    const [lecturas, setLecturas] = useState({radiacion: null, suministro: null});
+    const [lecturas, setLecturas] = useState({radiacion: null, suministro: null, elemento_activo: null, bateria: null});
     const colores = coloresOscuro;
 
     useEffect(() => {
@@ -20,19 +20,19 @@ export default function DispositivoScreen({ navigation, route }) {
             const res = await api.get(`/dispositivos/${dispositivo.id}/lecturas?rango=-1h`);
             const todasLecturas = res.data.lecturas;
 
-            //Obtener última valor de cada variable
             const ultimaRadiacion = todasLecturas.find(l => l.variable === 'radiacion');
             const ultimoSuministro = todasLecturas.find(l => l.variable === 'suministro');
             const ultimoElemento = todasLecturas.find(l => l.variable === 'elemento_activo');
+            const ultimaBateria = todasLecturas.find(l => l.variable === 'bateria');
 
             setLecturas({
                 radiacion: ultimaRadiacion ? ultimaRadiacion.valor : null,
                 suministro: ultimoSuministro ? ultimoSuministro.valor : null,
                 elemento_activo: ultimoElemento ? ultimoElemento.valor : null,
+                bateria: ultimaBateria ? ultimaBateria.valor : null,
             });
         } catch (err) {
-            //Si no hay lecturas, no es un error crítico
-            setLecturas({radiacion: null, suministro: null, elemento_activo: null});
+            setLecturas({radiacion: null, suministro: null, elemento_activo: null, bateria: null});
         } finally {
             setCargando(false);
         }
@@ -125,7 +125,12 @@ export default function DispositivoScreen({ navigation, route }) {
                         {label: 'Versión hardware', value: dispositivo.hw_version},
                         {label: 'Versión firmware', value: dispositivo.fw_version},
                         {label: 'Fecha de instalación', value: formatearFecha(dispositivo.fecha_instalacion)},
-                        {label: 'Nivel de batería', value: dispositivo.nivel_bateria !== null ? `${dispositivo.nivel_bateria}%` : null},
+                        {
+                            label: 'Nivel de batería',
+                            value: dispositivo.medida_continuo
+                                ? (lecturas.bateria !== null ? `${lecturas.bateria.toFixed(0)}%` : null)
+                                : (dispositivo.nivel_bateria !== null ? `${dispositivo.nivel_bateria}%` : null)
+                        },
                         {label: 'IP de registro', value: dispositivo.ip_registro},
                         {label: 'Marca comercial', value: dispositivo.marca_comercial},
                         {label: 'Tipo de detector', value: dispositivo.tipo_detector},

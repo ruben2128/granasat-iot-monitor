@@ -188,6 +188,55 @@ export default function ConfigEmail() {
                     {exito && <p style={{ color: verdeExito, fontSize: '13px', margin: '0 0 16px 0'}}>{exito}</p>}
                     {error && <p style={{ color: colores.acento, fontSize: '13px', margin: '0 0 16px 0'}}>{error}</p>}
 
+                    <div style={{marginBottom: '20px'}}>
+                        <span onClick={function() { setMostrarFormulario(!mostrarFormulario); setEditandoId(null); setExito(''); setError(''); }} style={{ color: colores.acento, fontSize: '15px', cursor: 'pointer'}}>
+                            {mostrarFormulario ? 'Cancelar' : 'Crear configuración nueva'}
+                        </span>
+                    </div>
+
+
+                    {/* Formulario nueva configuración */}
+                    {mostrarFormulario && (
+                        <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, maxWidth: '600px', marginBottom: '20px'}}>
+                            <h2 style={{ color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 20px 0'}}>
+                                {editandoId ? 'Editar configuración' : 'Nueva configuración'}
+                            </h2>
+                            <form onSubmit={handleGuardar}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px'}}>
+                                    <div style={{ gridColumn: '1 / -1'}}>
+                                        <label htmlFor="nombre" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>NOMBRE</label>
+                                        <input id="nombre" type="text" value={nombre} onChange={function(e){ setNombre(e.target.value); }} placeholder="Ej: Gmail desarrollo, UGR producción" style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="smtp_host" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>SERVIDOR SMTP</label>
+                                        <input id="smtp_host" type="text" value={smtpHost} onChange={function(e){ setSmtpHost(e.target.value); }} placeholder="smtp.ugr.es" style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="smtp_port" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>PUERTO</label>
+                                        <input id="smtp_port" type="number" value={smtpPort} onChange={function(e){ setSmtpPort(e.target.value); }} placeholder="587" style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="smtp_user" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>USUARIO</label>
+                                        <input id="smtp_user" type="text" value={smtpUser} onChange={function(e){ setSmtpUser(e.target.value); }} placeholder="usuario@ugr.es" style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="smtp_pass" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>CONTRASEÑA</label>
+                                        <input id="smtp_pass" type="password" value={smtpPass} onChange={function(e){ setSmtpPass(e.target.value); }} placeholder="••••••••" style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
+                                    </div>
+                                    <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '10px'}}>
+                                        <input id="smtp_secure" type="checkbox" checked={smtpSecure} onChange={function(e){ setSmtpSecure(e.target.checked); }}/>
+                                        <label htmlFor="smtp_secure" style={{ color: colores.texto, fontSize: '14px'}}>Conexión segura (TLS)</label>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
+                                    <button type="submit" style={{ backgroundColor: colores.acentoBoton, color: 'white', border: 'none', borderRadius: '8px', padding: '10px 24px', fontSize: '14px', fontWeight: '600', cursor: 'pointer'}}>
+                                        {editandoId ? 'Guardar cambios' : 'Guardar y activar'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+
                     {/* Lista de configuraciones */}
                     {configs.length > 0 && (
                         <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginBottom: '24px'}}>
@@ -299,55 +348,6 @@ export default function ConfigEmail() {
                             </form>
                         )}
                     </div>
-
-                    {/* Botón nueva configuración */}
-                    <div style={{ marginBottom: '16px'}}>
-                        <span onClick={function() { setMostrarFormulario(!mostrarFormulario); setEditandoId(null); setExito(''); setError(''); }} style={{ color: colores.acento, fontSize: '13px', cursor: 'pointer'}}>
-                            {mostrarFormulario ? 'Cancelar' : 'Nueva configuración'}
-                        </span>
-                    </div>
-
-                    {/* Formulario nueva configuración */}
-                    {mostrarFormulario && (
-                        <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, maxWidth: '600px'}}>
-                            <h2 style={{ color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 20px 0'}}>
-                                {editandoId ? 'Editar configuración' : 'Nueva configuración'}
-                            </h2>
-                            <form onSubmit={handleGuardar}>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px'}}>
-                                    <div style={{ gridColumn: '1 / -1'}}>
-                                        <label htmlFor="nombre" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>NOMBRE</label>
-                                        <input id="nombre" type="text" value={nombre} onChange={function(e){ setNombre(e.target.value); }} placeholder="Ej: Gmail desarrollo, UGR producción" style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
-                                    </div>
-                                    <div>
-                                        <label htmlFor="smtp_host" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>SERVIDOR SMTP</label>
-                                        <input id="smtp_host" type="text" value={smtpHost} onChange={function(e){ setSmtpHost(e.target.value); }} placeholder="smtp.ugr.es" style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
-                                    </div>
-                                    <div>
-                                        <label htmlFor="smtp_port" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>PUERTO</label>
-                                        <input id="smtp_port" type="number" value={smtpPort} onChange={function(e){ setSmtpPort(e.target.value); }} placeholder="587" style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
-                                    </div>
-                                    <div>
-                                        <label htmlFor="smtp_user" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>USUARIO</label>
-                                        <input id="smtp_user" type="text" value={smtpUser} onChange={function(e){ setSmtpUser(e.target.value); }} placeholder="usuario@ugr.es" style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
-                                    </div>
-                                    <div>
-                                        <label htmlFor="smtp_pass" style={{ color: colores.texto, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>CONTRASEÑA</label>
-                                        <input id="smtp_pass" type="password" value={smtpPass} onChange={function(e){ setSmtpPass(e.target.value); }} placeholder="••••••••" style={{ width: '100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}}/>
-                                    </div>
-                                    <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '10px'}}>
-                                        <input id="smtp_secure" type="checkbox" checked={smtpSecure} onChange={function(e){ setSmtpSecure(e.target.checked); }}/>
-                                        <label htmlFor="smtp_secure" style={{ color: colores.texto, fontSize: '14px'}}>Conexión segura (TLS)</label>
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
-                                    <button type="submit" style={{ backgroundColor: colores.acentoBoton, color: 'white', border: 'none', borderRadius: '8px', padding: '10px 24px', fontSize: '14px', fontWeight: '600', cursor: 'pointer'}}>
-                                        {editandoId ? 'Guardar cambios' : 'Guardar y activar'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    )}
                 </main>
             </div>
         </>

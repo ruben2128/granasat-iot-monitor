@@ -3,8 +3,8 @@
 
 const char* ssid = "DIGIFIBRA-F09B";
 const char* password = "R8#kNQA4hM";
-//const char* mqtt_server = "192.168.1.249"; //Local
-const char* mqtt_server = "mqtt.granasat.space";
+const char* mqtt_server = "192.168.1.249"; //Local
+//const char* mqtt_server = "mqtt.granasat.space";
 
 // Info del dispositivo
 String device_mac;

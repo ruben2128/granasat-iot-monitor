@@ -254,15 +254,18 @@ export default function Dispositivo(){
 
     // Transformar al formato que necesita la gráfica, incluyendo si el punto es anomalo
     const datosRadiacion = lecturasOrdenadas.map(function(lectura) {
-        const zScore = desviacionRadiacion > 0
-            ? Math.abs((lectura.valor - mediaRadiacion) / desviacionRadiacion)
-            : 0;
+        const zScore = desviacionRadiacion > 0 ? Math.abs((lectura.valor - mediaRadiacion) / desviacionRadiacion): 0;
         return {
             hora: new Date(lectura.time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
             valor: parseFloat(lectura.valor.toFixed(2)),
             anomalo: zScore > 3
         };
     });
+
+    // Calcular dominio real del eje Y a partir de los datos, con margen
+    const valoresGrafica = datosRadiacion.map(function(d) { return d.valor; }).filter(function(v) { return v > 0; });
+    const yMin = valoresGrafica.length > 0 ? Math.min(...valoresGrafica) * 0.7 : 0.1;
+    const yMax = valoresGrafica.length > 0 ? Math.max(...valoresGrafica) * 1.5 : 10;
 
     function formatearFecha(fechaISO){
         if(!fechaISO) return '-';
@@ -491,12 +494,14 @@ export default function Dispositivo(){
                                         </label>
                                         <input type="date" value={editFechaInstalacion} onChange={function (e) { setEditFechaInstalacion(e.target.value); }} style={estiloInput} />
                                     </div>
-                                    <div>
-                                        <label style={estiloLabel}>
-                                            NIVEL DE BATERÍA (%)
-                                        </label>
-                                        <input type="number" min="0" max="100" value={editNivelBateria} onChange={function (e) { setEditNivelBateria(e.target.value); }} style={estiloInput} />
-                                    </div>
+                                    {!dispositivo.medida_continuo && (
+                                        <div>
+                                            <label style={estiloLabel}>
+                                                NIVEL DE BATERÍA (%)
+                                            </label>
+                                            <input type="number" min="0" max="100" value={editNivelBateria} onChange={function (e) { setEditNivelBateria(e.target.value); }} style={estiloInput} />
+                                        </div>
+                                    )}
                                     <div>
                                         <label style={estiloLabel}>
                                             LATITUD
@@ -761,7 +766,8 @@ export default function Dispositivo(){
                             <LineChart data={datosRadiacion}>
                                 <CartesianGrid strokeDasharray="3 3" stroke={colores.borde} />
                                 <XAxis dataKey="hora" stroke={colores.textoSecundario} fontSize={11} />
-                                <YAxis stroke={colores.textoSecundario} fontSize={11} scale="log" domain={['auto', 'auto']} />                                <Tooltip contentStyle={{ backgroundColor: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: '8px', color: colores.texto }} />
+                                <YAxis stroke={colores.textoSecundario} fontSize={11} scale="log" domain={[yMin, yMax]} />                                
+                                <Tooltip contentStyle={{ backgroundColor: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: '8px', color: colores.texto }} />
                                 <Line 
                                     type="monotone" 
                                     dataKey="valor" 
@@ -780,14 +786,24 @@ export default function Dispositivo(){
                                 />
                                 {umbrales && (
                                     <>
-                                        <ReferenceArea y1={0.001} y2={umbrales.umbral_vigilada} fill="#a0a0a0" fillOpacity={0.1} />
-                                        <ReferenceArea y1={umbrales.umbral_vigilada} y2={umbrales.umbral_controlada} fill="#7b9fc7" fillOpacity={0.1} label={{ value: 'Vigilada', position: 'insideTopLeft', fontSize: 10, fill: '#7b9fc7' }} />
-                                        <ReferenceArea y1={umbrales.umbral_controlada} y2={umbrales.umbral_controlada_limitada} fill="#4ade80" fillOpacity={0.1} label={{ value: 'Controlada', position: 'insideTopLeft', fontSize: 10, fill: '#4ade80' }} />
-                                        <ReferenceArea y1={umbrales.umbral_controlada_limitada} y2={umbrales.umbral_controlada_reglamentada} fill="#fbbf24" fillOpacity={0.1} label={{ value: 'C. Limitada', position: 'insideTopLeft', fontSize: 10, fill: '#fbbf24' }} />
-                                        <ReferenceArea y1={umbrales.umbral_controlada_reglamentada} y2={umbrales.umbral_acceso_prohibido} fill="#f97316" fillOpacity={0.1} label={{ value: 'C. Reglamentada', position: 'insideTopLeft', fontSize: 10, fill: '#f97316' }} />
-                                        <ReferenceArea y1={umbrales.umbral_acceso_prohibido} y2={Number.MAX_SAFE_INTEGER} fill="#f87171" fillOpacity={0.1} label={{ value: 'Acceso prohibido', position: 'insideTopLeft', fontSize: 10, fill: '#f87171' }} />
+                                        <ReferenceArea y1={yMin} y2={Math.min(umbrales.umbral_vigilada, yMax)} fill="#a0a0a0" fillOpacity={0.1} />
+                                        {umbrales.umbral_vigilada < yMax && (
+                                            <ReferenceArea y1={umbrales.umbral_vigilada} y2={Math.min(umbrales.umbral_controlada, yMax)} fill="#7b9fc7" fillOpacity={0.1} label={{ value: 'Vigilada', position: 'insideTopLeft', fontSize: 10, fill: '#7b9fc7' }} />
+                                        )}
+                                        {umbrales.umbral_controlada < yMax && (
+                                            <ReferenceArea y1={umbrales.umbral_controlada} y2={Math.min(umbrales.umbral_controlada_limitada, yMax)} fill="#4ade80" fillOpacity={0.1} label={{ value: 'Controlada', position: 'insideTopLeft', fontSize: 10, fill: '#4ade80' }} />
+                                        )}
+                                        {umbrales.umbral_controlada_limitada < yMax && (
+                                            <ReferenceArea y1={umbrales.umbral_controlada_limitada} y2={Math.min(umbrales.umbral_controlada_reglamentada, yMax)} fill="#fbbf24" fillOpacity={0.1} label={{ value: 'C. Limitada', position: 'insideTopLeft', fontSize: 10, fill: '#fbbf24' }} />
+                                        )}
+                                        {umbrales.umbral_controlada_reglamentada < yMax && (
+                                            <ReferenceArea y1={umbrales.umbral_controlada_reglamentada} y2={Math.min(umbrales.umbral_acceso_prohibido, yMax)} fill="#f97316" fillOpacity={0.1} label={{ value: 'C. Reglamentada', position: 'insideTopLeft', fontSize: 10, fill: '#f97316' }} />
+                                        )}
+                                        {umbrales.umbral_acceso_prohibido < yMax && (
+                                            <ReferenceArea y1={umbrales.umbral_acceso_prohibido} y2={yMax} fill="#f87171" fillOpacity={0.1} label={{ value: 'Acceso prohibido', position: 'insideTopLeft', fontSize: 10, fill: '#f87171' }} />
+                                        )}
                                     </>
-                                )}                        
+                                )}                      
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
@@ -803,7 +819,12 @@ export default function Dispositivo(){
                                 { label: 'Versión hardware', value: dispositivo.hw_version },
                                 { label: 'Versión firmware', value: dispositivo.fw_version },
                                 { label: 'Fecha de instalación', value: formatearFechaSolo(dispositivo.fecha_instalacion) },
-                                { label: 'Nivel de batería', value: dispositivo.nivel_bateria !== null ? `${dispositivo.nivel_bateria}%` : '-' },
+                                {
+                                    label: 'Nivel de batería',
+                                    value: dispositivo.medida_continuo
+                                        ? (dispositivoEstaActivo() && ultimoValor('bateria') !== null ? `${ultimoValor('bateria').toFixed(0)}%` : '-')
+                                        : (dispositivo.nivel_bateria !== null ? `${dispositivo.nivel_bateria}%` : '-')
+                                },
                                 { label: 'IP de registro UGR', value: dispositivo.medida_continuo ? dispositivo.ip_registro : null},
                                 { label: 'Latitud', value: dispositivo.latitud },
                                 { label: 'Longitud', value: dispositivo.longitud },
