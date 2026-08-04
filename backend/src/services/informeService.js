@@ -8,6 +8,7 @@ const Informe = require('../models/Informe');
 const Instalacion = require('../models/Instalacion');
 const Dispositivo = require('../models/Dispositivo');
 const AlertaHistorial = require('../models/AlertaHistorial');
+const AlertaConfig = require('../models/AlertaConfig');
 const influxService = require('./influxService');
 const emailService = require('./emailService');
 
@@ -44,7 +45,7 @@ async function generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaIn
 
         // Bloque texto cabecera (derecha del logo)
         doc.fontSize(14).font('Helvetica-Bold').fillColor('#e8550a').text('GranaSAT', 110, 42);
-        doc.fontSize(9).font('Helvetica').fillColor('#444444').text('CubeSat University Program', 110, 59).text('Electronics Department — University of Granada, SPAIN', 110, 71);
+        doc.fontSize(9).font('Helvetica').fillColor('#444444').text('Electronics Department — University of Granada, SPAIN', 110, 59);
 
         // Línea separadora
         doc.moveDown(0.5);
@@ -106,7 +107,8 @@ async function generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaIn
             doc.moveDown(0.4);
             alertas.forEach((a, i) => {
                 const fecha = new Date(a.fecha_disparo).toLocaleString('es-ES');
-                doc.fontSize(9).fillColor('#444444').text(`${i + 1}.  [${a.tipo}]  ${fecha}  —  Valor: ${a.valor_detectado}  (umbral: ${a.umbral_configurado})  —  Email: ${a.email_enviado ? 'Enviado ' : 'No enviado'}`);
+                const nombreDispositivo = a.dispositivo?.nombre || 'Dispositivo eliminado';
+                doc.fontSize(9).fillColor('#444444').text(`${i + 1}.  [${a.tipo}]  ${nombreDispositivo}  —  ${fecha}  —  Valor: ${a.valor_detectado}  (umbral: ${a.umbral_configurado})  —  Email: ${a.email_enviado ? 'Enviado ' : 'No enviado'}`);
             });
         }
 
@@ -125,7 +127,7 @@ async function generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaIn
                 doc.image(LOGO, 50, 40, { width: 40, height: 40 });
             }
             
-            doc.fontSize(9).font('Helvetica').fillColor('#888888').text('GranaSAT — CubeSat University Program — University of Granada', 100, 52);
+            doc.fontSize(9).font('Helvetica').fillColor('#888888').text('GranaSAT — University of Granada', 100, 52);
             doc.moveTo(50, 88).lineTo(545, 88).strokeColor('#e8550a').lineWidth(2).stroke();
             doc.strokeColor('black').lineWidth(1);
 
@@ -212,7 +214,9 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
                 [Op.gte]: fechaInicio,
                 [Op.lt]: fechaInicioMesSiguiente
             }
-        }, order: [['fecha_disparo', 'ASC']]
+        },
+        include: [{ model: Dispositivo, as: 'dispositivo', attributes: ['nombre'] }],
+        order: [['fecha_disparo', 'ASC']]
     });
 
     // Generar gráficas para cada dispositivo
@@ -222,7 +226,12 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
             try {
                 const lecturas = await influxService.obtenerLecturas(dispositivo.mac_address, influxInicioISO, null, influxFinISO);
                 if(lecturas.length > 0){
-                    const umbral = 80; // Por defecto, luego lo haremos configurable
+                    //Usamos el umbral realmente configurado para radiacion (el mismo que dispara
+                    //las alertas del resumen de arriba), en vez de un valor fijo desconectado de la realidad
+                    const alertaConfig = await AlertaConfig.findOne({
+                        where: { dispositivo_id: dispositivo.id, campo: 'radiacion', activa: true }
+                    });
+                    const umbral = alertaConfig?.umbral ?? 80;
                     const imagen = await generarGraficaRadiacion(lecturas, umbral);
                     graficas.push({
                         nombre: `${dispositivo.nombre} - Radiación`,
