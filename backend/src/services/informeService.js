@@ -231,7 +231,7 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
                     const alertaConfig = await AlertaConfig.findOne({
                         where: { dispositivo_id: dispositivo.id, campo: 'radiacion', activa: true }
                     });
-                    const umbral = alertaConfig?.umbral ?? 80;
+                    const umbral = alertaConfig?.umbral ?? null;
                     const imagen = await generarGraficaRadiacion(lecturas, umbral);
                     graficas.push({
                         nombre: `${dispositivo.nombre} - Radiación`,
@@ -366,27 +366,33 @@ async function generarGraficaRadiacion(lecturas, umbral) {
 
     const valores = lecturasRadiacion.map(function(l) { return l.valor; });
 
-    const config = {type: 'line', data: { labels, datasets: [
-                {
-                    label: 'Radiación',
-                    data: valores,
-                    borderColor: '#e8550a',
-                    backgroundColor: 'rgba(232, 85, 10, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    fill: true
-                },
-                {
-                    label: `Umbral (${umbral})`,
-                    data: new Array(labels.length).fill(umbral),
-                    borderColor: '#ff0000',
-                    borderWidth: 2,
-                    borderDash: [5, 5],
-                    pointRadius: 0,
-                    fill: false
-                }
-            ]
-        },
+    const datasets = [
+        {
+            label: 'Radiación',
+            data: valores,
+            borderColor: '#e8550a',
+            backgroundColor: 'rgba(232, 85, 10, 0.1)',
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: true
+        }
+    ];
+
+    //Solo dibujamos la linea de umbral si el dispositivo tiene un umbral de radiacion
+    //configurado de verdad - un valor inventado desvirtua la escala del eje Y
+    if (umbral !== null && umbral !== undefined) {
+        datasets.push({
+            label: `Umbral (${umbral})`,
+            data: new Array(labels.length).fill(umbral),
+            borderColor: '#ff0000',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 0,
+            fill: false
+        });
+    }
+
+    const config = {type: 'line', data: { labels, datasets },
         options: { responsive: false, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true }}}
     };
 

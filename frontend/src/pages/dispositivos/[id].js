@@ -252,11 +252,18 @@ export default function Dispositivo(){
     const varianzaRadiacion = valoresRadiacion.length > 0 ? valoresRadiacion.reduce(function(acc, v) { return acc + Math.pow(v - mediaRadiacion, 2); }, 0) / valoresRadiacion.length : 0;
     const desviacionRadiacion = Math.sqrt(varianzaRadiacion);
 
-    // Transformar al formato que necesita la gráfica, incluyendo si el punto es anomalo
+    // Transformar al formato que necesita la gráfica, incluyendo si el punto es anomalo.
+    // En rangos de varios dias (-7d/-30d) incluimos tambien la fecha en la etiqueta,
+    // si no todos los dias muestran las mismas horas y no se puede distinguir a que dia
+    // pertenece cada punto.
+    const incluirFechaEnEtiqueta = rango === '-7d' || rango === '-30d';
     const datosRadiacion = lecturasOrdenadas.map(function(lectura) {
         const zScore = desviacionRadiacion > 0 ? Math.abs((lectura.valor - mediaRadiacion) / desviacionRadiacion): 0;
+        const fechaLectura = new Date(lectura.time);
         return {
-            hora: new Date(lectura.time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+            hora: incluirFechaEnEtiqueta
+                ? fechaLectura.toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+                : fechaLectura.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
             valor: parseFloat(lectura.valor.toFixed(2)),
             anomalo: zScore > 3
         };
