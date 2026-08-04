@@ -24,9 +24,9 @@ const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', '
 /* Generar PDF del informe mensual de una instalación y lo guarda*/
 async function generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaInicio, fechaFin, graficas) {
     return new Promise((resolve, reject) => {
-        //codigo_referencia es texto libre (p.ej. "IR/GR-057") y puede llevar caracteres
-        //no validos en nombres de fichero (/, \). Los saneamos para no romper la ruta,
-        //y usamos el id como respaldo si la instalacion no tiene codigo asignado.
+        //codigo_referencia es texto librey puede llevar caracteres
+        //no validos en nombres de fichero (/, \). Se sanea para no romper la ruta,
+        //y usar el id como respaldo si la instalacion no tiene codigo asignado.
         const codigoSeguro = (instalacion.codigo_referencia || instalacion.id).replace(/[\\/]/g, '-');
         const nombreArchivo = `informe_${codigoSeguro}_${anio}_${String(mes).padStart(2, '0')}.pdf`;
         const rutaArchivo = path.join(CARPETA_INFORMES, nombreArchivo);
@@ -48,12 +48,11 @@ async function generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaIn
         doc.fontSize(9).font('Helvetica').fillColor('#444444').text('Electronics Department — University of Granada, SPAIN', 110, 59);
 
         // Línea separadora
-        doc.moveDown(0.5);
         doc.moveTo(50, 100).lineTo(545, 100).strokeColor('#e8550a').lineWidth(2).stroke();
         doc.strokeColor('black').lineWidth(1);
 
         // Título
-        doc.moveDown(1.5);
+        doc.y = 115;
         doc.fontSize(16).font('Helvetica-Bold').fillColor('#1a1a1a').text('INFORME MENSUAL DE MONITORIZACIÓN IoT', { align: 'center' });
         doc.moveDown(0.3);
         doc.fontSize(13).font('Helvetica').fillColor('#444444').text(`${MESES[mes - 1]} de ${anio}`, { align: 'center' });
