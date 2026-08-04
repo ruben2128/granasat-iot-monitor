@@ -351,8 +351,10 @@ async function generarInformesMensualesAutomaticos() {
 }
 
 async function generarGraficaRadiacion(lecturas, umbral) {
-    const width = 500;
-    const height = 250;
+    //Resolucion mayor que el ancho final en el PDF (495pt) para que, con meses con
+    //muchos picos (p.ej. muchas alertas ZSCORE), los puntos no se amontonen entre si
+    const width = 1000;
+    const height = 300;
     const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height });
 
     // Filtrar solo lecturas de radiación y ordenar por tiempo
@@ -360,8 +362,10 @@ async function generarGraficaRadiacion(lecturas, umbral) {
         .filter(function(l) { return l.variable === 'radiacion'; })
         .reverse();
 
+    //El informe siempre cubre un mes entero, asi que la etiqueta necesita fecha ademas
+    //de la hora - si no, dias distintos con horas parecidas son indistinguibles en el eje
     const labels = lecturasRadiacion.map(function(l) {
-        return new Date(l.time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        return new Date(l.time).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     });
 
     const valores = lecturasRadiacion.map(function(l) { return l.valor; });
