@@ -23,7 +23,11 @@ const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', '
 /* Generar PDF del informe mensual de una instalación y lo guarda*/
 async function generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaInicio, fechaFin, graficas) {
     return new Promise((resolve, reject) => {
-        const nombreArchivo = `informe_${instalacion.codigo_referencia}_${anio}_${String(mes).padStart(2, '0')}.pdf`;
+        //codigo_referencia es texto libre (p.ej. "IR/GR-057") y puede llevar caracteres
+        //no validos en nombres de fichero (/, \). Los saneamos para no romper la ruta,
+        //y usamos el id como respaldo si la instalacion no tiene codigo asignado.
+        const codigoSeguro = (instalacion.codigo_referencia || instalacion.id).replace(/[\\/]/g, '-');
+        const nombreArchivo = `informe_${codigoSeguro}_${anio}_${String(mes).padStart(2, '0')}.pdf`;
         const rutaArchivo = path.join(CARPETA_INFORMES, nombreArchivo);
         const LOGO = path.join(__dirname, '../assets/granasat-logo.png');
         const doc = new PDFDocument({ margin: 50, size: 'A4' });
@@ -177,10 +181,16 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
     //Calcular fechas
     const fechaInicio = new Date(anio, mes - 1, 1); // Los meses van del 0 al 11
     const fechaFin = new Date(anio, mes, 0); // Dia 0 del siguiente mes = ultimo dia del mes actual
+    const fechaInicioMesSiguiente = new Date(anio, mes, 1); // Limite superior exclusivo (medianoche del dia 1 del mes siguiente)
 
     //Transformar a String con formato 'YYYY-MM-DD'
     const fechaInicioStr = fechaInicio.toLocaleDateString('en-CA');
     const fechaFinStr = fechaFin.toLocaleDateString('en-CA');
+
+    //Rango RFC3339 para InfluxDB: del inicio del mes al inicio del mes siguiente (stop exclusivo,
+    //para no perder las lecturas del último día del mes)
+    const influxInicioISO = fechaInicio.toISOString();
+    const influxFinISO = fechaInicioMesSiguiente.toISOString();
 
     //Asegurarnos de que no exista ya un informe en este mes y año
     const informeExistente = await Informe.findOne({
@@ -193,12 +203,14 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
     });
 
     //Recopilar las alertas del mes
+    //(limite superior exclusivo: [Op.lt] evita perder las alertas disparadas
+    //despues de medianoche del ultimo dia del mes)
     const alertas = await AlertaHistorial.findAll({
         where: {
             instalacion_id,
             fecha_disparo: {
                 [Op.gte]: fechaInicio,
-                [Op.lte]: fechaFin
+                [Op.lt]: fechaInicioMesSiguiente
             }
         }, order: [['fecha_disparo', 'ASC']]
     });
@@ -208,7 +220,7 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
     for(const dispositivo of dispositivos){
         if(dispositivo.mac_address){
             try {
-                const lecturas = await influxService.obtenerLecturas(dispositivo.mac_address, '-30d', null);
+                const lecturas = await influxService.obtenerLecturas(dispositivo.mac_address, influxInicioISO, null, influxFinISO);
                 if(lecturas.length > 0){
                     const umbral = 80; // Por defecto, luego lo haremos configurable
                     const imagen = await generarGraficaRadiacion(lecturas, umbral);
@@ -272,7 +284,7 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
     if(informeExistente){
         registro = await informeExistente.update({
             ruta_pdf: rutaArchivo,
-            tamanio_bytes: tamanio,
+            tamano_bytes: tamanio,
             generado: true,
             email_enviado: emailEnviado,
             email_destinatarios: destinatarios,
@@ -287,7 +299,7 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
             fecha_inicio: fechaInicioStr,
             fecha_fin: fechaFinStr,
             ruta_pdf: rutaArchivo,
-            tamanio_bytes: tamanio,
+            tamano_bytes: tamanio,
             generado: true,
             email_enviado: emailEnviado,
             email_destinatarios: destinatarios,
@@ -303,6 +315,30 @@ async function generarInformeMensual(instalacion_id, mes, anio) {
     };
 
     return resultado;
+}
+
+/*
+    Genera el informe del mes que acaba de terminar para todas las instalaciones activas.
+    Pensada para ejecutarse desde un cron el día 1 de cada mes (ver server.js).
+*/
+async function generarInformesMensualesAutomaticos() {
+    //Mes/año que acaba de cerrar respecto a hoy
+    const hoy = new Date();
+    const mesAnterior = hoy.getMonth() === 0 ? 12 : hoy.getMonth();
+    const anioAnterior = hoy.getMonth() === 0 ? hoy.getFullYear() - 1 : hoy.getFullYear();
+
+    const instalaciones = await Instalacion.findAll({ where: { activa: true } });
+
+    console.log(`[informes] Generando informes automaticos de ${mesAnterior}/${anioAnterior} para ${instalaciones.length} instalacion(es)...`);
+
+    for (const instalacion of instalaciones) {
+        try {
+            await generarInformeMensual(instalacion.id, mesAnterior, anioAnterior);
+            console.log(`[informes] Informe generado para "${instalacion.nombre}" (${mesAnterior}/${anioAnterior})`);
+        } catch (err) {
+            console.error(`[informes] Error generando el informe automatico de "${instalacion.nombre}":`, err.message);
+        }
+    }
 }
 
 async function generarGraficaRadiacion(lecturas, umbral) {
@@ -348,4 +384,4 @@ async function generarGraficaRadiacion(lecturas, umbral) {
     return await chartJSNodeCanvas.renderToBuffer(config);
 }
 
-module.exports = { generarInformeMensual };
+module.exports = { generarInformeMensual, generarInformesMensualesAutomaticos };

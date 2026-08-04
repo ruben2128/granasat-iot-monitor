@@ -43,14 +43,14 @@ export default function LoginScreen(){
                     <Text style={[styles.etiqueta, { color: colores.texto}]}>
                         USUARIO
                     </Text>
-                    <TextInput style={[styles.input, {backgroundColor: colores.tarjeta, borderColor: colores.borde, color: colores.texto}]} value={username} onChangeText={setUsername} autoCapitalize='none' placeholder='usuario' placeholderTextColor={colores.textoSecundario}/>
+                    <TextInput style={[styles.input, {backgroundColor: colores.tarjeta, borderColor: colores.borde, color: colores.texto}]} value={username} onChangeText={setUsername} autoCapitalize='none' placeholder='Usuario' placeholderTextColor={colores.textoSecundario}/>
                 </View>
 
                 <View style={styles.campoContenedor}>
                     <Text style={[styles.etiqueta, { color: colores.texto}]}>
                         CONTRASEÑA
                     </Text>
-                    <TextInput style={[styles.input, {backgroundColor: colores.tarjeta, borderColor: colores.borde, color: colores.texto}]} value={password} onChangeText={setPassword} secureTextEntry placeholder='contraseña' placeholderTextColor={colores.textoSecundario}/>
+                    <TextInput style={[styles.input, {backgroundColor: colores.tarjeta, borderColor: colores.borde, color: colores.texto}]} value={password} onChangeText={setPassword} secureTextEntry placeholder='Contraseña' placeholderTextColor={colores.textoSecundario}/>
                 </View>
 
                 <TouchableOpacity style={[styles.boton, {backgroundColor: colores.acentoBoton}]} onPress={handleLogin} disabled={cargando}>

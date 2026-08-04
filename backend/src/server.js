@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const cron = require('node-cron');
 require('dotenv').config();
 
 const { testConnection, sequelize } = require('./config/database');
@@ -11,6 +12,9 @@ require('./models/index');
 
 //Importar el servicio de las alertas
 const {procesarAlertas} = require('./services/alertaService');
+
+//Importar el servicio de los informes mensuales
+const {generarInformesMensualesAutomaticos} = require('./services/informeService');
 
 // Importar las rutas
 const authRoutes = require('./routes/authRoutes');
@@ -53,6 +57,10 @@ async function startServer() {
       console.log(`\n Arrancado el servicio de alertas, con un intervalo de 5 minutos`);
       procesarAlertas();
       setInterval(procesarAlertas, intervalo);
+
+      // Informes mensuales: dia 1 de cada mes a las 06:00, genera el informe del mes que acaba de cerrar
+      console.log(' Programado el servicio de informes mensuales, dia 1 de cada mes a las 06:00');
+      cron.schedule('0 6 1 * *', generarInformesMensualesAutomaticos, { timezone: 'Europe/Madrid' });
     });
   } catch (error) {
     console.error('Error iniciando servidor:', error);

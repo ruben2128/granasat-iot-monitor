@@ -29,12 +29,15 @@ function ejecutarQuery(query){
 }
 
 /*
-    Consulta el historial de lecturas de un dispositivo en InfluxDB
+    Consulta el historial de lecturas de un dispositivo en InfluxDB.
+    'rango' y 'stop' aceptan tanto duraciones relativas de Flux (p.ej. '-24h')
+    como timestamps absolutos RFC3339 - si no se indica 'stop', Flux usa 'now()'.
 */
-async function obtenerLecturas(mac, rango = '-24h', variable = null){
+async function obtenerLecturas(mac, rango = '-24h', variable = null, stop = null){
     const filtroVariable = variable ? `|> filter(fn: (r) => r["_field"] == "${variable}")` : '';
+    const rangoFlux = stop ? `range(start: ${rango}, stop: ${stop})` : `range(start: ${rango})`;
 
-    const query = `from(bucket: "${BUCKET}") |> range(start: ${rango}) |> filter(fn: (r) => r["_measurement"] == "radiacion_iot")
+    const query = `from(bucket: "${BUCKET}") |> ${rangoFlux} |> filter(fn: (r) => r["_measurement"] == "radiacion_iot")
     |> filter(fn: (r) => r["mac"] == "${mac}") ${filtroVariable} |> sort(columns: ["_time"], desc: true)
     `;
 

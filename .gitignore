@@ -1,7 +1,8 @@
 # Dependencias
 node_modules/
 
-# Variables de entorno 
+# Variables de entorno
+/.env
 backend/.env
 frontend/.env.local
 

@@ -61,7 +61,7 @@ services:
     environment:
       POSTGRES_DB: tfg_iot
       POSTGRES_USER: tfg_user
-      POSTGRES_PASSWORD: tfg_password_seguro_2024
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
@@ -88,17 +88,17 @@ services:
       DB_PORT: 5432
       DB_NAME: tfg_iot
       DB_USER: tfg_user
-      DB_PASSWORD: tfg_password_seguro_2024
+      DB_PASSWORD: ${DB_PASSWORD}
       INFLUX_URL: http://influxdb:8086
-      INFLUX_TOKEN: fEbHJjtGuX28Y8nbGp6JCIoRPzHimHBc-lR08haWQzpfE5b2MB-cldIoYihKLbPDX-U3HypDJ5zD0kFPx4oPQA==
+      INFLUX_TOKEN: ${INFLUX_TOKEN_V01}
       INFLUX_ORG: RadiationMonitor
       INFLUX_BUCKET: RadiationMonitorBucket
-      JWT_SECRET: mi_secreto_super_seguro_cambiar_en_produccion_123456
+      JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: 24h
       SMTP_HOST: smtp.gmail.com
       SMTP_PORT: 587
-      SMTP_USER: gilrubenmartin@gmail.com
-      SMTP_PASS: ogjrrxmkgonuhbsl
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.radiacion-api.rule=Host(`radiacion.granasat.space`) && PathPrefix(`/api`)"
