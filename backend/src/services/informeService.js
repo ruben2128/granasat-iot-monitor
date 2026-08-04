@@ -24,9 +24,9 @@ const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', '
 /* Generar PDF del informe mensual de una instalación y lo guarda*/
 async function generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaInicio, fechaFin, graficas) {
     return new Promise((resolve, reject) => {
-        //codigo_referencia es texto librey puede llevar caracteres
-        //no validos en nombres de fichero (/, \). Se sanea para no romper la ruta,
-        //y usar el id como respaldo si la instalacion no tiene codigo asignado.
+        //codigo_referencia es texto libre (p.ej. "IR/GR-057") y puede llevar caracteres
+        //no validos en nombres de fichero (/, \). Los saneamos para no romper la ruta,
+        //y usamos el id como respaldo si la instalacion no tiene codigo asignado.
         const codigoSeguro = (instalacion.codigo_referencia || instalacion.id).replace(/[\\/]/g, '-');
         const nombreArchivo = `informe_${codigoSeguro}_${anio}_${String(mes).padStart(2, '0')}.pdf`;
         const rutaArchivo = path.join(CARPETA_INFORMES, nombreArchivo);
@@ -47,11 +47,12 @@ async function generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaIn
         doc.fontSize(14).font('Helvetica-Bold').fillColor('#e8550a').text('GranaSAT', 110, 42);
         doc.fontSize(9).font('Helvetica').fillColor('#444444').text('Electronics Department — University of Granada, SPAIN', 110, 59);
 
-        // Línea separadora
+        // Línea separadora (posición fija en y=100)
         doc.moveTo(50, 100).lineTo(545, 100).strokeColor('#e8550a').lineWidth(2).stroke();
         doc.strokeColor('black').lineWidth(1);
 
-        // Título
+        // Título - posición fija tras la línea, para no depender de cuanto texto
+        // haya en la cabecera de arriba (que usa moveDown() relativo)
         doc.y = 115;
         doc.fontSize(16).font('Helvetica-Bold').fillColor('#1a1a1a').text('INFORME MENSUAL DE MONITORIZACIÓN IoT', { align: 'center' });
         doc.moveDown(0.3);
@@ -107,7 +108,15 @@ async function generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaIn
             alertas.forEach((a, i) => {
                 const fecha = new Date(a.fecha_disparo).toLocaleString('es-ES');
                 const nombreDispositivo = a.dispositivo?.nombre || 'Dispositivo eliminado';
-                doc.fontSize(9).fillColor('#444444').text(`${i + 1}.  [${a.tipo}]  ${nombreDispositivo}  —  ${fecha}  —  Valor: ${a.valor_detectado}  (umbral: ${a.umbral_configurado})  —  Email: ${a.email_enviado ? 'Enviado ' : 'No enviado'}`);
+                //Alertas de tipo conexion (RECONEXION/DESCONEXION) no tienen valor/umbral
+                //numerico - omitimos ese segmento en vez de mostrar "Valor: null (umbral: null)"
+                //ZSCORE: el umbral (3) son desviaciones estandar, no la misma unidad que el
+                //valor detectado (µSv/h) - lo marcamos como "±3σ" para que no parezca comparable
+                const textoUmbral = a.tipo === 'ZSCORE' ? `±${a.umbral_configurado}σ` : a.umbral_configurado;
+                const segmentoValor = a.valor_detectado !== null
+                    ? `Valor: ${a.valor_detectado}  (umbral: ${textoUmbral})  —  `
+                    : '';
+                doc.fontSize(9).fillColor('#444444').text(`${i + 1}.  [${a.tipo}]  ${nombreDispositivo}  —  ${fecha}  —  ${segmentoValor}Email: ${a.email_enviado ? 'Enviado ' : 'No enviado'}`);
             });
         }
 
@@ -356,10 +365,15 @@ async function generarGraficaRadiacion(lecturas, umbral) {
     const height = 300;
     const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height });
 
-    // Filtrar solo lecturas de radiación y ordenar por tiempo
+    // Filtrar solo lecturas de radiación y ordenar por tiempo.
+    // Ordenamos explicitamente por fecha en vez de fiarnos de un simple .reverse() sobre
+    // el orden que devuelve InfluxDB: si las lecturas quedan repartidas en mas de una
+    // "tabla" internamente (por ejemplo, si algun tag como hw_version/fw_version cambio
+    // a mitad del periodo), Influx puede devolver los resultados por bloques - cada uno
+    // bien ordenado por dentro, pero los bloques entre si no necesariamente en orden global.
     const lecturasRadiacion = lecturas
         .filter(function(l) { return l.variable === 'radiacion'; })
-        .reverse();
+        .sort(function(a, b) { return new Date(a.time) - new Date(b.time); });
 
     //El informe siempre cubre un mes entero, asi que la etiqueta necesita fecha ademas
     //de la hora - si no, dias distintos con horas parecidas son indistinguibles en el eje
@@ -395,8 +409,23 @@ async function generarGraficaRadiacion(lecturas, umbral) {
         });
     }
 
+    //Dejamos un margen por encima del pico mas alto (datos o umbral) para que la linea
+    //no quede pegada al borde superior del canvas, rozando la leyenda/titulo de encima
+    const picoMasAlto = Math.max(0, ...valores, umbral ?? 0);
+    const yMax = picoMasAlto > 0 ? picoMasAlto * 1.2 : 1;
+
     const config = {type: 'line', data: { labels, datasets },
-        options: { responsive: false, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true }}}
+        options: {
+            responsive: false,
+            layout: { padding: { top: 10 } },
+            plugins: { legend: { display: true } },
+            scales: {
+                y: { beginAtZero: true, suggestedMax: yMax },
+                //Limitamos el numero de etiquetas visibles - con un mes entero de lecturas,
+                //mostrarlas todas las amontona y rotadas hace dificil ver el orden cronologico
+                x: { ticks: { maxTicksLimit: 12, autoSkip: true } }
+            }
+        }
     };
 
     return await chartJSNodeCanvas.renderToBuffer(config);
