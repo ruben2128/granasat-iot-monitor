@@ -2,6 +2,7 @@ const AlertaConfig = require('../models/AlertaConfig');
 const AlertaHistorial = require('../models/AlertaHistorial');
 const Dispositivo = require('../models/Dispositivo');
 const Instalacion = require('../models/Instalacion');
+const Usuario = require('../models/Usuario');
 const influxService = require('./influxService');
 const emailService = require('./emailService');
 const {Op} = require('sequelize');
@@ -534,7 +535,78 @@ async function comprobarMediaConsecutiva() {
     }
 }
 
+/**
+ * Comprueba que InfluxDB sigue accesible.
+ * Si no responde, avisa por email a todos los usuarios con rol ADMIN.
+ */
+async function comprobarInfluxDB(){
+    const disponible = await influxService.comprobarConexion();
+
+    if(disponible){
+        return true;
+    }
+
+    const yaAvisado = await AlertaHistorial.findOne({
+        where: {
+            tipo: 'INFLUXDB_CAIDO',
+            fecha_disparo: { [Op.gte]: new Date(Date.now() - COOLDOWN_MINUTOS * 60 * 1000) }
+        }
+    });
+
+    if(yaAvisado){
+        return false;
+    }
+
+    const admins = await Usuario.findAll({ where: { role: 'ADMIN', activo: true } });
+    const emailsDestino = admins.map(a => a.email).filter(Boolean);
+
+    const mensaje = `AVISO: la base de datos InfluxDB no responde.\n` +
+        `Fecha de deteccion: ${new Date()}`;
+
+    let emailEnviado = false;
+    let emailError = null;
+
+    if(emailsDestino.length > 0){
+        try {
+            await emailService.enviarEmailAlerta(
+                emailsDestino,
+                '[IOT ALERTA] InfluxDB no responde',
+                mensaje
+            );
+            emailEnviado = true;
+            console.log('Aviso de caida de InfluxDB enviado a los administradores');
+        } catch(err){
+            emailError = err.message;
+            console.error(`Error enviando aviso de caida de InfluxDB: ${err.message}`);
+        }
+    }
+
+    await AlertaHistorial.create({
+        alerta_config_id: null,
+        dispositivo_id: null,
+        instalacion_id: null,
+        tipo: 'INFLUXDB_CAIDO',
+        valor_detectado: null,
+        umbral_configurado: null,
+        mensaje,
+        email_enviado: emailEnviado,
+        email_error: emailError,
+        destinatarios: emailsDestino,
+        fecha_disparo: new Date(),
+        fecha_email: emailEnviado ? new Date() : null
+    });
+
+    return false;
+}
+
 async function procesarAlertas(){
+    const influxOK = await comprobarInfluxDB();
+
+    if(!influxOK){
+        return;
+    }
+
+    await actualizarUltimasConexiones();
     await actualizarUltimasConexiones();
     await comprobarCalibraciones();
     await comprobarConexiones();
@@ -635,4 +707,4 @@ async function procesarAlertas(){
     }
 }
 
-module.exports = {procesarAlertas};
+module.exports = {procesarAlertas, comprobarInfluxDB};

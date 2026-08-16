@@ -95,5 +95,22 @@ async function testConexionDispositivo(mac){
     }
 }
 
+/**
+ * Comprueba si InfluxDB responde.
+ * Devuelve true si el servicio responde y false si la conexion falla.
+ */
+async function comprobarConexion(){
+    try {
+        const query = `from(bucket: "${BUCKET}")
+            |> range(start: -5m)
+            |> limit(n: 1)`;
 
-module.exports = {obtenerLecturas, obtenerUltimaLectura,testConexionDispositivo};
+        await ejecutarQuery(query);
+        return true;
+    } catch(err){
+        console.error(`InfluxDB no responde: ${err.message}`);
+        return false;
+    }
+}
+
+module.exports = {obtenerLecturas, obtenerUltimaLectura,testConexionDispositivo, comprobarConexion};

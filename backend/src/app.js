@@ -34,24 +34,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date() });
 });
 
-app.get('/api/setup-admin', async (req, res) => {
-    try {
-        const bcrypt = require('bcrypt');
-        const Usuario = require('./models/Usuario');
-        const hash = await bcrypt.hash('admin123', 10);
-        
-        const [actualizado] = await Usuario.update({ password_hash: hash },{ where: { username: 'admin' }});
-
-        if (actualizado === 0) {
-            await Usuario.create({password_hash: hash, role: 'ADMIN', nombre: 'Administrador', apellidos: 'del Sistema', email: 'admin@granasat.ugr.es', activo: true, username: 'admin'});
-        }
-
-        res.json({message: 'Admin listo'});
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
 app.use('/api/auth', authRoutes);
 app.use('/api/instalaciones', instalacionRoutes);
 app.use('/api/dispositivos', dispositivoRoutes);

@@ -112,7 +112,7 @@ async function generarPDF(instalacion, dispositivos, alertas, mes, anio, fechaIn
                 //numerico - omitimos ese segmento en vez de mostrar "Valor: null (umbral: null)"
                 //ZSCORE: el umbral (3) son desviaciones estandar, no la misma unidad que el
                 //valor detectado (µSv/h) - lo marcamos como "±3σ" para que no parezca comparable
-                const textoUmbral = a.tipo === 'ZSCORE' ? `±${a.umbral_configurado}σ` : a.umbral_configurado;
+                const textoUmbral = a.tipo === 'ZSCORE' ? `±${a.umbral_configurado}DE` : a.umbral_configurado;
                 const segmentoValor = a.valor_detectado !== null
                     ? `Valor: ${a.valor_detectado}  (umbral: ${textoUmbral})  —  `
                     : '';

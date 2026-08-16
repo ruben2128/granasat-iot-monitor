@@ -1,28 +1,4 @@
 services:
-  #influxdb_rad:
-    #container_name: influxdb_rad
-    #image: influxdb:2.7
-    #ports:
-      #- "8087:8086"
-    #volumes:
-     # - ./data/influxdb:/var/lib/influxdb2
-      #- ./conf/influxdb:/etc/influxdb2
-    #restart: always
-    #networks:
-     # - RadiacionN
-
-  #telegraf_rad:
-    #container_name: telegraf_rad
-    #image: telegraf
-    #volumes:
-     # - ./conf/telegraf/telegraf.prod.conf:/etc/telegraf/telegraf.conf
-     # - /var/run/docker.sock:/var/run/docker.sock
-    #depends_on:
-    #  - influxdb_rad
-    #restart: always
-    #networks:
-     # - RadiacionN
-
   grafana_rad:
     container_name: grafana_rad
     image: grafana/grafana
@@ -55,7 +31,7 @@ services:
     container_name: postgres_rad
     image: postgres:15
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     environment:
       POSTGRES_DB: tfg_iot
       POSTGRES_USER: tfg_user
@@ -75,8 +51,6 @@ services:
   backend_rad:
     container_name: backend_rad
     build: ./backend
-    ports:
-      - "3001:3001"
     volumes:
       - ./uploads:/app/uploads
       - ./data:/app/data:ro
