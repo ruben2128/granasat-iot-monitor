@@ -16,21 +16,6 @@ const {procesarAlertas} = require('./services/alertaService');
 //Importar el servicio de los informes mensuales
 const {generarInformesMensualesAutomaticos} = require('./services/informeService');
 
-// Importar las rutas
-const authRoutes = require('./routes/authRoutes');
-const instalacionRoutes = require('./routes/instalacionRoutes');
-const dispositivoRoutes = require('./routes/dispositivoRoutes');
-const alertaConfigRoutes = require('./routes/alertaConfigRoutes');
-const lecturaRoutes = require('./routes/lecturaRoutes');
-const informeRoutes = require('./routes/informeRoutes');
-const usuarioRoutes = require('./routes/usuarioRoutes');
-const logRoutes = require('./routes/logRoutes');
-const emailHistorialRoutes = require('./routes/emailHistorialRoutes');
-const configEmailRoutes = require('./routes/configEmailRoutes');
-const dockerRoutes = require('./routes/dockerRoutes');
-const plantillaEmailRoutes = require('./routes/plantillaEmailRoutes');
-const licenciaRoutes = require('./routes/licenciaRoutes');
-
 //Puerto que vamos a utilizar
 const PORT = process.env.PORT || 3001;
 

@@ -17,9 +17,11 @@ jest.mock('../src/models/LogAcceso', () => ({ create: jest.fn().mockResolvedValu
 jest.mock('../src/models/Usuario', () => ({ findOne: jest.fn(), findByPk: jest.fn(), create: jest.fn() }));
 jest.mock('../src/models/Instalacion', () => ({ findAll: jest.fn(), findByPk: jest.fn(), findOne: jest.fn(), create: jest.fn() }));
 jest.mock('../src/models/AlertaConfig', () => ({ findAll: jest.fn(), findByPk: jest.fn(), findOne: jest.fn(), create: jest.fn() }));
+jest.mock('../src/models/Dispositivo', () => ({ findAll: jest.fn(), findByPk: jest.fn(), findOne: jest.fn(), create: jest.fn() }));
 
 const AlertaConfig = require('../src/models/AlertaConfig');
 const Instalacion  = require('../src/models/Instalacion');
+const Dispositivo  = require('../src/models/Dispositivo');
 
 const ID_ADMIN = 'admin-001';
 const ID_RESP = 'resp-001';
@@ -43,6 +45,7 @@ const ALERTA = {
 
 const BODY_VALIDO = {
   instalacion_id: 'inst-001',
+  dispositivo_id: 'disp-001',
   tipo: 'UMBRAL',
   nombre: 'Alerta temperatura',
   campo: 'temperatura',
@@ -96,6 +99,7 @@ describe('POST /api/alertas-config', () => {
 
   test('ADMIN crea una alerta con datos válidos', async () => {
     Instalacion.findByPk.mockResolvedValue({ id: 'inst-001' });
+    Dispositivo.findByPk.mockResolvedValue({id: 'disp-001', instalacion_id: 'inst-001', medida_continuo: true });
     AlertaConfig.create.mockResolvedValue({ id: 'nueva', ...ALERTA });
 
     const res = await request(app)

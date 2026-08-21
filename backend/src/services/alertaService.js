@@ -607,7 +607,6 @@ async function procesarAlertas(){
     }
 
     await actualizarUltimasConexiones();
-    await actualizarUltimasConexiones();
     await comprobarCalibraciones();
     await comprobarConexiones();
     await comprobarZScore();
@@ -659,7 +658,7 @@ async function procesarAlertas(){
 
             const mensaje = alerta.mensaje_personalizado ||
                 `ALERTA: ${alerta.nombre}\n` +
-                `Instaalcion: ${alerta.instalacion.nombre}\n` +
+                `Instalacion: ${alerta.instalacion.nombre}\n` +
                 `Dispositivo: ${dispositivo.nombre} (Direccion MAC: ${dispositivo.mac_address})\n` +
                 `Campo: ${alerta.campo}\n` +
                 `Valor detectado: ${valor}\n` +
