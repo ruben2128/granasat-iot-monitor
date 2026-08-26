@@ -56,7 +56,6 @@ export default function Dashboard() {
             setExito('Instalación creada correctamente');
             setMostrarFormulario(false);
         } catch (err) {
-            console.log('Error en el registro de la instalación:', err);
             setError(err.response?.data?.error || 'Error en el registro');
             setExito('');
         }  

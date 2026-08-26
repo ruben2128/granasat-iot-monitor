@@ -314,10 +314,23 @@ async function eliminarDispositivo (req, res){
 async function testConexion(req, res){
     try{
         const { id } = req.params;
-        const dispositivo = await Dispositivo.findByPk(id);
+        const dispositivo = await Dispositivo.findByPk(id, {
+            include: [{ model: Instalacion, as: 'instalacion' }]
+        });
 
         if(!dispositivo){
             return res.status(404).json({error: 'Dispositivo no encontrado'});
+        }
+
+        const esResponsable = dispositivo.instalacion?.responsable_id === req.user.id;
+        const esTitular = dispositivo.titular_id === req.user.id;
+
+        if (req.user.role !== 'ADMIN' && !esResponsable && !esTitular) {
+            return res.status(403).json({ error: 'No tienes acceso a este dispositivo' });
+        }
+
+        if (!dispositivo.medida_continuo || !dispositivo.mac_address) {
+            return res.json({ activo: false, mensaje: 'El equipo no realiza medida en continuo' });
         }
 
         const resultado = await influxService.testConexionDispositivo(dispositivo.mac_address);
@@ -343,10 +356,23 @@ async function subirFotoDispositivo(req, res){
         }
 
         const {id} = req.params;
-        const dispositivo = await Dispositivo.findByPk(id);
+        const dispositivo = await Dispositivo.findByPk(id, {
+            include: [{ model: Instalacion, as: 'instalacion' }]
+        });
 
         if(!dispositivo){
-            return res.status(400).json({ error: 'Dispositivo no encontrado'});
+            return res.status(404).json({error: 'Dispositivo no encontrado'});
+        }
+
+        const esResponsable = dispositivo.instalacion?.responsable_id === req.user.id;
+        const esTitular = dispositivo.titular_id === req.user.id;
+
+        if (req.user.role !== 'ADMIN' && !esResponsable && !esTitular) {
+            return res.status(403).json({ error: 'No tienes acceso a este dispositivo' });
+        }
+
+        if (!dispositivo.medida_continuo || !dispositivo.mac_address) {
+            return res.json({ activo: false, mensaje: 'El equipo no realiza medida en continuo' });
         }
 
         //Eliminar foto anterior si existe

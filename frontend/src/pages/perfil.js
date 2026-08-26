@@ -59,8 +59,6 @@ export default function Perfil() {
 
             if(idQuery && idQuery !== usuarioGuardado.id) {
                 const respUsuario = await api.get(`/usuarios/${idQuery}`, { headers: { Authorization: `Bearer ${token}`}});
-
-                console.log('respUsuario.data:', respUsuario.data);
                 
                 setUsuarioPerfil(respUsuario.data);
                 setEditNombre(respUsuario.data.nombre || '');

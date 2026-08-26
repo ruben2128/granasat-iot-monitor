@@ -33,7 +33,6 @@ export default function Home() {
 
       router.push('/dashboard');
     } catch (err) {
-      console.log('Error en el login:', err);
       setError('Usuario o contraseña incorrectos');
     }
   }

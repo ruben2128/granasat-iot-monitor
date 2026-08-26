@@ -291,7 +291,7 @@ export default function Instalacion(){
                                 <p style={{ color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 4px 0'}}>{instalacion.nombre}</p>
                                 <div style={{ display: 'flex', gap: '32px'}}>
                                     <span style={{color: colores.texto, fontSize: '13px'}}> Ubicación: {instalacion.ubicacion}</span>
-                                    <span style={{color: colores.texto, fontSize: '13px'}}> Responsable: {instalacion.responsable?.nombre} {instalacion.responsable.apellidos}</span>
+                                    <span style={{color: colores.texto, fontSize: '13px'}}> Responsable: {instalacion.responsable?.nombre} {instalacion.responsable?.apellidos}</span>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
