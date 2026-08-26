@@ -71,6 +71,10 @@ export default function Dispositivo(){
     }, []);
 
     async function cargarLecturas(){
+        if (!dispositivo?.medida_continuo) {
+            return;
+        }
+
         const token = localStorage.getItem('token');
         const respuestaLectura = await api.get(`/dispositivos/${id}/lecturas?rango=${rango}`, {headers: {Authorization: `Bearer ${token}`}});
         
@@ -125,8 +129,12 @@ export default function Dispositivo(){
             setEditZonaRadiologica(d.zona_radiologica || '');
             setEditModeloSonda(d.modelo_sonda || '');
  
-            const respuestaLecturas = await api.get(`/dispositivos/${id}/lecturas?rango=${rango}`, { headers: { Authorization: `Bearer ${token}` } });
-            setLecturas(respuestaLecturas.data.lecturas);
+            if (d.medida_continuo) {
+                const respuestaLecturas = await api.get(`/dispositivos/${id}/lecturas?rango=${rango}`, { headers: { Authorization: `Bearer ${token}` } });
+                setLecturas(respuestaLecturas.data.lecturas);
+            } else {
+                setLecturas([]);
+            }
 
             const respuestaConfig = await api.get('/configuracion/publica');
             setUmbrales(respuestaConfig.data.configuracion);
@@ -135,7 +143,7 @@ export default function Dispositivo(){
     }, [id, rango]) // Ejecutar cuando id esté disponible
 
     useEffect(function(){
-        if(!id){
+        if(!id || !dispositivo?.medida_continuo){
             return;
         }
 
@@ -143,7 +151,7 @@ export default function Dispositivo(){
         const intervalo = setInterval(cargarLecturas, 5000);
 
         return function(){ clearInterval(intervalo); }; 
-    }, [id, rango]);
+    }, [id, rango, dispositivo?.medida_continuo]);
 
     async function handleTestConexion() {
         setTestCargando(true);
@@ -714,6 +722,7 @@ export default function Dispositivo(){
                     )}
 
                     {/* Botón test conexión */}
+                    {dispositivo.medida_continuo && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
                         <button onClick={handleTestConexion} disabled={testCargando} style={{ backgroundColor: colores.acentoBoton, color: 'white', border: 'none', borderRadius: '8px', padding: '8px 20px', fontSize: '13px', fontWeight: '600', cursor: testCargando ? 'wait' : 'pointer', opacity: testCargando ? 0.7 : 1 }}>
                             {testCargando ? 'Probando...' : 'Test de conexión'}
@@ -724,8 +733,10 @@ export default function Dispositivo(){
                             </span>
                         )}
                     </div>
+                    )}
 
                     {/* Tarjetas de lecturas */}
+                    {dispositivo.medida_continuo && (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
                         <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '20px', border: `1px solid ${colores.borde}` }}>
                             <p style={{ color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0' }}>
@@ -752,8 +763,11 @@ export default function Dispositivo(){
                             </p>
                         </div>
                     </div>
+                    )}
+                    
 
                     {/* Gráfica */}
+                    {dispositivo.medida_continuo && (
                     <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginBottom: '24px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                             <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: 0, borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px' }}>
@@ -814,6 +828,15 @@ export default function Dispositivo(){
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
+                    )}
+
+                    {!dispositivo.medida_continuo && (
+                        <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginBottom: '24px' }}>
+                            <p style={{ color: colores.textoSecundario, fontSize: '14px', margin: 0 }}>
+                                Este equipo no realiza medida en continuo, por lo que no dispone de lecturas ni de gráficas de evolución temporal. Sus datos de inventario, calibración y verificación se muestran a continuación.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Información técnica solo lecura */}
                     <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}` }}>

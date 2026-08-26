@@ -82,8 +82,9 @@ export default function Instalacion(){
 
             const token = localStorage.getItem('token');
             const usuarioGuardado = localStorage.getItem('usuario');
+            const usuarioActual = JSON.parse(usuarioGuardado);
 
-            setUsuario(JSON.parse(usuarioGuardado));
+            setUsuario(usuarioActual);
 
             if(!token){
                 router.push('/');
@@ -106,7 +107,7 @@ export default function Instalacion(){
             setEditCodigoReferencia(inst.codigo_referencia || '');
 
             //Cargar responsables (Solo Admin)
-            if(usuarioGuardado.role === 'ADMIN') {
+            if(usuarioActual.role === 'ADMIN') {
                 const respuestaResponsables = await api.get('/usuarios', {headers: {Authorization: `Bearer ${token}`}});
                 const todosUsuarios = respuestaResponsables.data.usuarios;
                 
@@ -138,7 +139,7 @@ export default function Instalacion(){
                 fecha_instalacion, 
                 instalacion_id: id, 
                 latitud: latitud || null, 
-                longitud: longitud || longitud, 
+                longitud: longitud || null, 
                 altura: altura || null, 
                 nivel_bateria: nivel_bateria ? parseInt(nivel_bateria) : null, 
                 titular_id: titularId || null, 
@@ -199,7 +200,6 @@ export default function Instalacion(){
             setMostrarFormulario(false);
             setModeloSonda('');
         } catch (err) {
-            console.log('Error en el registro del dispositivo:', err.response?.data);
             setError(err.response?.data?.error || 'Error en el registro del dispositivo');
         }  
     }
@@ -217,7 +217,7 @@ export default function Instalacion(){
                 categoria: editCategoria,
                 descripcion: editDescripcion,
                 ubicacion: editUbicacion,
-                responsable_id: editResponsableId,
+                responsable_id: editResponsableId || null,
                 activa: editActiva,
                 tipo_instalacion: editTipoInstalacion || null,
                 direccion_instalacion: editDireccionInstalacion || null,
@@ -270,7 +270,7 @@ export default function Instalacion(){
         <>
             <Head>
                 <title>
-                    GranaSAT - Dispositivo
+                    {instalacion.nombre}
                 </title>
             </Head>
 
@@ -289,10 +289,9 @@ export default function Instalacion(){
                             <div>
                                 <p style={{ color: colores.texto, fontSize: '11px', margin: '0 0 8px 0'}}>{instalacion.codigo_referencia}</p>
                                 <p style={{ color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 4px 0'}}>{instalacion.nombre}</p>
-                                <p style={{ color: colores.texto, fontSize: '13px', margin: 0}}>{instalacion.ubicacion}</p> 
                                 <div style={{ display: 'flex', gap: '32px'}}>
                                     <span style={{color: colores.texto, fontSize: '13px'}}> Ubicación: {instalacion.ubicacion}</span>
-                                    <span style={{color: colores.texto, fontSize: '13px'}}> Responsable: {instalacion.responsable.nombre} {instalacion.responsable.apellidos}</span>
+                                    <span style={{color: colores.texto, fontSize: '13px'}}> Responsable: {instalacion.responsable?.nombre} {instalacion.responsable.apellidos}</span>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>

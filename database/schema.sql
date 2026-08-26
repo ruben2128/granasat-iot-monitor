@@ -16,12 +16,23 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
+--
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 
 
+--
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
+--
+
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
 
+
+--
+-- Name: enum_dispositivos_zona_radiologica; Type: TYPE; Schema: public; Owner: tfg_user
+--
 
 CREATE TYPE public.enum_dispositivos_zona_radiologica AS ENUM (
     'LIBRE_PASO',
@@ -35,6 +46,9 @@ CREATE TYPE public.enum_dispositivos_zona_radiologica AS ENUM (
 
 ALTER TYPE public.enum_dispositivos_zona_radiologica OWNER TO tfg_user;
 
+--
+-- Name: enum_instalaciones_tipo_instalacion; Type: TYPE; Schema: public; Owner: tfg_user
+--
 
 CREATE TYPE public.enum_instalaciones_tipo_instalacion AS ENUM (
     'IRA',
@@ -44,6 +58,45 @@ CREATE TYPE public.enum_instalaciones_tipo_instalacion AS ENUM (
 
 ALTER TYPE public.enum_instalaciones_tipo_instalacion OWNER TO tfg_user;
 
+--
+-- Name: enum_invitaciones_role; Type: TYPE; Schema: public; Owner: tfg_user
+--
+
+CREATE TYPE public.enum_invitaciones_role AS ENUM (
+    'RESPONSABLE',
+    'TITULAR'
+);
+
+
+ALTER TYPE public.enum_invitaciones_role OWNER TO tfg_user;
+
+--
+-- Name: enum_licencias_nivel; Type: TYPE; Schema: public; Owner: tfg_user
+--
+
+CREATE TYPE public.enum_licencias_nivel AS ENUM (
+    'OPERADOR',
+    'SUPERVISOR'
+);
+
+
+ALTER TYPE public.enum_licencias_nivel OWNER TO tfg_user;
+
+--
+-- Name: enum_tipo_instalacion; Type: TYPE; Schema: public; Owner: tfg_user
+--
+
+CREATE TYPE public.enum_tipo_instalacion AS ENUM (
+    'IRA',
+    'IRD'
+);
+
+
+ALTER TYPE public.enum_tipo_instalacion OWNER TO tfg_user;
+
+--
+-- Name: enum_usuarios_role; Type: TYPE; Schema: public; Owner: tfg_user
+--
 
 CREATE TYPE public.enum_usuarios_role AS ENUM (
     'ADMIN',
@@ -53,6 +106,26 @@ CREATE TYPE public.enum_usuarios_role AS ENUM (
 
 
 ALTER TYPE public.enum_usuarios_role OWNER TO tfg_user;
+
+--
+-- Name: enum_zona_radiologica; Type: TYPE; Schema: public; Owner: tfg_user
+--
+
+CREATE TYPE public.enum_zona_radiologica AS ENUM (
+    'LIBRE_PASO',
+    'VIGILADA',
+    'CONTROLADA',
+    'CONTROLADA_LIMITADA',
+    'CONTROLADA_REGLAMENTADA',
+    'ACCESO_PROHIBIDO'
+);
+
+
+ALTER TYPE public.enum_zona_radiologica OWNER TO tfg_user;
+
+--
+-- Name: actualizar_updated_at(); Type: FUNCTION; Schema: public; Owner: tfg_user
+--
 
 CREATE FUNCTION public.actualizar_updated_at() RETURNS trigger
     LANGUAGE plpgsql
@@ -70,6 +143,9 @@ SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
+--
+-- Name: alertas_config; Type: TABLE; Schema: public; Owner: tfg_user
+--
 
 CREATE TABLE public.alertas_config (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
@@ -84,12 +160,23 @@ CREATE TABLE public.alertas_config (
     mensaje_personalizado text,
     activa boolean DEFAULT true,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    dispositivo_id uuid
 );
+
 
 ALTER TABLE public.alertas_config OWNER TO tfg_user;
 
+--
+-- Name: TABLE alertas_config; Type: COMMENT; Schema: public; Owner: tfg_user
+--
+
 COMMENT ON TABLE public.alertas_config IS 'Configuración de alertas por instalación';
+
+
+--
+-- Name: alertas_historial; Type: TABLE; Schema: public; Owner: tfg_user
+--
 
 CREATE TABLE public.alertas_historial (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
@@ -107,9 +194,19 @@ CREATE TABLE public.alertas_historial (
     fecha_email timestamp without time zone
 );
 
+
 ALTER TABLE public.alertas_historial OWNER TO tfg_user;
 
+--
+-- Name: TABLE alertas_historial; Type: COMMENT; Schema: public; Owner: tfg_user
+--
+
 COMMENT ON TABLE public.alertas_historial IS 'Histórico de alertas disparadas';
+
+
+--
+-- Name: config_email; Type: TABLE; Schema: public; Owner: tfg_user
+--
 
 CREATE TABLE public.config_email (
     id integer NOT NULL,
@@ -126,6 +223,10 @@ CREATE TABLE public.config_email (
 
 ALTER TABLE public.config_email OWNER TO tfg_user;
 
+--
+-- Name: config_email_id_seq; Type: SEQUENCE; Schema: public; Owner: tfg_user
+--
+
 CREATE SEQUENCE public.config_email_id_seq
     AS integer
     START WITH 1
@@ -137,9 +238,31 @@ CREATE SEQUENCE public.config_email_id_seq
 
 ALTER TABLE public.config_email_id_seq OWNER TO tfg_user;
 
+--
+-- Name: config_email_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: tfg_user
+--
+
 ALTER SEQUENCE public.config_email_id_seq OWNED BY public.config_email.id;
 
-ALTER TABLE ONLY public.config_email ALTER COLUMN id SET DEFAULT nextval('public.config_email_id_seq'::regclass);
+
+--
+-- Name: configuracion; Type: TABLE; Schema: public; Owner: tfg_user
+--
+
+CREATE TABLE public.configuracion (
+    clave character varying(100) NOT NULL,
+    valor character varying(255) NOT NULL,
+    descripcion text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.configuracion OWNER TO tfg_user;
+
+--
+-- Name: dispositivos; Type: TABLE; Schema: public; Owner: tfg_user
+--
 
 CREATE TABLE public.dispositivos (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
@@ -176,17 +299,25 @@ CREATE TABLE public.dispositivos (
     medida_continuo boolean DEFAULT false NOT NULL,
     unidades_medida character varying(20) DEFAULT 'µSv/h'::character varying,
     factor_correccion numeric(10,6) DEFAULT 1.0,
-    zona_radiologica public.enum_dispositivos_zona_radiologica,
+    zona_radiologica public.enum_zona_radiologica,
     modelo_sonda character varying(100),
-    foto character varying(255)
+    foto character varying(255),
+    conectado boolean DEFAULT false NOT NULL
 );
 
 
 ALTER TABLE public.dispositivos OWNER TO tfg_user;
 
+--
+-- Name: TABLE dispositivos; Type: COMMENT; Schema: public; Owner: tfg_user
+--
+
 COMMENT ON TABLE public.dispositivos IS 'Dispositivos IoT registrados';
 
 
+--
+-- Name: informes; Type: TABLE; Schema: public; Owner: tfg_user
+--
 
 CREATE TABLE public.informes (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
@@ -210,8 +341,16 @@ CREATE TABLE public.informes (
 
 ALTER TABLE public.informes OWNER TO tfg_user;
 
+--
+-- Name: TABLE informes; Type: COMMENT; Schema: public; Owner: tfg_user
+--
+
 COMMENT ON TABLE public.informes IS 'Informes PDF generados mensualmente';
 
+
+--
+-- Name: instalaciones; Type: TABLE; Schema: public; Owner: tfg_user
+--
 
 CREATE TABLE public.instalaciones (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
@@ -223,7 +362,7 @@ CREATE TABLE public.instalaciones (
     activa boolean DEFAULT true,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    tipo_instalacion public.enum_instalaciones_tipo_instalacion,
+    tipo_instalacion public.enum_tipo_instalacion,
     direccion_instalacion text,
     codigo_referencia character varying(50)
 );
@@ -231,7 +370,52 @@ CREATE TABLE public.instalaciones (
 
 ALTER TABLE public.instalaciones OWNER TO tfg_user;
 
+--
+-- Name: TABLE instalaciones; Type: COMMENT; Schema: public; Owner: tfg_user
+--
+
 COMMENT ON TABLE public.instalaciones IS 'Instalaciones físicas donde están los IoT';
+
+
+--
+-- Name: invitaciones; Type: TABLE; Schema: public; Owner: tfg_user
+--
+
+CREATE TABLE public.invitaciones (
+    id uuid NOT NULL,
+    email character varying(100) NOT NULL,
+    token character varying(64) NOT NULL,
+    role public.enum_invitaciones_role DEFAULT 'RESPONSABLE'::public.enum_invitaciones_role NOT NULL,
+    fecha_caducidad timestamp with time zone NOT NULL,
+    usado boolean DEFAULT false,
+    invitado_por uuid NOT NULL,
+    created_at timestamp with time zone NOT NULL
+);
+
+
+ALTER TABLE public.invitaciones OWNER TO tfg_user;
+
+--
+-- Name: licencias; Type: TABLE; Schema: public; Owner: tfg_user
+--
+
+CREATE TABLE public.licencias (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    usuario_id uuid NOT NULL,
+    instalacion_id uuid,
+    campo_aplicacion character varying(255) NOT NULL,
+    fecha_concesion date,
+    fecha_caducidad date,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    nivel public.enum_licencias_nivel
+);
+
+
+ALTER TABLE public.licencias OWNER TO tfg_user;
+
+--
+-- Name: log_accesos; Type: TABLE; Schema: public; Owner: tfg_user
+--
 
 CREATE TABLE public.log_accesos (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -245,41 +429,9 @@ CREATE TABLE public.log_accesos (
 
 ALTER TABLE public.log_accesos OWNER TO tfg_user;
 
-CREATE TABLE public.usuarios (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    username character varying(50) NOT NULL,
-    password_hash character varying(255) NOT NULL,
-    role public.enum_usuarios_role NOT NULL,
-    nombre character varying(100),
-    apellidos character varying(100),
-    email character varying(100) NOT NULL,
-    telefono_movil character varying(20),
-    telefono_fijo character varying(20),
-    activo boolean DEFAULT true,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    ultimo_acceso timestamp without time zone,
-    avatar character varying(255),
-    CONSTRAINT usuarios_role_check CHECK ((role = ANY (ARRAY['ADMIN'::public.enum_usuarios_role, 'RESPONSABLE'::public.enum_usuarios_role, 'TITULAR'::public.enum_usuarios_role])))
-);
-
-
-ALTER TABLE public.usuarios OWNER TO tfg_user;
-
-COMMENT ON TABLE public.usuarios IS 'Usuarios del sistema (admin y responsables)';
-
-CREATE TABLE IF NOT EXISTS public.licencias (
-    id UUID DEFAULT public.uuid_generate_v4() NOT NULL,
-    usuario_id uuid NOT NULL,
-    instalacion_id uuid,
-    campo_aplicacion character varying(255) NOT NULL,
-    fecha_concesion date,
-    fecha_caducidad date,
-    created_at TIMESTAMP without time zone DEFAULT CURRENT_TIMESTAMP
-);
-
-ALTER TABLE public.licencias OWNER TO tfg_user;
-
+--
+-- Name: log_cambios; Type: TABLE; Schema: public; Owner: tfg_user
+--
 
 CREATE TABLE public.log_cambios (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
@@ -291,10 +443,78 @@ CREATE TABLE public.log_cambios (
     fecha timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
 
+
 ALTER TABLE public.log_cambios OWNER TO tfg_user;
 
 --
--- Views
+-- Name: plantillas_email; Type: TABLE; Schema: public; Owner: tfg_user
+--
+
+CREATE TABLE public.plantillas_email (
+    id integer NOT NULL,
+    html text NOT NULL,
+    updated_at timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.plantillas_email OWNER TO tfg_user;
+
+--
+-- Name: plantillas_email_id_seq; Type: SEQUENCE; Schema: public; Owner: tfg_user
+--
+
+CREATE SEQUENCE public.plantillas_email_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.plantillas_email_id_seq OWNER TO tfg_user;
+
+--
+-- Name: plantillas_email_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: tfg_user
+--
+
+ALTER SEQUENCE public.plantillas_email_id_seq OWNED BY public.plantillas_email.id;
+
+
+--
+-- Name: usuarios; Type: TABLE; Schema: public; Owner: tfg_user
+--
+
+CREATE TABLE public.usuarios (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    username character varying(50) NOT NULL,
+    password_hash character varying(255) NOT NULL,
+    role public.enum_usuarios_role NOT NULL,
+    nombre character varying(100),
+    apellidos character varying(100),
+    email character varying(100) NOT NULL,
+    activo boolean DEFAULT true,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    ultimo_acceso timestamp without time zone,
+    avatar character varying(255),
+    telefono_movil character varying(20),
+    telefono_fijo character varying(20),
+    CONSTRAINT usuarios_role_check CHECK ((role = ANY (ARRAY['ADMIN'::public.enum_usuarios_role, 'RESPONSABLE'::public.enum_usuarios_role, 'TITULAR'::public.enum_usuarios_role])))
+);
+
+
+ALTER TABLE public.usuarios OWNER TO tfg_user;
+
+--
+-- Name: TABLE usuarios; Type: COMMENT; Schema: public; Owner: tfg_user
+--
+
+COMMENT ON TABLE public.usuarios IS 'Usuarios del sistema (admin y responsables)';
+
+
+--
+-- Name: v_alertas_recientes; Type: VIEW; Schema: public; Owner: tfg_user
 --
 
 CREATE VIEW public.v_alertas_recientes AS
@@ -312,8 +532,12 @@ CREATE VIEW public.v_alertas_recientes AS
   WHERE (ah.fecha_disparo > (now() - '24:00:00'::interval))
   ORDER BY ah.fecha_disparo DESC;
 
+
 ALTER TABLE public.v_alertas_recientes OWNER TO tfg_user;
 
+--
+-- Name: v_dispositivos_completos; Type: VIEW; Schema: public; Owner: tfg_user
+--
 
 CREATE VIEW public.v_dispositivos_completos AS
  SELECT d.id,
@@ -329,113 +553,469 @@ CREATE VIEW public.v_dispositivos_completos AS
      LEFT JOIN public.instalaciones i ON ((d.instalacion_id = i.id)))
      LEFT JOIN public.usuarios u ON ((i.responsable_id = u.id)));
 
+
 ALTER TABLE public.v_dispositivos_completos OWNER TO tfg_user;
+
+--
+-- Name: config_email id; Type: DEFAULT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.config_email ALTER COLUMN id SET DEFAULT nextval('public.config_email_id_seq'::regclass);
 
 
 --
--- Primary keys and constraints
+-- Name: plantillas_email id; Type: DEFAULT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.plantillas_email ALTER COLUMN id SET DEFAULT nextval('public.plantillas_email_id_seq'::regclass);
+
+
+--
+-- Name: alertas_config alertas_config_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
 --
 
 ALTER TABLE ONLY public.alertas_config
     ADD CONSTRAINT alertas_config_pkey PRIMARY KEY (id);
 
+
+--
+-- Name: alertas_historial alertas_historial_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
 ALTER TABLE ONLY public.alertas_historial
     ADD CONSTRAINT alertas_historial_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: config_email config_email_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
 
 ALTER TABLE ONLY public.config_email
     ADD CONSTRAINT config_email_pkey PRIMARY KEY (id);
 
+
+--
+-- Name: configuracion configuracion_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.configuracion
+    ADD CONSTRAINT configuracion_pkey PRIMARY KEY (clave);
+
+
+--
+-- Name: dispositivos dispositivos_mac_address_key; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
 ALTER TABLE ONLY public.dispositivos
     ADD CONSTRAINT dispositivos_mac_address_key UNIQUE (mac_address);
+
+
+--
+-- Name: dispositivos dispositivos_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
 
 ALTER TABLE ONLY public.dispositivos
     ADD CONSTRAINT dispositivos_pkey PRIMARY KEY (id);
 
+
+--
+-- Name: informes informes_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
 ALTER TABLE ONLY public.informes
     ADD CONSTRAINT informes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: instalaciones instalaciones_codigo_referencia_key; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.instalaciones
+    ADD CONSTRAINT instalaciones_codigo_referencia_key UNIQUE (codigo_referencia);
+
+
+--
+-- Name: instalaciones instalaciones_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
 
 ALTER TABLE ONLY public.instalaciones
     ADD CONSTRAINT instalaciones_pkey PRIMARY KEY (id);
 
+
+--
+-- Name: invitaciones invitaciones_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.invitaciones
+    ADD CONSTRAINT invitaciones_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: invitaciones invitaciones_token_key; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.invitaciones
+    ADD CONSTRAINT invitaciones_token_key UNIQUE (token);
+
+
+--
+-- Name: licencias licencias_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.licencias
+    ADD CONSTRAINT licencias_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: log_accesos log_accesos_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
 ALTER TABLE ONLY public.log_accesos
     ADD CONSTRAINT log_accesos_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: log_cambios log_cambios_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.log_cambios
+    ADD CONSTRAINT log_cambios_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: plantillas_email plantillas_email_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.plantillas_email
+    ADD CONSTRAINT plantillas_email_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: usuarios usuarios_email_key; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
 
 ALTER TABLE ONLY public.usuarios
     ADD CONSTRAINT usuarios_email_key UNIQUE (email);
 
+
+--
+-- Name: usuarios usuarios_pkey; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
 ALTER TABLE ONLY public.usuarios
     ADD CONSTRAINT usuarios_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: usuarios usuarios_username_key; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
 
 ALTER TABLE ONLY public.usuarios
     ADD CONSTRAINT usuarios_username_key UNIQUE (username);
 
 
 --
--- Indexes
+-- Name: usuarios usuarios_username_key1; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.usuarios
+    ADD CONSTRAINT usuarios_username_key1 UNIQUE (username);
+
+
+--
+-- Name: usuarios usuarios_username_key2; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.usuarios
+    ADD CONSTRAINT usuarios_username_key2 UNIQUE (username);
+
+
+--
+-- Name: usuarios usuarios_username_key3; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.usuarios
+    ADD CONSTRAINT usuarios_username_key3 UNIQUE (username);
+
+
+--
+-- Name: usuarios usuarios_username_key4; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.usuarios
+    ADD CONSTRAINT usuarios_username_key4 UNIQUE (username);
+
+
+--
+-- Name: usuarios usuarios_username_key5; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.usuarios
+    ADD CONSTRAINT usuarios_username_key5 UNIQUE (username);
+
+
+--
+-- Name: usuarios usuarios_username_key6; Type: CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.usuarios
+    ADD CONSTRAINT usuarios_username_key6 UNIQUE (username);
+
+
+--
+-- Name: idx_alertas_config_activa; Type: INDEX; Schema: public; Owner: tfg_user
 --
 
 CREATE INDEX idx_alertas_config_activa ON public.alertas_config USING btree (activa);
+
+
+--
+-- Name: idx_alertas_config_instalacion; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE INDEX idx_alertas_config_instalacion ON public.alertas_config USING btree (instalacion_id);
+
+
+--
+-- Name: idx_alertas_historial_dispositivo; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE INDEX idx_alertas_historial_dispositivo ON public.alertas_historial USING btree (dispositivo_id);
+
+
+--
+-- Name: idx_alertas_historial_fecha; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE INDEX idx_alertas_historial_fecha ON public.alertas_historial USING btree (fecha_disparo DESC);
+
+
+--
+-- Name: idx_alertas_historial_instalacion; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE INDEX idx_alertas_historial_instalacion ON public.alertas_historial USING btree (instalacion_id);
+
+
+--
+-- Name: idx_dispositivos_activo; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE INDEX idx_dispositivos_activo ON public.dispositivos USING btree (activo);
+
+
+--
+-- Name: idx_dispositivos_instalacion; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE INDEX idx_dispositivos_instalacion ON public.dispositivos USING btree (instalacion_id);
+
+
+--
+-- Name: idx_dispositivos_mac; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE INDEX idx_dispositivos_mac ON public.dispositivos USING btree (mac_address);
+
+
+--
+-- Name: idx_informes_instalacion; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE INDEX idx_informes_instalacion ON public.informes USING btree (instalacion_id);
+
+
+--
+-- Name: idx_informes_periodo; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE INDEX idx_informes_periodo ON public.informes USING btree (anio DESC, mes DESC);
+
+
+--
+-- Name: idx_informes_unique; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE UNIQUE INDEX idx_informes_unique ON public.informes USING btree (instalacion_id, anio, mes);
+
+
+--
+-- Name: idx_instalaciones_categoria; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE INDEX idx_instalaciones_categoria ON public.instalaciones USING btree (categoria);
+
+
+--
+-- Name: idx_instalaciones_responsable; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE INDEX idx_instalaciones_responsable ON public.instalaciones USING btree (responsable_id);
+
+
+--
+-- Name: idx_usuarios_email; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE INDEX idx_usuarios_email ON public.usuarios USING btree (email);
+
+
+--
+-- Name: idx_usuarios_role; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE INDEX idx_usuarios_role ON public.usuarios USING btree (role);
+
+
+--
+-- Name: idx_usuarios_username; Type: INDEX; Schema: public; Owner: tfg_user
+--
+
 CREATE INDEX idx_usuarios_username ON public.usuarios USING btree (username);
 
 
 --
--- Triggers
+-- Name: alertas_config trigger_alertas_config_updated_at; Type: TRIGGER; Schema: public; Owner: tfg_user
 --
 
 CREATE TRIGGER trigger_alertas_config_updated_at BEFORE UPDATE ON public.alertas_config FOR EACH ROW EXECUTE FUNCTION public.actualizar_updated_at();
+
+
+--
+-- Name: dispositivos trigger_dispositivos_updated_at; Type: TRIGGER; Schema: public; Owner: tfg_user
+--
+
 CREATE TRIGGER trigger_dispositivos_updated_at BEFORE UPDATE ON public.dispositivos FOR EACH ROW EXECUTE FUNCTION public.actualizar_updated_at();
+
+
+--
+-- Name: instalaciones trigger_instalaciones_updated_at; Type: TRIGGER; Schema: public; Owner: tfg_user
+--
+
 CREATE TRIGGER trigger_instalaciones_updated_at BEFORE UPDATE ON public.instalaciones FOR EACH ROW EXECUTE FUNCTION public.actualizar_updated_at();
+
+
+--
+-- Name: usuarios trigger_usuarios_updated_at; Type: TRIGGER; Schema: public; Owner: tfg_user
+--
+
 CREATE TRIGGER trigger_usuarios_updated_at BEFORE UPDATE ON public.usuarios FOR EACH ROW EXECUTE FUNCTION public.actualizar_updated_at();
 
 
 --
--- Foreign keys
+-- Name: alertas_config alertas_config_dispositivo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.alertas_config
+    ADD CONSTRAINT alertas_config_dispositivo_id_fkey FOREIGN KEY (dispositivo_id) REFERENCES public.dispositivos(id) ON DELETE CASCADE;
+
+
+--
+-- Name: alertas_config alertas_config_instalacion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
 --
 
 ALTER TABLE ONLY public.alertas_config
     ADD CONSTRAINT alertas_config_instalacion_id_fkey FOREIGN KEY (instalacion_id) REFERENCES public.instalaciones(id) ON DELETE CASCADE;
 
+
+--
+-- Name: alertas_historial alertas_historial_alerta_config_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
 ALTER TABLE ONLY public.alertas_historial
     ADD CONSTRAINT alertas_historial_alerta_config_id_fkey FOREIGN KEY (alerta_config_id) REFERENCES public.alertas_config(id) ON DELETE SET NULL;
+
+
+--
+-- Name: alertas_historial alertas_historial_dispositivo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
 
 ALTER TABLE ONLY public.alertas_historial
     ADD CONSTRAINT alertas_historial_dispositivo_id_fkey FOREIGN KEY (dispositivo_id) REFERENCES public.dispositivos(id) ON DELETE SET NULL;
 
+
+--
+-- Name: alertas_historial alertas_historial_instalacion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
 ALTER TABLE ONLY public.alertas_historial
     ADD CONSTRAINT alertas_historial_instalacion_id_fkey FOREIGN KEY (instalacion_id) REFERENCES public.instalaciones(id) ON DELETE SET NULL;
+
+
+--
+-- Name: dispositivos dispositivos_instalacion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
 
 ALTER TABLE ONLY public.dispositivos
     ADD CONSTRAINT dispositivos_instalacion_id_fkey FOREIGN KEY (instalacion_id) REFERENCES public.instalaciones(id) ON DELETE CASCADE;
 
+
+--
+-- Name: dispositivos dispositivos_titular_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
 ALTER TABLE ONLY public.dispositivos
     ADD CONSTRAINT dispositivos_titular_id_fkey FOREIGN KEY (titular_id) REFERENCES public.usuarios(id) ON DELETE SET NULL;
+
+
+--
+-- Name: informes informes_instalacion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
 
 ALTER TABLE ONLY public.informes
     ADD CONSTRAINT informes_instalacion_id_fkey FOREIGN KEY (instalacion_id) REFERENCES public.instalaciones(id) ON DELETE CASCADE;
 
+
+--
+-- Name: instalaciones instalaciones_responsable_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
 ALTER TABLE ONLY public.instalaciones
     ADD CONSTRAINT instalaciones_responsable_id_fkey FOREIGN KEY (responsable_id) REFERENCES public.usuarios(id) ON DELETE SET NULL;
+
+
+--
+-- Name: invitaciones invitaciones_invitado_por_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.invitaciones
+    ADD CONSTRAINT invitaciones_invitado_por_fkey FOREIGN KEY (invitado_por) REFERENCES public.usuarios(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: licencias licencias_instalacion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.licencias
+    ADD CONSTRAINT licencias_instalacion_id_fkey FOREIGN KEY (instalacion_id) REFERENCES public.instalaciones(id) ON DELETE SET NULL;
+
+
+--
+-- Name: licencias licencias_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.licencias
+    ADD CONSTRAINT licencias_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id) ON DELETE CASCADE;
+
+
+--
+-- Name: log_accesos log_accesos_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
 
 ALTER TABLE ONLY public.log_accesos
     ADD CONSTRAINT log_accesos_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id) ON DELETE CASCADE;
 
 
-ALTER TABLE instalaciones ADD CONSTRAINT instalaciones_codigo_referencia_key UNIQUE (codigo_referencia);
+--
+-- Name: log_cambios log_cambios_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tfg_user
+--
+
+ALTER TABLE ONLY public.log_cambios
+    ADD CONSTRAINT log_cambios_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id) ON DELETE SET NULL;
+
 
 --
 -- PostgreSQL database dump complete
 --
+
+

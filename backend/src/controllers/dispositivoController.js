@@ -27,6 +27,13 @@ async function obtenerDispositivos(req, res) {
                 }],
                 order: [['created_at', 'DESC']]
             });
+        } else if (req.user.role === 'TITULAR') {
+            whereDispositivo.titular_id = req.user.id;
+            dispositivos = await Dispositivo.findAll({
+                where: whereDispositivo,
+                include: [{ model: Instalacion, as: 'instalacion', attributes: ['id', 'nombre', 'categoria'] }],
+                order: [['created_at', 'DESC']]
+            });
         } else {
             // Buscar solo dispositivos de las instalaciones donde el usuario es responsable
             dispositivos = await Dispositivo.findAll({
@@ -72,8 +79,11 @@ async function obtenerDispositivoPorId(req, res) {
             return res.status(404).json({error: 'Dispositivo no encontrado'});
         }
 
-        if(req.user.role === 'RESPONSABLE' && dispositivo.instalacion.responsable_id !== req.user.id) {
-            return res.status(403).json({error: 'No tienes acceso a esta dispositivo'});
+        const esResponsable = dispositivo.instalacion?.responsable_id === req.user.id;
+        const esTitular = dispositivo.titular_id === req.user.id;
+
+        if (req.user.role !== 'ADMIN' && !esResponsable && !esTitular) {
+            return res.status(403).json({ error: 'No tienes acceso a este dispositivo' });
         }
 
         res.json(dispositivo);
@@ -83,6 +93,20 @@ async function obtenerDispositivoPorId(req, res) {
     }
 }
 
+// Normaliza un campo numérico opcional
+function aNumero(valor, actual) {
+    if (valor === undefined) {
+        return actual;
+    }
+    if (valor === null || valor === '') {
+        return null;
+    }
+
+    const numero = Number(valor);
+    return Number.isNaN(numero) ? null : numero;
+}
+
+
 /*
     Ruta: POST /api/dispositivos 
     Crear un dispositivo perteneneciente a una instalación
@@ -91,19 +115,25 @@ async function crearDispositivo(req, res) {
     try {
         const { mac_address, nombre, descripcion, instalacion_id, hw_version, fw_version, fecha_instalacion, notas, latitud, longitud, altura, nivel_bateria, titular_id, ip_registro, fecha_caducidad_ip, marca_comercial, modelo_electronica, num_serie_electronica, num_serie_sonda, tipo_detector, calibrado, fecha_ultima_calibracion, fecha_proxima_calibracion, verificacion_periodica, periodicidad_verificacion, medida_continuo, unidades_medida, factor_correccion, zona_radiologica, modelo_sonda } = req.body;
         
-        if (!mac_address || !nombre) {
-            return res.status(400).json({ error: 'La direccion MAC y el nombre son obligatorios' });
+        if (!nombre) {
+            return res.status(400).json({ error: 'El nombre es obligatorio' });
         }
 
-        const macRegex = /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/; // 5 Digitos formados de 2 caracteres que pueden tener valores entre 0-9, A-F o a-f separados por dos puntos, y último digito aparte porque no tiene 2 puntos
-        if (!macRegex.test(mac_address)) {
-            return res.status(400).json({ error: 'Formato de MAC inválido. Usa AA:BB:CC:DD:EE:FF' });
-        }
+        // La MAC solo tiene sentido en equipos de medida en continuo
+        if (medida_continuo) {
+            if (!mac_address) {
+                return res.status(400).json({ error: 'La dirección MAC es obligatoria en equipos de medida en continuo' });
+            }
 
-        const existe = await Dispositivo.findOne({where: {mac_address}});
+            const macRegex = /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/;
+            if (!macRegex.test(mac_address)) {
+                return res.status(400).json({ error: 'Formato de MAC inválido. Usa AA:BB:CC:DD:EE:FF' });
+            }
 
-        if(existe){
-            return res.status(409).json({error: `La MAC '${mac_address}' ya existe`});
+            const existe = await Dispositivo.findOne({ where: { mac_address } });
+            if (existe) {
+                return res.status(409).json({ error: `La MAC '${mac_address}' ya existe` });
+            }
         }
 
         let instalacion = null;
@@ -115,7 +145,7 @@ async function crearDispositivo(req, res) {
             }
         }
 
-        if (req.user.role === 'RESPONSABLE') {
+        if (req.user.role !== 'ADMIN') {
             if (!instalacion) {
                 return res.status(400).json({ error: 'Debes especificar una instalación' });
             }
@@ -125,7 +155,7 @@ async function crearDispositivo(req, res) {
         }
 
         const dispositivo = await Dispositivo.create({
-            mac_address, 
+            mac_address: medida_continuo ? mac_address : null, 
             nombre, 
             descripcion, 
             instalacion_id: instalacion_id || null, 
@@ -133,10 +163,10 @@ async function crearDispositivo(req, res) {
             fw_version, 
             fecha_instalacion : fecha_instalacion || null , 
             notas, 
-            latitud: latitud ? parseFloat(latitud) : null, 
-            longitud: longitud ? parseFloat(longitud) : null, 
-            altura: altura ? parseFloat(altura) : null, 
-            nivel_bateria: nivel_bateria ? parseInt(nivel_bateria) : null, 
+            latitud: aNumero(latitud, null),
+            longitud: aNumero(longitud, null),
+            altura: aNumero(altura, null),
+            nivel_bateria: aNumero(nivel_bateria, null),
             titular_id: titular_id || null, ip_registro: ip_registro || null, 
             fecha_caducidad_ip: fecha_caducidad_ip || null,
             marca_comercial: marca_comercial || null,
@@ -151,7 +181,7 @@ async function crearDispositivo(req, res) {
             periodicidad_verificacion: periodicidad_verificacion || null,
             medida_continuo: medida_continuo === true ? true : false,
             unidades_medida: unidades_medida || 'µSv/h',
-            factor_correccion: factor_correccion ? parseFloat(factor_correccion) : 1.0,
+            factor_correccion: aNumero(factor_correccion, 1.0),            
             zona_radiologica: zona_radiologica || null,
             modelo_sonda: modelo_sonda || null
         });
@@ -210,10 +240,10 @@ async function actualizarDispositivo(req,res){
             activo: activo ?? dispositivo.activo,
             notas: notas ?? dispositivo.notas,
             fecha_instalacion: fecha_instalacion ?? dispositivo.fecha_instalacion,
-            latitud: latitud !== undefined ? parseFloat(latitud) : dispositivo.latitud,
-            longitud: longitud !== undefined ? parseFloat(longitud) : dispositivo.longitud,
-            altura: altura !== undefined ? parseFloat(altura) : dispositivo.altura,
-            nivel_bateria: nivel_bateria !== undefined ? parseInt(nivel_bateria) : dispositivo.nivel_bateria,
+            latitud: aNumero(latitud, dispositivo.latitud),
+            longitud: aNumero(longitud, dispositivo.longitud),
+            altura: aNumero(altura, dispositivo.altura),
+            nivel_bateria: aNumero(nivel_bateria, dispositivo.nivel_bateria),
             titular_id: titular_id ?? dispositivo.titular_id,
             ip_registro: ip_registro ?? dispositivo.ip_registro,
             fecha_caducidad_ip: fecha_caducidad_ip ?? dispositivo.fecha_caducidad_ip,
@@ -229,7 +259,7 @@ async function actualizarDispositivo(req,res){
             periodicidad_verificacion: periodicidad_verificacion ?? dispositivo.periodicidad_verificacion,
             medida_continuo: medida_continuo ?? dispositivo.medida_continuo,
             unidades_medida: unidades_medida ?? dispositivo.unidades_medida,
-            factor_correccion: factor_correccion !== undefined ? parseFloat(factor_correccion) : dispositivo.factor_correccion,
+            factor_correccion: aNumero(factor_correccion, dispositivo.factor_correccion),            
             zona_radiologica: zona_radiologica ?? dispositivo.zona_radiologica,
             modelo_sonda: modelo_sonda ?? dispositivo.modelo_sonda,
             mac_address: mac_address && !dispositivo.mac_address ? mac_address : dispositivo.mac_address,       

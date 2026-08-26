@@ -8,6 +8,9 @@ async function tieneAcceso(idUsuario, rol, dispositivo){
     if(rol === 'ADMIN'){
         return true;
     }
+    if(dispositivo.titular_id === idUsuario){
+        return true;
+    }
 
     const instalacion = await Instalacion.findOne({
         where:{
@@ -52,6 +55,10 @@ async function obtenerLecturas(req,res){
             return res.status(403).json({error: 'No tiene acceso a este dispositivo'});
         }
 
+        if (!dispositivo.medida_continuo || !dispositivo.mac_address) {
+            return res.status(400).json({ error: 'Este dispositivo no es un equipo de medida en continuo y no registra lecturas' });
+        }
+
         const lecturas = await influxService.obtenerLecturas(dispositivo.mac_address, rango, variable);
 
         res.json({
@@ -89,6 +96,10 @@ async function obtenerUltimaLectura(req, res){
 
         if(!acceso){
             return res.status(403).json({error: 'No tiene acceso a este dispositivo'});
+        }
+
+        if (!dispositivo.medida_continuo || !dispositivo.mac_address) {
+            return res.status(400).json({ error: 'Este dispositivo no es un equipo de medida en continuo y no registra lecturas' });
         }
 
         const ultima = await influxService.obtenerUltimaLectura(dispositivo.mac_address);

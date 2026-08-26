@@ -1,8 +1,8 @@
 #include <WiFi.h>
+#include "secrets.h"
 
-// ⚠️ CAMBIAR ESTOS VALORES POR LOS TUYOS
-const char* ssid = "DIGIFIBRA-F09B";           // Nombre de tu WiFi
-const char* password = "R8#kNQA4hM";   // Contraseña de tu WiFi
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASS; 
 
 void setup() {
   Serial.begin(115200);

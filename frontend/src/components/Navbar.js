@@ -4,7 +4,9 @@ import { useState } from 'react';
 export default function Navbar({ usuario, tema, setTema, colores }){
     const router = useRouter();
     const rutaActual = router.pathname;
-    const rutasNav = ['dashboard', 'alertas', 'informes', 'mapa'];
+    const rutasNav = usuario?.role === 'TITULAR'
+        ? ['dashboard', 'mapa']
+        : ['dashboard', 'alertas', 'informes', 'mapa'];
     const [menuAbierto, setMenuAbierto] = useState(false);
     const [adminMenuAbierto, setAdminMenuAbierto] = useState(false);
 
@@ -61,7 +63,8 @@ export default function Navbar({ usuario, tema, setTema, colores }){
                         </button>
 
                         {adminMenuAbierto && (
-                            <div style={{position: 'absolute', top: '40px', left: 0, backgroundColor: colores.tarjeta, border: `1px solid ${colores.border}`, borderRadius: '10px', padding: '8px', minWidth: '180px', zIndex: 1001, boxShadow: '0 4px 12px rgba(0,0,0,0.3'}}>                                {rutasAdmin.map(function(item){
+                            <div style={{position: 'absolute', top: '40px', left: 0, backgroundColor: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: '10px', padding: '8px', minWidth: '180px', zIndex: 1001, boxShadow: '0 4px 12px rgba(0,0,0,0.3)'}}> 
+                                {rutasAdmin.map(function(item){
                                     const activa = rutaActual === '/' + item.ruta;
                                     return (
                                         <button key={item.ruta} onClick={function() {setAdminMenuAbierto(false); router.push('/' + item.ruta);}} style ={{width: '100%', padding: '8px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: activa ? '600' : '400', backgroundColor: activa ? colores.acentoBoton : 'transparent', color: activa ? 'white' : colores.texto, textAlign: 'left'}}>

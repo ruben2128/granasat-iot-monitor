@@ -92,7 +92,7 @@ describe('POST /api/dispositivos', () => {
     const res = await request(app)
       .post('/api/dispositivos')
       .set('Authorization', `Bearer ${token('ADMIN', ID_ADMIN)}`)
-      .send({ mac_address: MAC, nombre: 'Sensor B', instalacion_id: 'inst-001' });
+      .send({ mac_address: MAC, nombre: 'Sensor B', instalacion_id: 'inst-001', medida_continuo: true  });
 
     expect(res.status).toBe(201);
   });
@@ -101,7 +101,7 @@ describe('POST /api/dispositivos', () => {
     const res = await request(app)
       .post('/api/dispositivos')
       .set('Authorization', `Bearer ${token('ADMIN', ID_ADMIN)}`)
-      .send({ mac_address: 'mac-invalida', nombre: 'Sensor' });
+      .send({ mac_address: 'mac-invalida', nombre: 'Sensor', medida_continuo: true });
     expect(res.status).toBe(400);
   });
 
@@ -110,8 +110,21 @@ describe('POST /api/dispositivos', () => {
     const res = await request(app)
       .post('/api/dispositivos')
       .set('Authorization', `Bearer ${token('ADMIN', ID_ADMIN)}`)
-      .send({ mac_address: MAC, nombre: 'Duplicado' });
+      .send({ mac_address: MAC, nombre: 'Duplicado', medida_continuo: true  });
     expect(res.status).toBe(409);
+  });
+
+  test('crea un dispositivo sin MAC si no es de medida en continuo', async () => {
+    Instalacion.findByPk.mockResolvedValue({ id: 'inst-001', responsable_id: ID_RESP });
+    Dispositivo.create.mockResolvedValue({ id: 'nuevo', nombre: 'Medidor portátil', mac_address: null });
+    Dispositivo.findByPk.mockResolvedValue({ id: 'nuevo', nombre: 'Medidor portátil', mac_address: null });
+
+    const res = await request(app)
+      .post('/api/dispositivos')
+      .set('Authorization', `Bearer ${token('ADMIN', ID_ADMIN)}`)
+      .send({ nombre: 'Medidor portátil', instalacion_id: 'inst-001', medida_continuo: false });
+
+    expect(res.status).toBe(201);
   });
 });
 

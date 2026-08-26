@@ -1,8 +1,9 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include "secrets.h"
 
-const char* ssid = "DIGIFIBRA-F09B";
-const char* password = "R8#kNQA4hM";
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASS;
 const char* mqtt_server = "192.168.1.249"; //Local
 //const char* mqtt_server = "mqtt.granasat.space";
 

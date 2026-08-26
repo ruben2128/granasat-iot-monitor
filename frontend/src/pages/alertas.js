@@ -100,7 +100,7 @@ export default function Alertas(){
                     mensaje_personalizado: alertaMensaje || null,
                 }, {headers: {Authorization: `Bearer ${token}`}});
                 
-                setExito('Alerta creada correctamente');
+                setExito('Alerta actualizada correctamente');
             } else {
                  await api.post('/alertas-config', {
                     nombre: alertaNombre,
@@ -243,12 +243,14 @@ export default function Alertas(){
 
                     {/* Boton nueva alerta */}
                     <div style={{display:'flex', justifyContent: 'flex-end', marginBottom: '16px'}}>
-                        <span onClick={function () { setMostrarFormulario(!mostrarFormulario); setEditandoId(null); setError(''); setExito('');}} style={{color: colores.acento, fontSize: '13px', cursor: 'pointer'}}>
-                            {mostrarFormulario ? 'Cancelar' : 'Crear alerta'}
-                        </span>
+                        {usuario.role !== 'TITULAR' && (
+                            <span onClick={function() { setMostrarFormulario(!mostrarFormulario); }} style={{ color: colores.acento, fontSize: '13px', cursor: 'pointer' }}>
+                                {mostrarFormulario ? 'Cancelar' : 'Crear alerta'}
+                            </span>
+                        )}
                     </div>
 
-                    {mostrarFormulario && (
+                    {mostrarFormulario && usuario.role !== 'TITULAR' && (
                         <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, maxWidth: '600px', marginBottom: '16px'}}>
                             <h2 style={{ color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 20px 0'}}>
                                {editandoId ? 'Editar alerta' : 'Nueva alerta'} 
@@ -265,7 +267,8 @@ export default function Alertas(){
                                         <label htmlFor="alerta_instalacion" style={estiloLabel}>
                                             INSTALACIÓN
                                         </label>
-                                        <select id="alerta_instalacion" value={alertaInstalacionId} onChange={function(e){ setAlertaInstalacionId(e.target.value); setAlertaDispositivoId(''); }} required style={estiloInput}>                                            <option value="">
+                                        <select id="alerta_instalacion" value={alertaInstalacionId} onChange={function(e){ setAlertaInstalacionId(e.target.value); setAlertaDispositivoId(''); }} required style={estiloInput}>
+                                            <option value="">
                                                 Seleccionar instalación
                                             </option>
                                             {instalaciones.map(function(i){
@@ -279,9 +282,9 @@ export default function Alertas(){
                                         <label htmlFor="alerta_dispositivo" style={estiloLabel}>
                                             DISPOSITIVO
                                         </label>
-                                        <select id="alerta_dispositivo" value={alertaDispositivoId} onChange={function(e){ setAlertaDispositivoId(e.target.value); }} disabled={!alertaInstalacionId} style={estiloInput}>
+                                        <select id="alerta_dispositivo" value={alertaDispositivoId} onChange={function(e){ setAlertaDispositivoId(e.target.value); }} disabled={!alertaInstalacionId} required style={estiloInput}>
                                             <option value="">
-                                                Toda la instalación
+                                                Seleccionar dispositivo
                                             </option>
                                             {dispositivosFiltrados.map(function(d){
                                                 return <option key={d.id} value={d.id}>
@@ -358,7 +361,7 @@ export default function Alertas(){
                                 Nombre
                             </p>
                             <p style={estiloTitulosTabla}>
-                                Instalación
+                                Instalación/Dispositivo
                             </p>
                             <p style={estiloTitulosTabla}>
                                 Tipo
@@ -404,15 +407,19 @@ export default function Alertas(){
                                         <span style={{backgroundColor: alerta.activa ? '#1a3a2a' : colores.fondo, color: alerta.activa ? '#4ade80' : textoSecundarioAccesible, fontSize: '12px', fontWeight: '600', padding: '4px 12px', borderRadius: '20px', display: 'inline-block'}}>
                                             {alerta.activa ? 'Activa' : 'Inactiva'}
                                         </span>
-                                        <button onClick={function(){handleCambiarEstadoAlerta(alerta.id, alerta.activa)}} style={{background: 'none', border: `1px solid ${alerta.activa ? '#f87171' : '#4ade80'}`, color: alerta.activa ? '#f87171' : '#4ade80', borderRadius: '6px', padding: '3px 10px', fontSize: '12px', cursor: 'pointer'}}>
-                                            {alerta.activa ? 'Desactivar' : 'Activar'}
-                                        </button>
-                                        <button onClick={function() {handleEditar(alerta); }} style={{background: 'none', border: `1px solid ${colores.borde}`, color: colores.texto, borderRadius: '6px', padding: '3px 10px', fontSize: '12px', cursor: 'pointer'}}>
-                                            Editar
-                                        </button>
-                                        <button type="button" onClick={function(){handleEliminarAlerta(alerta.id)}} style={{background: 'none', border: '1px solid #f87171', color: '#f87171', borderRadius: '6px', padding: '3px 10px', fontSize: '12px', cursor: 'pointer'}}>
-                                            Eliminar
-                                        </button>
+                                        {usuario.role !== 'TITULAR' && (
+                                            <>
+                                                <button onClick={function(){handleCambiarEstadoAlerta(alerta.id, alerta.activa)}} style={{background: 'none', border: `1px solid ${alerta.activa ? '#f87171' : '#4ade80'}`, color: alerta.activa ? '#f87171' : '#4ade80', borderRadius: '6px', padding: '3px 10px', fontSize: '12px', cursor: 'pointer'}}>
+                                                    {alerta.activa ? 'Desactivar' : 'Activar'}
+                                                </button>
+                                                <button onClick={function() {handleEditar(alerta); }} style={{background: 'none', border: `1px solid ${colores.borde}`, color: colores.texto, borderRadius: '6px', padding: '3px 10px', fontSize: '12px', cursor: 'pointer'}}>
+                                                    Editar
+                                                </button>
+                                                <button type="button" onClick={function(){handleEliminarAlerta(alerta.id)}} style={{background: 'none', border: '1px solid #f87171', color: '#f87171', borderRadius: '6px', padding: '3px 10px', fontSize: '12px', cursor: 'pointer'}}>
+                                                    Eliminar
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             )

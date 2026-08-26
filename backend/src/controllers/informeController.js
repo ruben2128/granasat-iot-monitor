@@ -83,7 +83,7 @@ async function descargar(req, res){
         }
 
         //El responsable solo puede descargar los informes de su instalacion
-        if(req.user.role === 'RESPONSABLE'){
+        if(req.user.role !== 'ADMIN'){
             if(!informe.instalacion || informe.instalacion.responsable_id !== req.user.id) {
                 return res.status(403).json({error: 'No tienes acceso a este informe'});
             }

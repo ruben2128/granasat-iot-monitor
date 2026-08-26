@@ -4,6 +4,11 @@ const Instalacion = require('../models/Instalacion');
 async function obtenerLicencias(req, res) {
     try {
         const { usuario_id } = req.params;
+
+        if (req.user.role !== 'ADMIN' && usuario_id !== req.user.id) {
+            return res.status(403).json({ error: 'No tienes acceso a las licencias de otro usuario' });
+        }
+        
         const licencias = await Licencia.findAll({
             where: { usuario_id },
             include: [{

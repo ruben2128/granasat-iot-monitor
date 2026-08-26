@@ -18,7 +18,7 @@ export default function Dashboard() {
     const[ubicacion, setUbicacionInstalacion] = useState('');
     const[usuarios, setUsuarios] = useState([]);
     const[responsableId, setResponsableId] = useState('');
-    const[alertas, setAlertas] = useState('');
+    const[alertas, setAlertas] = useState([]);
     const[mostrarFormulario, setMostrarFormulario] = useState(false);
     const[error, setError] = useState('');
     const[exito, setExito] = useState('');
@@ -76,8 +76,6 @@ export default function Dashboard() {
 
             const usuarioGuardado = JSON.parse(localStorage.getItem('usuario'));
             setUsuario((usuarioGuardado));
-            const respuestaAlertas = await api.get('/alertas-config', { headers: { Authorization: `Bearer ${token}` } });
-            setAlertas(respuestaAlertas.data.alertas);
             
             const respuesta = await api.get('/instalaciones', {headers: {Authorization: `Bearer ${token}`}});
             const instalaciones = respuesta.data.instalaciones;
@@ -104,6 +102,9 @@ export default function Dashboard() {
             
             setInstalaciones(instalaciones);
             setDispositivos(dispositivos);
+
+            const respuestaAlertas = await api.get('/alertas-config', { headers: { Authorization: `Bearer ${token}` } });
+            setAlertas(respuestaAlertas.data.alertas);
 
         }
         cargarDatos();
@@ -139,50 +140,99 @@ export default function Dashboard() {
                     )}
 
                     {/* Tarjetas resumen de alertas e informes */}
-                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '40px'}}>
-                        <div style={{backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`}}>
-                            <p style={{color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0'}}>INSTALACIONES</p>
-                            <p style={{color: colores.texto, fontSize: '36px', fontWeight: '700', margin: '0 0 4px 0'}}>{instalaciones.length}</p>
-                            <p style={{color: colores.textoSecundario, fontSize: '13px',margin: 0}}>REGISTRADAS</p>
+                    {usuario.role === 'TITULAR' ? (
+                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '40px'}}>
+                            <div style={{backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`}}>
+                                <p style={{color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0'}}>DISPOSITIVOS</p>
+                                <p style={{color: colores.texto, fontSize: '36px', fontWeight: '700', margin: '0 0 4px 0'}}>{dispositivos.length}</p>
+                                <p style={{color: colores.textoSecundario, fontSize: '13px', margin: 0}}>A MI NOMBRE</p>
+                            </div>
+                            <div style={{backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`}}>
+                                <p style={{color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0'}}>ACTIVOS</p>
+                                <p style={{color: colores.texto, fontSize: '36px', fontWeight: '700', margin: '0 0 4px 0'}}>{dispositivos.filter(function(d){ return d.activo; }).length}</p>
+                                <p style={{color: colores.textoSecundario, fontSize: '13px', margin: 0}}>FUNCIONANDO</p>
+                            </div>
                         </div>
-                        <div style={{backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`}}>
-                            <p style={{color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0'}}>DISPOSITIVOS</p>
-                            <p style={{color: colores.texto, fontSize: '36px', fontWeight: '700', margin: '0 0 4px 0'}}>{dispositivos.length}</p>
-                            <p style={{color: colores.textoSecundario, fontSize: '13px',margin: 0}}>REGISTRADOS</p>
+                    ) : (
+                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '40px'}}>
+                            <div style={{backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`}}>
+                                <p style={{color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0'}}>INSTALACIONES</p>
+                                <p style={{color: colores.texto, fontSize: '36px', fontWeight: '700', margin: '0 0 4px 0'}}>{instalaciones.length}</p>
+                                <p style={{color: colores.textoSecundario, fontSize: '13px',margin: 0}}>REGISTRADAS</p>
+                            </div>
+                            <div style={{backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`}}>
+                                <p style={{color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0'}}>DISPOSITIVOS</p>
+                                <p style={{color: colores.texto, fontSize: '36px', fontWeight: '700', margin: '0 0 4px 0'}}>{dispositivos.length}</p>
+                                <p style={{color: colores.textoSecundario, fontSize: '13px',margin: 0}}>REGISTRADOS</p>
+                            </div>
+                            <div style={{backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`}}>
+                                <p style={{color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0'}}>ALERTAS </p>
+                                <p style={{color: colores.texto, fontSize: '36px', fontWeight: '700', margin: '0 0 4px 0'}}>{alertas.length}</p>
+                                <p style={{color: colores.textoSecundario, fontSize: '13px',margin: 0}}>CONFIGURADAS</p>
+                            </div>
                         </div>
-                        <div style={{backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`}}>
-                            <p style={{color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0'}}>ALERTAS </p>
-                            <p style={{color: colores.texto, fontSize: '36px', fontWeight: '700', margin: '0 0 4px 0'}}>{alertas.length}</p>
-                            <p style={{color: colores.textoSecundario, fontSize: '13px',margin: 0}}>CONFIGURADAS</p>
-                        </div>
-                    </div>
+                    )}
 
                     {/* Lista de instalaciones*/}
                     <div style={{ marginBottom: '24px'}}>
                         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
-                            <h2 style={{color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: 0, borderLeft: `3px solid ${colores.acento} `, paddingLeft: '1px'}}>
-                                INSTALACIONES
+                            <h2 style={{color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: 0, paddingLeft: '1px'}}>
+                                {usuario.role === 'TITULAR' ? 'MIS DISPOSITIVOS' : 'INSTALACIONES'}
                             </h2>
                             {usuario.role === 'ADMIN' && (
                                 <span onClick={function() {setMostrarFormulario(!mostrarFormulario); }} style={{color: colores.acento, fontSize: '13px', cursor: 'pointer'}}>{mostrarFormulario ? 'x Cancelar' : '+ Nueva Instalación'}</span>
                             )}
                         </div>
+
+                        {usuario?.role === 'TITULAR' ? (
+                            <div>
+
+                                {dispositivos.length === 0 ? (
+                                    <p style={{ color: colores.textoSecundario, fontSize: '14px' }}>
+                                        No tienes ningún dispositivo asignado.
+                                    </p>
+                                ) : (
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+                                        {dispositivos.map(function (d) {
+                                            return (
+                                                <div
+                                                    key={d.id}
+                                                    onClick={function () { router.push(`/dispositivos/${d.id}`); }}
+                                                    style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '20px', border: `1px solid ${colores.borde}`, cursor: 'pointer' }}
+                                                >
+                                                    <p style={{ color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 6px 0' }}>
+                                                        {d.nombre}
+                                                    </p>
+                                                    <p style={{ color: colores.textoSecundario, fontSize: '12px', margin: '0 0 10px 0' }}>
+                                                        {d.instalacion ? d.instalacion.nombre : 'Sin instalación asignada'}
+                                                    </p>
+                                                    <span style={{ backgroundColor: d.activo ? '#1a3a2a' : '#2a2a2a', color: d.activo ? '#4ade80' : '#a0a0a0', fontSize: '11px', fontWeight: '600', padding: '3px 10px', borderRadius: '20px' }}>
+                                                        {d.activo ? 'Activo' : 'Inactivo'}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
+                        ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px'}}>
                             {instalaciones.map(function(instalacion){
                                 return (
                                     <div key={instalacion.id} onClick={function() {router.push(`/instalaciones/${instalacion.id}`)}}
                                         style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '20px', border: `1px solid ${colores.borde}`, cursor: 'pointer'}}
                                     >
-                                        <p style={{ color: colores.textoSecundario, fontSize: '11px', margin: '0 0 8px 0'}}>{instalacion.codigo_referencia}</p>
+                                        <p style={{ color: colores.textoSecundario, fontSize: '11px', margin: '0 0 8px 0', minHeight: '14px' }}>{instalacion.codigo_referencia || '\u00A0'}</p>
                                         <p style={{ color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 4px 0'}}>{instalacion.nombre}</p>
                                         <p style={{ color: colores.textoSecundario, fontSize: '13px', margin: 0}}>{instalacion.ubicacion}</p>
                                     </div>
                                 )
                             })}
                         </div>
+                        )}
                     </div>
-                    
-
+ 
                     {/*Formulario solo para ADMIN*/}
                     {exito && 
                         <p style={{color: '#4ade80', fontSize: '16px', margin: '0 0 16px 0'}}>
@@ -190,7 +240,7 @@ export default function Dashboard() {
                         </p>
                     }
 
-                    { mostrarFormulario && usuario.role === 'ADMIN' && (
+                    {mostrarFormulario && usuario.role === 'ADMIN' && (
                         <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginTop: '24px'}}>
                             <h2 style={{color: colores.texto, fontSize: '16px', fontWeight: '600', margin: '0 0 20px 0'}}> 
                                 Nueva instalación
@@ -201,13 +251,13 @@ export default function Dashboard() {
                                         <label htmlFor="nombre" style={{color: colores.texto, fontSize: '11px', fontWeight:'600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
                                             Nombre
                                         </label>
-                                        <input id="nombre" type="text" value={nombre} onChange={function(e) {setNombreInstalacion(e.target.value)}} style={{width:'100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}} />
+                                        <input id="nombre" required type="text" value={nombre} onChange={function(e) {setNombreInstalacion(e.target.value)}} style={{width:'100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}} />
                                     </div>
                                 <div>
                                     <label htmlFor="categoria" style={{color: colores.texto, fontSize: '11px', fontWeight:'600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
                                         Categoría
                                     </label>
-                                    <input id="categoria" type="text" value={categoria} onChange={function(e) {setCategoriaInstalacion(e.target.value)}} style={{width:'100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}} />
+                                    <input id="categoria" required type="text" value={categoria} onChange={function(e) {setCategoriaInstalacion(e.target.value)}} style={{width:'100%', backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '10px 12px', color: colores.texto, fontSize: '14px', boxSizing: 'border-box'}} />
                                 </div>
                                 <div>
                                     <label htmlFor="descripcion" style={{color: colores.texto, fontSize: '11px', fontWeight:'600', letterSpacing: '1px', display: 'block', marginBottom: '6px'}}>
@@ -287,7 +337,7 @@ export default function Dashboard() {
                             <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px'}}>
                                 {espacioDocker.map(function (vol,index){
                                     return(
-                                        <div key={index} style={{backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`}}>
+                                        <div key={index} style={{backgroundColor: colores.fondo, border: `1px solid ${colores.borde}`, borderRadius: '8px', padding: '16px'}}>
                                             <p style={{ color: colores.textoSecundario, fontSize: '11px', fontWeight: '600', letterSpacing: '1px', margin: '0 0 8px 0'}}>
                                                 {vol.nombre.toUpperCase()}
                                             </p>

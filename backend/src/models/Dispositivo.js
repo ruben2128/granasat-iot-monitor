@@ -12,7 +12,7 @@ const Dispositivo = sequelize.define('Dispositivo', {
     mac_address: {
         type: DataTypes.STRING(17),
         unique: true,
-        allowNull: false
+        allowNull: true
     }, 
     nombre:{
         type: DataTypes.STRING(100),

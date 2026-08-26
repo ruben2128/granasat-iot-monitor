@@ -273,9 +273,11 @@ export default function Perfil() {
                             <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', margin: 0, borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px' }}>
                                 DATOS DEL USUARIO
                             </h2>
-                            <button onClick={function() { setModoEdicion(!modoEdicion); }} style={{ background: 'none', border: `1px solid ${colores.borde}`, color: colores.texto, borderRadius: '8px', padding: '4px 14px', fontSize: '12px', cursor: 'pointer' }}>
-                                {modoEdicion ? 'Cancelar' : 'Editar'}
-                            </button>
+                            {(usuario.role === 'ADMIN' || !idQuery || idQuery === usuario.id) && (
+                                <button onClick={function() { setModoEdicion(!modoEdicion); }} style={{ background: 'none', border: `1px solid ${colores.borde}`, color: colores.texto, borderRadius: '8px', padding: '4px 14px', fontSize: '12px', cursor: 'pointer' }}>
+                                    {modoEdicion ? 'Cancelar' : 'Editar'}
+                                </button>
+                            )}
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
@@ -359,12 +361,14 @@ export default function Perfil() {
                             <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', margin: 0, borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px' }}>
                                 LICENCIAS ({licencias.length})
                             </h2>
-                            <span onClick={function() { setMostrarFormulario(!mostrarFormulario); }} style={{ color: colores.acento, fontSize: '13px', cursor: 'pointer' }}>
-                                {mostrarFormulario ? 'Cancelar' : '+ Nueva licencia'}
-                            </span>
+                            {usuario.role === 'ADMIN' && (
+                                <span onClick={function() { setMostrarFormulario(!mostrarFormulario); }} style={{ color: colores.acento, fontSize: '13px', cursor: 'pointer' }}>
+                                    {mostrarFormulario ? 'Cancelar' : '+ Nueva licencia'}
+                                </span>
+                            )}
                         </div>
 
-                        {mostrarFormulario && (
+                        {mostrarFormulario && usuario.role === 'ADMIN' && (
                             <form onSubmit={handleCrearLicencia} style={{ marginBottom: '24px', padding: '20px', border: `1px solid ${colores.borde}`, borderRadius: '8px' }}>
                                 {error && <p style={{ color: '#f87171', fontSize: '13px', marginBottom: '16px' }}>{error}</p>}
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
@@ -442,9 +446,11 @@ export default function Perfil() {
                                                     </span>
                                                 )}
                                             </div>
-                                            <button onClick={function() { handleEliminarLicencia(licencia.id); }} style={{ background: 'none', border: '1px solid #f87171', color: '#f87171', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', cursor: 'pointer' }}>
-                                                Eliminar
-                                            </button>
+                                            {usuario.role === 'ADMIN' && (
+                                                <button onClick={function() { handleEliminarLicencia(licencia.id); }} style={{ background: 'none', border: '1px solid #f87171', color: '#f87171', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', cursor: 'pointer' }}>
+                                                    Eliminar
+                                                </button>
+                                            )}
                                         </div>
                                     );
                                 })}

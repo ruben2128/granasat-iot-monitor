@@ -22,3 +22,5 @@ backend/informes/
 backend/uploads/
 
 tareasPendientes.md
+
+arduino/**/secrets.h

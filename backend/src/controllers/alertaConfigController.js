@@ -72,7 +72,7 @@ async function obtenerAlertaPorId(req, res) {
             return res.status(404).json({error: 'Alerta no encontrada'});
         }
 
-        if(req.user.role === 'RESPONSABLE') {
+        if(req.user.role !== 'ADMIN') {
             if(!alerta.instalacion || alerta.instalacion.responsable_id !== req.user.id){
                 return res.status(403).json({error: 'No tienes acceso a esta alerta'});
             }   
@@ -107,6 +107,10 @@ async function crearAlerta(req, res) {
 
         if(!instalacion){
             return res.status(404).json( { error: 'La instalacion no existe'});
+        }
+
+        if (req.user.role !== 'ADMIN' && instalacion.responsable_id !== req.user.id) {
+            return res.status(403).json({ error: 'No puedes configurar alertas en instalaciones que no son tuyas' });
         }
 
         const dispositivo = await Dispositivo.findByPk(dispositivo_id);
@@ -158,10 +162,20 @@ async function actualizarAlerta(req,res){
         const { id } = req.params;
         const { nombre, descripcion, campo, operador, umbral, emails_destino, mensaje_personalizado, activa} = req.body;
 
-        const alerta = await AlertaConfig.findByPk(id);
-        
+        const alerta = await AlertaConfig.findByPk(id, {
+            include: [{
+                model: Instalacion,
+                as: 'instalacion',
+                attributes: ['id', 'nombre', 'responsable_id']
+            }]
+        });
+
         if(!alerta){
             return res.status(404).json({ error: 'Alerta no encontrada'});
+        }
+
+        if (req.user.role !== 'ADMIN' && (!alerta.instalacion || alerta.instalacion.responsable_id !== req.user.id)) {
+            return res.status(403).json({ error: 'No puedes modificar alertas de instalaciones que no son tuyas' });
         }
 
         if(operador){
@@ -188,6 +202,10 @@ async function actualizarAlerta(req,res){
                 model: Instalacion, 
                 as:'instalacion', 
                 attributes: ['id', 'nombre']
+            }, {
+                model: Dispositivo,
+                as: 'dispositivo',
+                attributes: ['id', 'nombre', 'mac_address']
             }]
         });
 
@@ -210,10 +228,20 @@ async function eliminarAlerta(req, res){
     try {
         const { id } = req.params;
 
-        const alerta = await AlertaConfig.findByPk(id);
+        const alerta = await AlertaConfig.findByPk(id, {
+            include: [{
+                model: Instalacion,
+                as: 'instalacion',
+                attributes: ['id', 'nombre', 'responsable_id']
+            }]
+        });
 
         if(!alerta){
             return res.status(404).json( { error: 'Alerta no encontrada'});
+        }
+
+        if (req.user.role !== 'ADMIN' && (!alerta.instalacion || alerta.instalacion.responsable_id !== req.user.id)) {
+            return res.status(403).json({ error: 'No puedes eliminar alertas de instalaciones que no son tuyas' });
         }
 
         await alerta.destroy();

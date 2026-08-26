@@ -64,7 +64,6 @@ async function yaAlertadoRecientemente(alertaConfigId, dispositivoId){
         where: {
             alerta_config_id: alertaConfigId,
             dispositivo_id: dispositivoId,
-            email_enviado: true,
             fecha_disparo: { [Op.gte]: limite} //Operador de Sequelize similar a >= en SQL
         }
     });
@@ -87,7 +86,6 @@ async function yaAvisadoCalibracion(dispositivoId) {
         where: {
             dispositivo_id: dispositivoId,
             tipo: 'CALIBRACION',
-            email_enviado: true,
             fecha_disparo: { [Op.gte]: limite }
         }
     });
@@ -133,11 +131,10 @@ async function comprobarCalibraciones() {
             );
 
             const emailsDestino = [];
+
             if (dispositivo.instalacion?.responsable?.email) {
                 emailsDestino.push(dispositivo.instalacion.responsable.email);
             }
-
-            if (emailsDestino.length === 0) continue;
 
             const mensaje =
                 `AVISO DE CALIBRACIÓN PRÓXIMA A CADUCAR\n\n` +
@@ -151,17 +148,21 @@ async function comprobarCalibraciones() {
             let emailEnviado = false;
             let emailError = null;
 
-            try {
-                await emailService.enviarEmailAlerta(
-                    emailsDestino,
-                    `[IOT AVISO] Calibración próxima a caducar: ${dispositivo.nombre}`,
-                    mensaje
-                );
-                emailEnviado = true;
-                console.log(`Aviso de calibración enviado para: ${dispositivo.nombre}`);
-            } catch (err) {
-                emailError = err.message;
-                console.error(`Error enviando aviso de calibración para ${dispositivo.nombre}: ${err.message}`);
+            if (emailsDestino.length === 0) {
+                emailError = 'La instalación no tiene responsable asignado';
+            } else {
+                try {
+                    await emailService.enviarEmailAlerta(
+                        emailsDestino,
+                        `[IOT AVISO] Calibración próxima a caducar: ${dispositivo.nombre}`,
+                        mensaje
+                    );
+                    emailEnviado = true;
+                    console.log(`Aviso de calibración enviado para: ${dispositivo.nombre}`);
+                } catch (err) {
+                    emailError = err.message;
+                    console.error(`Error enviando aviso de calibración para ${dispositivo.nombre}: ${err.message}`);
+                }
             }
 
             // Registrar el aviso en el historial aunque el email falle
@@ -240,8 +241,6 @@ async function comprobarConexiones() {
                 emailsDestino.push(dispositivo.instalacion.responsable.email);
             }
 
-            if (emailsDestino.length === 0) continue;
-
             const tipo = ahoraConectado ? 'RECONEXION' : 'DESCONEXION';
             const asunto = ahoraConectado
                 ? `[IOT AVISO] Dispositivo reconectado: ${dispositivo.nombre}`
@@ -260,13 +259,17 @@ async function comprobarConexiones() {
             let emailEnviado = false;
             let emailError = null;
 
-            try {
-                await emailService.enviarEmailAlerta(emailsDestino, asunto, mensaje);
-                emailEnviado = true;
-                console.log(`Aviso de ${tipo} enviado para: ${dispositivo.nombre}`);
-            } catch (err) {
-                emailError = err.message;
-                console.error(`Error enviando aviso de ${tipo} para ${dispositivo.nombre}: ${err.message}`);
+            if (emailsDestino.length === 0) {
+                emailError = 'La instalación no tiene responsable asignado';
+            } else {
+                try {
+                    await emailService.enviarEmailAlerta(emailsDestino, asunto, mensaje);
+                    emailEnviado = true;
+                    console.log(`Aviso de ${tipo} enviado para: ${dispositivo.nombre}`);
+                } catch (err) {
+                    emailError = err.message;
+                    console.error(`Error enviando aviso de ${tipo} para ${dispositivo.nombre}: ${err.message}`);
+                }
             }
 
             await AlertaHistorial.create({
@@ -311,7 +314,7 @@ function calcularZScore(valor, lecturas) {
 /**
  * Comprueba si las últimas lecturas de cada dispositivo de medida continua
  * contienen valores anómalos según el criterio Z-Score.
- * Usa las ultimas 30 lecturas como referencia.
+ * Usa las lecturas de los ultimos 30 minutos como referencia.
  * Cooldown de 30 minutos para no repetir el aviso constantemente.
  */
 async function comprobarZScore() {
@@ -336,7 +339,7 @@ async function comprobarZScore() {
             continue;
 
         try {
-            // Obtener las ultimas 30 lecturas de radiacion para calcular la referencia estadistica
+            // Obtener las lecturas de radiacion de los ultimos 30 minutos para calcular la referencia estadistica
             const lecturas = await influxService.obtenerLecturas(dispositivo.mac_address, '-30m', 'radiacion');
 
             if (lecturas.length < 10)
@@ -359,7 +362,6 @@ async function comprobarZScore() {
                 where: {
                     dispositivo_id: dispositivo.id,
                     tipo: 'ZSCORE',
-                    email_enviado: true,
                     fecha_disparo: { [Op.gte]: new Date(Date.now() - COOLDOWN_MINUTOS * 60 * 1000) }
                 }
             });
@@ -371,8 +373,6 @@ async function comprobarZScore() {
                 emailsDestino.push(dispositivo.instalacion.responsable.email);
             }
 
-            if (emailsDestino.length === 0) continue;
-
             const mensaje =
                 `AVISO DE VALOR ANÓMALO (Z-Score)\n\n` +
                 `Se ha detectado un valor estadísticamente anómalo en el dispositivo "${dispositivo.nombre}".\n\n` +
@@ -381,22 +381,26 @@ async function comprobarZScore() {
                 `Valor detectado: ${lecturaActual.valor.toFixed(2)} ${dispositivo.unidades_medida || 'µSv/h'}\n` +
                 `Z-Score: ${zScore.toFixed(2)} (umbral: ±3)\n` +
                 `Fecha: ${new Date(lecturaActual.time).toLocaleString('es-ES')}\n\n` +
-                `Un Z-Score de ${zScore.toFixed(2)} indica que el valor está a ${Math.abs(zScore).toFixed(1)} desviaciones estándar de la media de las últimas 30 lecturas.`;
+                `Un Z-Score de ${zScore.toFixed(2)} indica que el valor está a ${Math.abs(zScore).toFixed(1)} desviaciones estándar de la media de las lecturas de los últimos 30 minutos.`;
 
             let emailEnviado = false;
             let emailError = null;
 
-            try {
-                await emailService.enviarEmailAlerta(
-                    emailsDestino,
-                    `[IOT ANOMALÍA] Valor anómalo detectado: ${dispositivo.nombre}`,
-                    mensaje
-                );
-                emailEnviado = true;
-                console.log(`Aviso Z-Score enviado para: ${dispositivo.nombre} (Z=${zScore.toFixed(2)})`);
-            } catch (err) {
-                emailError = err.message;
-                console.error(`Error enviando aviso Z-Score para ${dispositivo.nombre}: ${err.message}`);
+            if (emailsDestino.length === 0) {
+                emailError = 'La instalación no tiene responsable asignado';
+            } else {
+                try {
+                    await emailService.enviarEmailAlerta(
+                        emailsDestino,
+                        `[IOT ANOMALÍA] Valor anómalo detectado: ${dispositivo.nombre}`,
+                        mensaje
+                    );
+                    emailEnviado = true;
+                    console.log(`Aviso Z-Score enviado para: ${dispositivo.nombre} (Z=${zScore.toFixed(2)})`);
+                } catch (err) {
+                    emailError = err.message;
+                    console.error(`Error enviando aviso Z-Score para ${dispositivo.nombre}: ${err.message}`);
+                }
             }
 
             await AlertaHistorial.create({
@@ -472,7 +476,6 @@ async function comprobarMediaConsecutiva() {
                 where: {
                     dispositivo_id: dispositivo.id,
                     tipo: 'MEDIA_CONSECUTIVA',
-                    email_enviado: true,
                     fecha_disparo: { [Op.gte]: new Date(Date.now() - COOLDOWN_MINUTOS * 60 * 1000) }
                 }
             });
@@ -483,8 +486,6 @@ async function comprobarMediaConsecutiva() {
             if (dispositivo.instalacion?.responsable?.email) {
                 emailsDestino.push(dispositivo.instalacion.responsable.email);
             }
-
-            if (emailsDestino.length === 0) continue;
 
             const valorMedio = media.toFixed(2);
             const valoresUltimas5 = ultimas5.map(function(l) { return l.valor.toFixed(2); }).join(', ');
@@ -501,17 +502,21 @@ async function comprobarMediaConsecutiva() {
             let emailEnviado = false;
             let emailError = null;
 
-            try {
-                await emailService.enviarEmailAlerta(
-                    emailsDestino,
-                    `[IOT AVISO] Superación del valor medio: ${dispositivo.nombre}`,
-                    mensaje
-                );
-                emailEnviado = true;
-                console.log(`Aviso de media consecutiva enviado para: ${dispositivo.nombre}`);
-            } catch (err) {
-                emailError = err.message;
-                console.error(`Error enviando aviso de media consecutiva para ${dispositivo.nombre}: ${err.message}`);
+            if (emailsDestino.length === 0) {
+                emailError = 'La instalación no tiene responsable asignado';
+            } else {
+                try {
+                    await emailService.enviarEmailAlerta(
+                        emailsDestino,
+                        `[IOT AVISO] Superación del valor medio: ${dispositivo.nombre}`,
+                        mensaje
+                    );
+                    emailEnviado = true;
+                    console.log(`Aviso de media consecutiva enviado para: ${dispositivo.nombre}`);
+                } catch (err) {
+                    emailError = err.message;
+                    console.error(`Error enviando aviso de media consecutiva para ${dispositivo.nombre}: ${err.message}`);
+                }
             }
 
             await AlertaHistorial.create({
@@ -554,6 +559,7 @@ async function comprobarInfluxDB(){
     });
 
     if(yaAvisado){
+        console.warn('[alertas] InfluxDB sigue sin responder — ciclo omitido');
         return false;
     }
 
@@ -600,7 +606,9 @@ async function comprobarInfluxDB(){
 }
 
 async function procesarAlertas(){
+    console.log('[sched] tick', new Date().toISOString());
     const influxOK = await comprobarInfluxDB();
+    console.log('[sched] influxOK =', influxOK);
 
     if(!influxOK){
         return;
@@ -616,7 +624,12 @@ async function procesarAlertas(){
         where: { activa : true },
         include: [{
             model: Instalacion,
-            as: 'instalacion'
+            as: 'instalacion',
+            include: [{
+                model: Usuario,
+                as: 'responsable',
+                attributes: ['email', 'nombre']
+            }]
         }, {
             model: Dispositivo,
             as: 'dispositivo'
@@ -656,22 +669,30 @@ async function procesarAlertas(){
                 continue;
             }
 
-            const mensaje = alerta.mensaje_personalizado ||
-                `ALERTA: ${alerta.nombre}\n` +
-                `Instalacion: ${alerta.instalacion.nombre}\n` +
+            const detalle =
+                `Instalacion: ${alerta.instalacion?.nombre || '-'}\n` + 
                 `Dispositivo: ${dispositivo.nombre} (Direccion MAC: ${dispositivo.mac_address})\n` +
                 `Campo: ${alerta.campo}\n` +
-                `Valor detectado: ${valor}\n` +
-                `Umbral configurado: ${alerta.operador} ${alerta.umbral}\n`+
-                `Fecha: ${new Date()}`;
+                `Valor detectado: ${valor} ${dispositivo.unidades_medida || ''}\n` +
+                `Umbral configurado: ${alerta.operador} ${alerta.umbral}\n` +
+                `Fecha: ${new Date().toLocaleString('es-ES')}`;
+
+            const mensaje = alerta.mensaje_personalizado
+                ? `${alerta.mensaje_personalizado}\n\n${detalle}`
+                : `ALERTA: ${alerta.nombre}\n${detalle}`;
 
             let emailEnviado = false;
             let emailError = null;
             let fechaEnvio = null;
 
+            const destinatarios = [...new Set([
+                ...(alerta.emails_destino || []),
+                alerta.instalacion?.responsable?.email
+            ].filter(Boolean))];
+
             try {
                 await emailService.enviarEmailAlerta(
-                    alerta.emails_destino,
+                    destinatarios,
                     `[IOT ALERTA] ${alerta.nombre}`,
                     mensaje
                 );
@@ -696,7 +717,7 @@ async function procesarAlertas(){
                 mensaje,
                 email_enviado: emailEnviado,
                 email_error: emailError,
-                destinatarios: alerta.emails_destino,
+                destinatarios: destinatarios,
                 fecha_disparo: new Date(),
                 fecha_email: fechaEnvio
             });
