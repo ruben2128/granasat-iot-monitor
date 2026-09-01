@@ -268,7 +268,7 @@ export default function Perfil() {
                     {/* Datos del usuario */}
                     <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginBottom: '24px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', margin: 0, borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px' }}>
+                            <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', margin: 0, paddingLeft: '8px' }}>
                                 DATOS DEL USUARIO
                             </h2>
                             {(usuario.role === 'ADMIN' || !idQuery || idQuery === usuario.id) && (
@@ -356,7 +356,7 @@ export default function Perfil() {
                     {/* Licencias */}
                     <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', margin: 0, borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px' }}>
+                            <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', margin: 0, paddingLeft: '8px' }}>
                                 LICENCIAS ({licencias.length})
                             </h2>
                             {usuario.role === 'ADMIN' && (

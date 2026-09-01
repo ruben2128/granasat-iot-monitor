@@ -5,45 +5,58 @@ import { coloresOscuro } from "../lib/temas";
 import api from "../lib/api";
 
 /*
-    Pantalla principal: Muestra la lista de instalaciones a las que el usuario tiene acceso
+    Pantalla principal. Su contenido depende del rol del usuario autenticado:
+
+      - ADMIN        ve todas las instalaciones del sistema.
+      - RESPONSABLE  ve unicamente las instalaciones de las que es responsable.
+      - TITULAR      no tiene instalaciones asignadas, sino dispositivos concretos
+                     a su nombre, de modo que se le muestra directamente la lista
+                     de esos dispositivos.
+
+    El filtrado real lo hace el backend en funcion del token; aqui solo se decide
+    que recurso consultar y como presentarlo.
  */
 export default function DashboardScreen({ navigation }){
-    const { usuario, logout} = useAuth();   //Usuario autenticado y la funcion para cerrar la sesión
-    const [ instalaciones, setInstalaciones] = useState([]);    //Lista de instalaciones cargadas desde la API
-    const [cargando, setCargando] = useState(true);     //Indicador de carga
-    const colores = coloresOscuro;  // Tema de colors, por ahora fijo en oscuro
+    const { usuario, logout } = useAuth();
+    const [instalaciones, setInstalaciones] = useState([]);
+    const [dispositivos, setDispositivos] = useState([]);
+    const [cargando, setCargando] = useState(true);
+    const colores = coloresOscuro;
 
-    //Al montar el componente, cargamos las instalaciones del usuario
-    useEffect( () => {cargarInstalaciones();}, []);
+    const esTitular = usuario?.role === 'TITULAR';
 
-    /*
-        Consulta al endpoint GET /instalaciones
-        Si el usuario tiene el rol de ADMIN, ve todas las instalaciones, si es RESPONSABLE solo ve sus asignadas
-     */
-    const cargarInstalaciones = async () => {
+    useEffect(() => { cargarDatos(); }, []);
+
+    const cargarDatos = async () => {
         try {
-            const res = await api.get('/instalaciones');
+            if(esTitular){
+                const res = await api.get('/dispositivos');
 
-            setInstalaciones(res.data.instalaciones);
+                setDispositivos(res.data.dispositivos);
+            } else {
+                const res = await api.get('/instalaciones');
+
+                setInstalaciones(res.data.instalaciones);
+            }
         } catch (err) {
-            Alert.alert('Error', 'No se pudieron cargar las instalaciones');
+            Alert.alert('Error', esTitular
+                ? 'No se pudieron cargar los dispositivos'
+                : 'No se pudieron cargar las instalaciones');
         } finally {
             setCargando(false);
         }
     };
-    /*
-        Cierra la sesión del usuario, eliminando el token y el usuario del AsyncStorage (similar a localStorage)
-    */
+
     const handleLogout = async () => {
         await logout();
-    }
+    };
 
     /*
-        Renderiza una tarjeta por cada instalación que devuelva el endpoint
+        Tarjeta de instalacion: al pulsarla se navega al listado de sus dispositivos.
     */
     const renderInstalacion = ({ item }) => (
         <TouchableOpacity style={[styles.tarjeta, {backgroundColor: colores.tarjeta, borderColor: colores.borde}]} onPress={ () => navigation.navigate('Instalacion', {instalacion: item})}>
-            
+
             {/* Fila superior: Nombre e indicador de estado activo o inactivo */}
             <View style={styles.tarjetaCabecera}>
                 <Text style = {[styles.tarjetaNombre, {color: colores.texto}]}>
@@ -57,9 +70,11 @@ export default function DashboardScreen({ navigation }){
             </View>
 
             {/* Código de la instalación */}
-            <Text style={[styles.tarjetaCodigo, {color: colores.acento}]}>
-                {item.codigo_referencia}
-            </Text>
+            {item.codigo_referencia && (
+                <Text style={[styles.tarjetaCodigo, {color: colores.acento}]}>
+                    {item.codigo_referencia}
+                </Text>
+            )}
 
             {/* Ubicación física (si existe) */}
             {item.ubicacion && (
@@ -69,6 +84,43 @@ export default function DashboardScreen({ navigation }){
             )}
         </TouchableOpacity>
     );
+
+    /*
+        Tarjeta de dispositivo, para el rol TITULAR: al pulsarla se navega
+        directamente al detalle del equipo, sin pasar por la instalacion.
+    */
+    const renderDispositivo = ({ item }) => (
+        <TouchableOpacity style={[styles.tarjeta, {backgroundColor: colores.tarjeta, borderColor: colores.borde}]} onPress={ () => navigation.navigate('Dispositivo', {dispositivo: item})}>
+
+            <View style={styles.tarjetaCabecera}>
+                <Text style={[styles.tarjetaNombre, {color: colores.texto}]}>
+                    {item.nombre}
+                </Text>
+                <View style={[styles.badge, {backgroundColor: item.activo ? '#22c55e22' : '#ef444422'}]}>
+                    <Text style={[styles.badgeTexto, {color: item.activo ? '#22c55e' : '#ef4444'}]}>
+                        {item.activo ? 'Activo' : 'Inactivo'}
+                    </Text>
+                </View>
+            </View>
+
+            {/* Instalación a la que pertenece el equipo */}
+            <Text style={[styles.tarjetaUbicacion, {color: colores.textoSecundario}]}>
+                {item.instalacion ? item.instalacion.nombre : 'Sin instalación asignada'}
+            </Text>
+
+            {/* La MAC solo existe en los equipos de medida en continuo */}
+            {item.medida_continuo && item.mac_address && (
+                <Text style={[styles.tarjetaCodigo, {color: colores.acento}]}>
+                    {item.mac_address}
+                </Text>
+            )}
+        </TouchableOpacity>
+    );
+
+    const datos = esTitular ? dispositivos : instalaciones;
+    const mensajeVacio = esTitular
+        ? 'No tienes ningún dispositivo asignado'
+        : 'No hay instalaciones disponibles';
 
     return (
         <View style={[styles.contenedor, {backgroundColor: colores.fondo}]}>
@@ -89,22 +141,32 @@ export default function DashboardScreen({ navigation }){
                 </TouchableOpacity>
             </View>
 
+            {/* Rótulo de la sección, según lo que se esté listando */}
+            {!cargando && datos.length > 0 && (
+                <Text style={[styles.seccionTitulo, {color: colores.acento}]}>
+                    {esTitular ? 'MIS DISPOSITIVOS' : 'INSTALACIONES'}
+                </Text>
+            )}
+
             {/* Contenido principal */}
             {cargando ? (
-                //Mientras carga, se muestra un spinner
                 <View style={styles.centrado}>
                     <ActivityIndicator size="large" color={colores.acento} />
                 </View>
-            ) : instalaciones.length === 0 ? (
-                //Si no hay instalaciones, se muestra el mensaje por pantalla
+            ) : datos.length === 0 ? (
                 <View style={styles.centrado}>
                     <Text style={[styles.vacio, { color: colores.textoSecundario}]}>
-                        No hay instalaciones disponibles
+                        {mensajeVacio}
                     </Text>
                 </View>
             ) : (
-                // Lista de instalaciones
-                <FlatList data = {instalaciones} keyExtractor={item => item.id} renderItem={renderInstalacion} contentContainerStyle={styles.lista} showsVerticalScrollIndicator={false}/>
+                <FlatList
+                    data={datos}
+                    keyExtractor={item => item.id}
+                    renderItem={esTitular ? renderDispositivo : renderInstalacion}
+                    contentContainerStyle={styles.lista}
+                    showsVerticalScrollIndicator={false}
+                />
             )}
         </View>
     );
@@ -133,6 +195,13 @@ const styles = StyleSheet.create({
     cerrarSesion: {
         fontSize: 14,
         fontWeight: '600',
+    },
+    seccionTitulo: {
+        fontSize: 12,
+        fontWeight: '700',
+        letterSpacing: 1,
+        paddingHorizontal: 16,
+        paddingTop: 16,
     },
     lista: {
         padding: 16,

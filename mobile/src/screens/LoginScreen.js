@@ -19,10 +19,8 @@ export default function LoginScreen(){
         setCargando(true);
         
         try{
-            const usuario = await login(username, password);
-            console.log('Login OK:', usuario)
+            await login(username, password);
         } catch (err) {
-            console.log('Error login: ', err.message);
             Alert.alert('Error', 'Usuario o contraseña incorrectos');
         } finally {
             setCargando(false);

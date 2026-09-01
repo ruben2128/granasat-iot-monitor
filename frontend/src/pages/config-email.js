@@ -240,7 +240,7 @@ export default function ConfigEmail() {
                     {/* Lista de configuraciones */}
                     {configs.length > 0 && (
                         <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginBottom: '24px'}}>
-                            <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 16px 0', borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px'}}>
+                            <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 16px 0', paddingLeft: '8px'}}>
                                 CONFIGURACIONES GUARDADAS
                             </h2>
                             {configs.map(function(config) {
@@ -277,7 +277,7 @@ export default function ConfigEmail() {
 
                     {/* Test de conexión SMTP */}
                     <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginBottom: '24px', maxWidth: '600px'}}>
-                        <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 16px 0', borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px'}}>
+                        <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 16px 0', paddingLeft: '8px'}}>
                             TEST DE CONEXIÓN SMTP
                         </h2>
                         <form onSubmit={handleTestEmail} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end'}}>
@@ -308,7 +308,7 @@ export default function ConfigEmail() {
                     {/* Editor de plantilla */}
                     <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginBottom: '24px'}}>
                         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
-                            <h2 style={{color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: 0, borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px'}}>
+                            <h2 style={{color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: 0, paddingLeft: '8px'}}>
                                 PLANTILLA HTML DE EMAILS
                             </h2>
                             <span onClick={function() {setMostrarEditorPlantilla(!mostrarEditorPlantilla); }} style={{color: colores.acento, fontSize: '13px', cursor: 'pointer'}}>

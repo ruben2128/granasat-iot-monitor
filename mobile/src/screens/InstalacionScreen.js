@@ -16,7 +16,7 @@ export default function InstalacionScreen({ navigation, route}){
     const cargarDispositivos = async() => {
         try {
             const res = await api.get(`/dispositivos?instalacion_id=${instalacion.id}`);
-            console.log('Respuesta:', JSON.stringify(res.data));
+
             setDispositivos(res.data.dispositivos);
         } catch (err){
             Alert.alert('Error', 'No se pudieron cargar los dispositivos');
@@ -40,10 +40,12 @@ export default function InstalacionScreen({ navigation, route}){
                 </View>
             </View>
 
-            {/* Dirección MAC */}
-            <Text style={[styles.mac, {color: colores.acento}]}>
-                {item.mac_address}
-            </Text>
+            {/* Dirección MAC: solo la tienen los equipos de medida en continuo */}
+            {item.medida_continuo && item.mac_address && (
+                <Text style={[styles.mac, {color: colores.acento}]}>
+                    {item.mac_address}
+                </Text>
+            )}
 
             {/* Descripción del dispositivo */}
             {item.descripcion && (
@@ -52,15 +54,21 @@ export default function InstalacionScreen({ navigation, route}){
                 </Text>
             )}
 
-            {/* Vesiones de hardware y firmware */}
-            <View style={styles.versiones}>
-                <Text style={[styles.version, {color: colores.textoSecundario}]}>
-                    HW: {item.hw_version || 'N/A'}
-                </Text>
-                <Text style={[styles.version, {color: colores.textoSecundario}]}>
-                    FW: {item.fw_version || 'N/A'}
-                </Text>
-            </View>
+            {/* Versiones de hardware y firmware: solo si consta alguna */}
+            {(item.hw_version || item.fw_version) && (
+                <View style={styles.versiones}>
+                    {item.hw_version && (
+                        <Text style={[styles.version, {color: colores.textoSecundario}]}>
+                            HW: {item.hw_version}
+                        </Text>
+                    )}
+                    {item.fw_version && (
+                        <Text style={[styles.version, {color: colores.textoSecundario}]}>
+                            FW: {item.fw_version}
+                        </Text>
+                    )}
+                </View>
+            )}
         </TouchableOpacity>
     );
 

@@ -187,7 +187,7 @@ export default function Usuarios() {
 
                     {/* Cabecera lista */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
-                        <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: 0, borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px'}}>
+                        <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: 0, paddingLeft: '8px'}}>
                             USUARIOS ({usuarios.length})
                         </h2>
                         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>

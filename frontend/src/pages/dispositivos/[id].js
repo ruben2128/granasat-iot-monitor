@@ -382,7 +382,6 @@ export default function Dispositivo(){
         fontWeight: '700',
         letterSpacing: '1px',
         margin: '0 0 16px 0',
-        borderLeft: `3px solid ${colores.acento}`,
         paddingLeft: '8px'
     };
 
@@ -769,7 +768,7 @@ export default function Dispositivo(){
                     {dispositivo.medida_continuo && (
                     <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, marginBottom: '24px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: 0, borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px' }}>
+                            <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: 0, paddingLeft: '8px' }}>
                                 RADIACIÓN ({dispositivo.unidades_medida || 'µSv/h'})
                             </h2>
                             <div style={{ display: 'flex', gap: '8px' }}>
@@ -839,7 +838,7 @@ export default function Dispositivo(){
 
                     {/* Información técnica solo lecura */}
                     <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}` }}>
-                        <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 20px 0', borderLeft: `3px solid ${colores.acento}`, paddingLeft: '10px' }}>
+                        <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 20px 0', paddingLeft: '10px' }}>
                             INFORMACIÓN TÉCNICA
                         </h2>
 

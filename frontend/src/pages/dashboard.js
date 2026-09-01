@@ -330,7 +330,7 @@ export default function Dashboard() {
                     {/* Espacio docker */}
                     {usuario.role === 'ADMIN' && espacioDocker.length > 0 && (
                         <div style={{ marginTop: '32px'}}>
-                            <h2 style = {{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 16px 0', borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px'}}>
+                            <h2 style = {{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 16px 0', paddingLeft: '8px'}}>
                                 ESPACIO EN DISCO (DOCKER)
                             </h2>
                             <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}`, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px'}}>

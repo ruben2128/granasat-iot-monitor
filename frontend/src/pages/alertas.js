@@ -228,7 +228,7 @@ export default function Alertas(){
                 <Navbar usuario = {usuario} tema={tema} setTema={setTema} colores={colores}/>
 
                 <main style={{ padding: '32px 40px'}}>
-                    <h1 style={{color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 20px 0', borderLeft: `3px solid ${colores.acento}`, paddingLeft: '10px'}}>
+                    <h1 style={{color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 20px 0', paddingLeft: '10px'}}>
                         Configuración de alertas
                     </h1>
 

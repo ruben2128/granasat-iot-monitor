@@ -115,7 +115,7 @@ export default function ConfiguracionPage() {
                     {error && <p style={{ color: '#f87171', fontSize: '13px', marginBottom: '16px' }}>{error}</p>}
 
                     <div style={{ backgroundColor: colores.tarjeta, borderRadius: '12px', padding: '24px', border: `1px solid ${colores.borde}` }}>
-                        <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 20px 0', borderLeft: `3px solid ${colores.acento}`, paddingLeft: '8px' }}>
+                        <h2 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: '0 0 20px 0', paddingLeft: '8px' }}>
                             UMBRALES DE ZONAS RADIOLÓGICAS
                         </h2>
                         <p style={{ color: colores.textoSecundario, fontSize: '13px', margin: '0 0 24px 0' }}>

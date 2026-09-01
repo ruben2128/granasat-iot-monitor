@@ -21,7 +21,7 @@ export function AuthProvider({ children }){
                 setUsuario(JSON.parse(usuarioGuardado));
             }
         } catch (e) {
-            console.log('Error cargando sesión:',e);
+            console.error('Error cargando la sesión:', e);
         } finally {
             setCargando(false);
         }

@@ -10,6 +10,16 @@ export default function DispositivoScreen({ navigation, route }) {
     const colores = coloresOscuro;
 
     useEffect(() => {
+        /*
+            Los equipos portatiles no publican lecturas: no tienen direccion MAC
+            con la que asociarlas en InfluxDB, y el backend rechaza la consulta.
+            En ese caso no se pide nada ni se arranca el refresco periodico.
+        */
+        if(!dispositivo.medida_continuo || !dispositivo.mac_address){
+            setCargando(false);
+            return;
+        }
+
         cargarLecturas();
         const intervalo = setInterval(cargarLecturas, 2000);
         return () => clearInterval(intervalo);
@@ -38,12 +48,43 @@ export default function DispositivoScreen({ navigation, route }) {
         }
     };
 
+    /*
+        Traduce el valor del enumerado zona_radiologica a la denominacion
+        que emplea el reglamento, para no mostrar el literal de la BD.
+    */
+    function etiquetaZona(valor){
+        const zonas = {
+            LIBRE_PASO: 'Libre paso',
+            VIGILADA: 'Zona vigilada',
+            CONTROLADA: 'Zona controlada',
+            CONTROLADA_LIMITADA: 'Zona controlada: permanencia limitada',
+            CONTROLADA_REGLAMENTADA: 'Zona controlada: permanencia reglamentada',
+            ACCESO_PROHIBIDO: 'Zona de acceso prohibido'
+        };
+
+        return zonas[valor] || null;
+    }
+
+    /*
+        La periodicidad se almacena en minusculas ('mensual', 'trimestral'...).
+        Se capitaliza solo para presentarla, sin tocar el valor de la BD.
+    */
+    function capitalizar(texto){
+        if(!texto){
+            return null;
+        }
+
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
     function formatearFecha(fechaISO){
         if(!fechaISO){
             return 'Sin datos';
         }
 
-        return new Date(fechaISO).toLocaleDateString('es-ES');
+        return new Date(fechaISO).toLocaleDateString('es-ES', {
+            day: '2-digit', month: '2-digit', year: 'numeric'
+        });
     }
 
     return (
@@ -60,7 +101,9 @@ export default function DispositivoScreen({ navigation, route }) {
                         {dispositivo.nombre}
                     </Text>
                     <Text style={[styles.cabeceraSubtitle, {color: colores.textoSecundario}]}>
-                        {dispositivo.mac_address}
+                        {dispositivo.medida_continuo && dispositivo.mac_address
+                            ? dispositivo.mac_address
+                            : 'Equipo portátil'}
                     </Text>
                 </View>
                 <View style={[styles.badge, {backgroundColor: dispositivo.activo ? '#22c55e22' : '#ef444422'}]}>
@@ -71,12 +114,25 @@ export default function DispositivoScreen({ navigation, route }) {
             </View>
 
             <ScrollView contentContainerStyle={styles.contenido}>
-                {/* Lecturas en tiempo real */}
-                <Text style={[styles.seccionTitulo, {color: colores.acento, borderLeftColor: colores.acento}]}> 
-                    LECTURAS EN TIEMPO REAL
-                </Text>
+                {/* Equipos portatiles: no hay lecturas que mostrar */}
+                {!dispositivo.medida_continuo && (
+                    <View style={[styles.infoCard, {backgroundColor: colores.tarjeta, borderColor: colores.borde, marginTop: 4}]}>
+                        <Text style={[styles.descripcion, {color: colores.textoSecundario}]}>
+                            Este equipo no realiza medida en continuo, por lo que no dispone de
+                            lecturas en tiempo real. Sus datos de inventario, calibración y
+                            verificación se muestran a continuación.
+                        </Text>
+                    </View>
+                )}
 
-                {cargando ? (
+                {/* Lecturas en tiempo real: solo equipos de medida en continuo */}
+                {dispositivo.medida_continuo && (
+                    <Text style={[styles.seccionTitulo, {color: colores.acento}]}>
+                        LECTURAS EN TIEMPO REAL
+                    </Text>
+                )}
+
+                {dispositivo.medida_continuo && (cargando ? (
                     <View style={styles.centrado}>
                         <ActivityIndicator size="large" color={colores.acento} />
                     </View>
@@ -113,11 +169,11 @@ export default function DispositivoScreen({ navigation, route }) {
                             </Text>
                         </View>
                     </View>
-                )}
+                ))}
 
 
                 {/* Información técnica */}
-                <Text style={[styles.seccionTitulo, {color: colores.acento, borderLeftColor: colores.acento}]}> 
+                <Text style={[styles.seccionTitulo, {color: colores.acento}]}> 
                     INFORMACIÓN TÉCNICA
                 </Text>
                 <View style={[styles.infoCard, {backgroundColor: colores.tarjeta, borderColor: colores.borde}]}>
@@ -131,9 +187,16 @@ export default function DispositivoScreen({ navigation, route }) {
                                 ? (lecturas.bateria !== null ? `${lecturas.bateria.toFixed(0)}%` : null)
                                 : (dispositivo.nivel_bateria !== null ? `${dispositivo.nivel_bateria}%` : null)
                         },
-                        {label: 'IP de registro', value: dispositivo.ip_registro},
+                        {label: 'IP de registro', value: dispositivo.medida_continuo ? dispositivo.ip_registro : null},
                         {label: 'Marca comercial', value: dispositivo.marca_comercial},
+                        {label: 'Modelo electrónica', value: dispositivo.modelo_electronica},
+                        {label: 'Modelo sonda', value: dispositivo.modelo_sonda},
                         {label: 'Tipo de detector', value: dispositivo.tipo_detector},
+                        {label: 'Zona radiológica', value: etiquetaZona(dispositivo.zona_radiologica)},
+                        {label: 'Estado calibración', value: dispositivo.calibrado ? 'Calibrado' : 'No calibrado'},
+                        {label: 'Última calibración', value: dispositivo.calibrado ? formatearFecha(dispositivo.fecha_ultima_calibracion) : null},
+                        {label: 'Próxima calibración', value: dispositivo.calibrado ? formatearFecha(dispositivo.fecha_proxima_calibracion) : null},
+                        {label: 'Verificación periódica', value: dispositivo.verificacion_periodica ? (capitalizar(dispositivo.periodicidad_verificacion) || 'Sí') : null},
                     ].filter(item => item.value).map(function(item) {
                         return (
                             <View key={item.label} style={[styles.infoFila,{borderBottomColor: colores.borde}]}>
@@ -150,7 +213,7 @@ export default function DispositivoScreen({ navigation, route }) {
                 {/* Descripción */}
                 {dispositivo.descripcion && (
                     <>
-                        <Text style={[styles.seccionTitulo, {color: colores.acento, borderLeftColor: colores.acento}]}>
+                        <Text style={[styles.seccionTitulo, {color: colores.acento}]}>
                             DESCRIPCIÓN
                         </Text>
                         <View style={[styles.infoCard, {backgroundColor: colores.tarjeta, borderColor: colores.borde}]}>

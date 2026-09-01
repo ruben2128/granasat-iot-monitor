@@ -128,7 +128,7 @@ export default function Informes(){
                 <main style={{ padding: '32px 40px'}}>
                     {/* Cabecera */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                        <h1 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: 0, borderLeft: `3px solid ${colores.acento}`, paddingLeft: '10px' }}>
+                        <h1 style={{ color: colores.acento, fontSize: '13px', fontWeight: '700', letterSpacing: '1px', margin: 0, paddingLeft: '10px' }}>
                             INFORMES MENSUALES ({informes.length})
                         </h1>
                         {usuario.role === 'ADMIN' && (
