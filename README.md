@@ -7,31 +7,25 @@ Escuela Técnica Superior de Ingenierías Informática y de Telecomunicación
 Universidad de Granada
 
 **Autor:** Rubén Martín Jáimez
-**Director:** Prof. Andrés Roldán Aranda · Grupo de investigación GranaSAT
+**Director:** Prof. Andrés Roldán Aranda. Grupo de investigación GranaSAT
 
 ---
 
 ## Descripción
 
-Sistema de vigilancia radiológica para instalaciones radiactivas. Los nodos ESP32
-instalados en cada recinto miden la tasa de dosis ambiental, el estado del suministro
-eléctrico y la actividad del elemento de irradiación, y publican las lecturas por MQTT.
-Telegraf las inserta en InfluxDB, y un backend en Node.js las expone mediante una API
-REST que consumen una aplicación web y una aplicación Android.
+Sistema de vigilancia radiológica para instalaciones radiactivas. Los nodos ESP32 instalados en cada recinto miden la tasa de dosis ambiental,
+el estado del suministro eléctrico y la actividad del elemento de irradiación, y publican las lecturas por MQTT.
+Telegraf las inserta en InfluxDB, y un backend en Node.js las expone mediante una API REST que consumen una aplicación web y una aplicación Android.
 
 Sobre esos datos, el sistema:
 
 - Clasifica cada recinto según las zonas radiológicas del **Real Decreto 1029/2022**
-  (vigilada, controlada, permanencia limitada, permanencia reglamentada y acceso
-  prohibido), con umbrales configurables desde la propia interfaz.
-- Evalúa cada cinco minutos **seis mecanismos de alerta** independientes y notifica
-  por correo al responsable de la instalación.
-- Mantiene el inventario de equipos con sus datos de calibración y verificación
-  periódica, y el registro de licencias del Consejo de Seguridad Nuclear del personal.
+  (vigilada, controlada, permanencia limitada, permanencia reglamentada y acceso prohibido), con umbrales configurables desde la propia interfaz.
+- Evalúa cada cinco minutos **seis mecanismos de alerta** independientes y notifica por correo al responsable de la instalación.
+- Mantiene el inventario de equipos con sus datos de calibración y verificación periódica, y el registro de licencias del Consejo de Seguridad Nuclear del personal.
 - Genera informes mensuales en PDF de forma automática.
 
-El control de acceso está segregado por rol: cada usuario ve únicamente las
-instalaciones o los dispositivos que le corresponden.
+El control de acceso está segregado por rol: cada usuario ve únicamente las instalaciones o los dispositivos que le corresponden.
 
 ---
 
@@ -87,10 +81,8 @@ Dos bases de datos con propósitos distintos:
 | Next.js | Framework React con enrutado por ficheros |
 | Recharts | Gráficas de evolución temporal |
 | Leaflet | Mapa de dispositivos sobre OpenStreetMap |
-| Axios | Cliente HTTP |
 
-Los estilos se resuelven con objetos de estilo en línea a partir de la paleta de
-`src/lib/temas.js`, que implementa los cuatro temas de la interfaz (claro, oscuro,
+Los estilos se resuelven con objetos de estilo en línea a partir de la paleta de `src/lib/temas.js`, que implementa los cuatro temas de la interfaz (claro, oscuro,
 alto contraste y azul).
 
 ### Aplicación Android
@@ -134,14 +126,11 @@ alto contraste y azul).
 | `RESPONSABLE` | Las instalaciones de las que es responsable: sus dispositivos, sus alertas y sus informes. No puede dar de alta instalaciones ni administrar usuarios. |
 | `TITULAR` | Solo los dispositivos que figuran a su nombre, en modo consulta. No accede a instalaciones, alertas ni informes. |
 
-El control de acceso se aplica en dos capas: el *middleware* `requireAdmin`
-restringe a nivel de ruta los *endpoints* reservados al administrador, y los
-controladores accesibles a varios roles comprueban la propiedad del recurso antes
-de responder. Las comprobaciones están escritas como listas blancas, de modo que un
-rol nuevo queda denegado por omisión.
+El control de acceso se aplica en dos capas: el *middleware* `requireAdmin` restringe a nivel de ruta los *endpoints* reservados al administrador, y los
+controladores accesibles a varios roles comprueban la propiedad del recurso antes de responder. 
+Las comprobaciones están escritas como listas blancas, de modo que un rol nuevo queda denegado por omisión.
 
-> Estos son roles **de aplicación** y no se corresponden con las figuras
-> reglamentarias de titular, supervisor y operador del Real Decreto 1836/1999.
+> Estos son roles **de aplicación** y no se corresponden con las figuras reglamentarias de titular, supervisor y operador del Real Decreto 1836/1999.
 > Las licencias del CSN se registran como un dato independiente del rol.
 
 ---
@@ -160,8 +149,7 @@ rol nuevo queda denegado por omisión.
 cp .env.example .env
 ```
 
-Rellena `.env` con las credenciales de tu despliegue. **No lo subas al repositorio**:
-está excluido en `.gitignore`.
+Rellena `.env` con las credenciales de tu despliegue. 
 
 | Variable | Descripción |
 |---|---|
@@ -178,10 +166,8 @@ docker compose -f docker-compose.prod.yml up -d
 
 Levanta cinco servicios: PostgreSQL, Mosquitto, Grafana, el *backend* y el *frontend*.
 
-> **InfluxDB y Telegraf no están en este *compose*.** En el despliegue de GranaSAT
-> son contenedores compartidos, gestionados por la infraestructura del grupo. El
-> *backend* los alcanza por nombre de host a través de la red Docker común; la
-> variable `INFLUX_URL` debe apuntar al contenedor real.
+> **InfluxDB y Telegraf no están en este *compose*.** En el despliegue de GranaSAT son contenedores compartidos, gestionados por la infraestructura del grupo. El
+> *backend* los alcanza por nombre de host a través de la red Docker común; la variable `INFLUX_URL` debe apuntar al contenedor real.
 
 ### 3. Base de datos
 
@@ -217,8 +203,7 @@ npm ci
 npx expo start
 ```
 
-Escanea el QR con Expo Go. La URL base se resuelve en `mobile/src/lib/api.js`: en
-desarrollo apunta a la IP local de la máquina —**ajústala a la tuya**— y en una
+Escanea el QR con Expo Go. La URL base se resuelve en `mobile/src/lib/api.js`: en desarrollo apunta a la IP local de la máquina —**ajústala a la tuya**— y en una
 compilación de producción, al servidor de GranaSAT.
 
 Para generar el APK instalable:
@@ -226,9 +211,6 @@ Para generar el APK instalable:
 ```bash
 eas build -p android --profile preview
 ```
-
-El perfil `preview` produce un `.apk`; `production` produce un `.aab`, válido
-únicamente para su distribución en Google Play.
 
 ### 7. Nodos ESP32
 
@@ -245,9 +227,7 @@ cd backend
 npm test
 ```
 
-41 casos sobre cinco módulos (autenticación, instalaciones, dispositivos, alertas y
-usuarios). La capa de persistencia se simula con `jest.mock()`, de modo que la suite
-no necesita bases de datos reales.
+41 casos sobre cinco módulos (autenticación, instalaciones, dispositivos, alertas y usuarios). La capa de persistencia se simula con `jest.mock()`, de modo que la suite no necesita bases de datos reales.
 
 ---
 
@@ -287,29 +267,22 @@ El servicio evalúa seis comprobaciones en cada ciclo de cinco minutos:
 | Conexión | Un dispositivo pasa a estar conectado o desconectado |
 | InfluxDB | La base de datos de series temporales no responde |
 
-Toda detección se registra en `alertas_historial` **aunque el envío del correo falle**,
-con el motivo en `email_error`: la trazabilidad no depende de la notificación. Un
-período de silencio de 30 minutos evita el reenvío mientras la condición persista.
+Toda detección se registra en `alertas_historial` **aunque el envío del correo falle**, con el motivo en `email_error`: la trazabilidad no depende de la notificación. Unperíodo de silencio de 30 minutos evita el reenvío mientras la condición persista.
 
 ---
 
 ## Integración con dispositivos de terceros
 
-La plataforma identifica cada equipo por su dirección MAC y acepta cualquier fuente
-que publique en el formato esperado. Como validación de esa interoperabilidad se
-integró el dispositivo TRMS desarrollado en un Trabajo Fin de Máster del propio
-grupo: un ESP32 con pantalla táctil gobernada por LVGL, ajeno a este proyecto.
+La plataforma identifica cada equipo por su dirección MAC y acepta cualquier fuente que publique en el formato esperado. Como validación de esa interoperabilidad se
+integró el dispositivo TRMS desarrollado en un Trabajo Fin de Máster del propio grupo: un ESP32 con pantalla táctil gobernada por LVGL, ajeno a este proyecto.
 
-La integración se resolvió como un módulo independiente sobre el firmware original,
-con solo tres puntos de enganche y sin modificar una línea del *backend*. Basta con
+La integración se resolvió como un módulo independiente sobre el firmware original, con solo tres puntos de enganche y sin modificar una línea del *backend*. Basta con
 dar de alta el equipo con su dirección MAC desde la interfaz de administración.
 
 ---
 
 ## Licencia
 
-El **código fuente** de este repositorio se publica bajo licencia **MIT**
-(véase [`LICENSE`](LICENSE)).
+El **código fuente** de este repositorio se publica bajo licencia **MIT** (véase [`LICENSE`](LICENSE)).
 
-La **memoria** del Trabajo Fin de Grado es una obra distinta y se publica bajo
-Creative Commons Attribution-ShareAlike 4.0 International (**CC BY-SA 4.0**).
+La **memoria** del Trabajo Fin de Grado es una obra distinta y se publica bajo Creative Commons Attribution-ShareAlike 4.0 International (**CC BY-SA 4.0**).
