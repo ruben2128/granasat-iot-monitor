@@ -29,6 +29,12 @@ function superaUmbral(valor,operador, umbral){
     }
 }
 
+/*
+    Refresca el campo ultima_conexion de cada dispositivo activo con la marca
+    temporal de su lectura mas reciente en InfluxDB. Se ejecuta antes que el
+    resto de comprobaciones porque comprobarConexiones() decide si un equipo
+    esta conectado a partir de ese dato.
+*/
 async function actualizarUltimasConexiones(){
     const dispositivos = await Dispositivo.findAll({
         where: {activo: true}
@@ -57,6 +63,10 @@ async function actualizarUltimasConexiones(){
     }
 }
 
+/*
+    Devuelve true si esta misma regla ya disparo sobre este mismo dispositivo dentro de los ultimos COOLDOWN_MINUTOS.
+    Evita que una condicion que persiste genere un correo en cada ciclo del planificador.
+*/
 async function yaAlertadoRecientemente(alertaConfigId, dispositivoId){
     const limite = new Date(Date.now() - COOLDOWN_MINUTOS*60*1000); // Convierte a ms
 
